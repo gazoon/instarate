@@ -9,9 +9,11 @@ defmodule Voting.Supervisor do
     Supervisor.start_link(__MODULE__, arg)
   end
 
-  def init(arg) do
+  def init(_) do
+    mongo_options = [name: :mongo] ++ Application.get_env(:voting, :mongodb)
     children = [
-      {Mongo, name: :mongo, database: "local"}
+      # add pool
+      {Mongo, mongo_options},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

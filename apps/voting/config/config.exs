@@ -10,7 +10,22 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :voting, key: :value
+config :voting,
+       Voting.Foo,
+       key: :value,
+       sss: :lljk
+
+config :voting,
+       mongodb: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
+       ]
+
+config :voting,
+       :bar,
+       key: :value,
+       sssss: :lljk
 #
 # and access this configuration in your application as:
 #
