@@ -1,7 +1,8 @@
 defmodule Voting.Supervisor do
   @moduledoc false
 
-
+  alias Voting.Girls.Storages.Mongo, as: GirlsMongoStorage
+  alias Voting.Voters.Storages.Mongo, as: VotersMongoStorage
 
   use Supervisor
 
@@ -16,9 +17,10 @@ defmodule Voting.Supervisor do
 
 
   def init(_) do
-    # TODO: try to use :name_girls for config field too,
-    mongo_girls_options = [name: :mongo_girls] ++ Application.get_env(:voting, :mongo_girls)
-    mongo_voters_options = [name: :mongo_voters] ++ Application.get_env(:voting, :mongo_voters)
+    mongo_girls_options = [name: GirlsMongoStorage.process_name] ++
+                          Application.get_env(:voting, :mongo_girls)
+    mongo_voters_options = [name: VotersMongoStorage.process_name] ++
+                           Application.get_env(:voting, :mongo_voters)
     children = [
       # TODO: add pool
       {

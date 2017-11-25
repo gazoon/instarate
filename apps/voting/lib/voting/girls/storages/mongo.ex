@@ -7,9 +7,12 @@ defmodule Voting.Girls.Storages.Mongo do
   @duplication_code 11000
   @max_random_get_attempt 5
 
+  @process_name :mongo_girls
+  def process_name, do: @process_name
+
   def get_top(number) do
     Mongo.find(
-      :mongo_girls,
+      @process_name,
       @collection,
       %{},
       sort: %{
@@ -21,13 +24,13 @@ defmodule Voting.Girls.Storages.Mongo do
   end
 
   def get_girl(username) do
-    Mongo.find_one(:mongo_girls, @collection, %{username: username})
+    Mongo.find_one(@process_name, @collection, %{username: username})
     |> transform_girl()
   end
 
   def update_girl(girl) do
     Mongo.update_one(
-      :mongo_girls,
+      @process_name,
       @collection,
       %{username: girl.username},
       %{
@@ -41,7 +44,7 @@ defmodule Voting.Girls.Storages.Mongo do
   end
 
   def add_girl(girl) do
-    insert_result = Mongo.insert_one(:mongo_girls, @collection, girl)
+    insert_result = Mongo.insert_one(@process_name, @collection, girl)
     case insert_result do
       {:ok, _} -> :ok
       {:error, %Mongo.Error{code: @duplication_code}} -> :error
@@ -58,7 +61,7 @@ defmodule Voting.Girls.Storages.Mongo do
   end
   defp get_random_pair(attempt) do
     girls = Mongo.aggregate(
-              :mongo_girls,
+              @process_name,
               @collection,
               [
                 %{

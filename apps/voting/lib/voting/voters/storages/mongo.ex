@@ -6,10 +6,13 @@ defmodule Voting.Voters.Storages.Mongo do
   @collection "voters"
   @duplication_code 11000
 
+  @process_name :mongo_voters
+  def process_name, do: @process_name
+
   def try_vote(voter_id, girl_one_id, girl_two_id)  do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     insert_result = Mongo.insert_one(
-      :mongo_voters,
+      @process_name,
       @collection,
       %{voter: voter_id, girls_id: girls_id}
     )
@@ -23,7 +26,7 @@ defmodule Voting.Voters.Storages.Mongo do
   def can_vote?(voter_id, girl_one_id, girl_two_id) do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     row = Mongo.find_one(
-      :mongo_voters,
+      @process_name,
       @collection,
       %{voter: voter_id, girls_id: girls_id}
     )
