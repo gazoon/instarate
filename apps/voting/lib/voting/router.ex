@@ -13,8 +13,8 @@ defmodule Voting.Router do
   get "/" do
     x = VotersStorage.can_vote?("1", "1", "2")
     IO.inspect(x)
-    x = VotersStorage.try_vote("1", "3", "2")
-    IO.inspect(x)
+#    x = VotersStorage.try_vote("1", "3", "2")
+#    IO.inspect(x)
     x = GirlsStorage.get_girl("1")
     x = %{x | rating: x.rating + 10}
     GirlsStorage.update_girl(x)

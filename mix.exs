@@ -15,6 +15,8 @@ defmodule Instmash.Mixfile do
   #
   # Run "mix help deps" for examples and options.
   defp deps do
-    []
+    [
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+    ]
   end
 end

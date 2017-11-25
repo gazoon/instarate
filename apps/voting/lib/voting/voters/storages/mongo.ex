@@ -9,6 +9,7 @@ defmodule Voting.Voters.Storages.Mongo do
   @process_name :mongo_voters
   def process_name, do: @process_name
 
+  @spec try_vote(String.t, String.t, String.t) :: :ok | :error
   def try_vote(voter_id, girl_one_id, girl_two_id)  do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     insert_result = Mongo.insert_one(
@@ -23,6 +24,8 @@ defmodule Voting.Voters.Storages.Mongo do
 
   end
 
+  # TODO: add specs everywhere
+  @spec try_vote(String.t, String.t, String.t) :: boolean
   def can_vote?(voter_id, girl_one_id, girl_two_id) do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     row = Mongo.find_one(
