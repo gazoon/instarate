@@ -16,11 +16,18 @@ config :voting,
        sss: :lljk
 
 config :voting,
-       mongodb: [
+       mongo_girls: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
+       ],
+       mongo_voters: [
          database: "local",
          host: "localhost",
          port: 27017,
        ]
+
+
 
 config :voting,
        :bar,
