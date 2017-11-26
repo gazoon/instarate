@@ -1,10 +1,13 @@
 defmodule VotingTest do
+  @moduledoc false
   use ExUnit.Case
-  doctest Voting
+  alias Voting.Girls.Girl
 
-  test "greets the world" do
-    IO.inspect(Application.get_all_env(:voting))
-    IO.inspect Application.get_env(:voting, :foo)
-    assert :world == :world
+  test "winner has higher rating" do
+    assert {
+             :ok,
+             %Girl{username: "svetabily", photo: "https://www.instagram.com/p/BbRv15lltW7/"}
+           } = Voting.add_girl("BbRv15lltW7")
+
   end
 end

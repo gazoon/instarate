@@ -21,8 +21,13 @@ defmodule Instagram.Clients.Http do
     end
   end
 
+  @spec build_media_url(String.t) :: String.t
+  def build_media_url(media_code) do
+    @api_url <> media_code <> "/"
+  end
+
   @spec retrieve_username(map()) :: String.t
-  def retrieve_username(media_resp) do
+  defp retrieve_username(media_resp) do
     username = retrieve_media_data(media_resp)["owner"]["username"]
     if username do
       username
@@ -31,17 +36,12 @@ defmodule Instagram.Clients.Http do
     end
   end
 
-  @spec code_to_url(String.t) :: String.t
-  defp code_to_url(media_code) do
-    @api_url <> media_code <> @magic_suffix
-  end
-
   @spec retrieve_media_data(map()) :: map()
   defp retrieve_media_data(media_response), do: media_response["graphql"]["shortcode_media"]
 
   @spec request_media(String.t) :: {:ok, map()} | {:error, String.t}
   defp request_media(media_code) do
-    media_url = code_to_url(media_code)
+    media_url = build_media_url(media_code) <> @magic_suffix
     resp = HTTPoison.get!(media_url)
     if resp.status_code == 404 do
       {:error, "Media #{media_url} not found"}

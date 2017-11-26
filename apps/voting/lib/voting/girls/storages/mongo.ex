@@ -39,19 +39,24 @@ defmodule Voting.Girls.Storages.Mongo do
       %{
         "$set" => %{
           rating: girl.rating,
-          photo: girl.photo
+          photo: girl.photo,
+          matches: girl.matches,
+          wins: girl.wins,
+          loses: girl.loses,
         }
       }
     )
     girl
   end
 
-  @spec add_girl(Girl.t) :: :ok | :error
+  @spec add_girl(Girl.t) :: {:ok, Girl.t} | {:error, String.t}
   def add_girl(girl) do
     insert_result = Mongo.insert_one(@process_name, @collection, girl)
     case insert_result do
-      {:ok, _} -> :ok
-      {:error, %Mongo.Error{code: @duplication_code}} -> :error
+      {:ok, _} ->
+        {:ok, girl}
+      {:error, %Mongo.Error{code: @duplication_code}} ->
+        {:error, "Girl #{girl.username} already added"}
     end
   end
 
@@ -99,7 +104,10 @@ defmodule Voting.Girls.Storages.Mongo do
       username: row["username"],
       added_at: row["added_at"],
       photo: row["photo"],
-      rating: row["rating"]
+      rating: row["rating"],
+      matches: row["matches"],
+      wins: row["wins"],
+      loses: row["loses"],
     }
   end
 
