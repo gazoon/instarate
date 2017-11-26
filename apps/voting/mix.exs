@@ -18,7 +18,7 @@ defmodule Voting.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger, :cowboy, :plug, :mongodb, :poolboy],
+      applications: [:logger, :cowboy, :plug, :mongodb, :poolboy, :httpoison],
       mod: {Voting.Application, []}
     ]
   end
@@ -32,7 +32,9 @@ defmodule Voting.Mixfile do
       {:cowboy, "~> 1.1.2"},
       {:plug, "~> 1.4.3"},
       {:mongodb, ">= 0.0.0"},
-      {:poolboy, ">= 0.0.0"}
+      {:poolboy, ">= 0.0.0"},
+      {:httpoison, "~> 0.13"},
+      {:poison, "~> 3.1"}
     ]
   end
 end

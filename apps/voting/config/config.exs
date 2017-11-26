@@ -11,9 +11,14 @@ use Mix.Config
 # You can configure your application as:
 #
 config :voting,
-       Voting.Foo,
        key: :value,
-       sss: :lljk
+       foo: "baz"
+config :voting,
+       some_key: "baz"
+
+config :voting, :girls_storage, Voting.Girls.Storages.Mongo
+config :voting, :voters_storage, Voting.Voters.Storages.Mongo
+config :voting, :instagram_client, Instagram.Clients.Http
 
 config :voting,
        mongo_girls: [
@@ -49,4 +54,4 @@ config :voting,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-#     import_config "#{Mix.env}.exs"
+import_config "#{Mix.env}.exs"
