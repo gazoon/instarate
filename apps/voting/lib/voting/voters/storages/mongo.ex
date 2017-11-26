@@ -25,7 +25,7 @@ defmodule Voting.Voters.Storages.Mongo do
   end
 
   # TODO: add specs everywhere
-  @spec try_vote(String.t, String.t, String.t) :: boolean
+  @spec can_vote?(String.t, String.t, String.t) :: boolean
   def can_vote?(voter_id, girl_one_id, girl_two_id) do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     row = Mongo.find_one(
@@ -37,6 +37,7 @@ defmodule Voting.Voters.Storages.Mongo do
 
   end
 
+  @spec to_girls_id(String.t, String.t) :: String.t
   defp to_girls_id(girl_one_id, girl_two_id) do
     [girl_one_id, girl_two_id]
     |> Enum.sort
