@@ -24,10 +24,14 @@ defmodule Voting.Girls.Storages.Mongo do
     |> transform_girls()
   end
 
-  @spec get_girl(String.t) :: Girl.t | nil
+  @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
   def get_girl(username) do
-    Mongo.find_one(@process_name, @collection, %{username: username})
-    |> transform_girl()
+    row = Mongo.find_one(@process_name, @collection, %{username: username})
+    if row do
+      {:ok, transform_girl(row)}
+    else
+      {:error, "Girl #{username} not found"}
+    end
   end
 
   @spec update_girl(Girl.t) :: Girl.t
@@ -66,8 +70,8 @@ defmodule Voting.Girls.Storages.Mongo do
     get_random_pair(attempt)
   end
 
-  defp get_random_pair(attempt = @max_random_get_attempt) do
-    raise RuntimeError, message: "Can't get two distinct rows, attempts limit is reached"
+  defp get_random_pair(_attempt = @max_random_get_attempt) do
+    raise "Can't get two distinct rows, attempts limit is reached"
   end
   @spec get_random_pair(integer) :: {Girl.t, Girl.t}
   defp get_random_pair(attempt) do
@@ -96,9 +100,7 @@ defmodule Voting.Girls.Storages.Mongo do
     Enum.map(rows, &transform_girl/1)
   end
 
-  defp transform_girl(nil), do: nil
-
-  @spec transform_girl(map()) :: Girl.t
+  @spec transform_girl(map() | Mongo.Cursor.t) :: Girl.t
   defp transform_girl(row) do
     %Girl{
       username: row["username"],
@@ -110,5 +112,4 @@ defmodule Voting.Girls.Storages.Mongo do
       loses: row["loses"],
     }
   end
-
 end

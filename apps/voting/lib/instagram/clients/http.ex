@@ -44,7 +44,7 @@ defmodule Instagram.Clients.Http do
     media_url = build_media_url(media_code) <> @magic_suffix
     resp = HTTPoison.get!(media_url)
     if resp.status_code == 404 do
-      {:error, "Media #{media_url} not found"}
+      {:error, "Media #{media_code} not found"}
     else
       case Poison.decode(resp.body, as: %{}) do
         {:ok, data} -> {:ok, data}

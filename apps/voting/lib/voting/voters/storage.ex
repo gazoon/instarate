@@ -3,13 +3,13 @@ defmodule Voting.Voters.Storage do
 
   @callback try_vote(
               voter_id :: String.t,
-              first_girl_id :: String.t,
-              second_girl_id :: String.t
-            ) :: :ok | :error
+              girl_one_id :: String.t,
+              girl_two_id :: String.t
+            ) :: :ok | {:error, String.t}
 
   @callback can_vote?(
               voter_id :: String.t,
-              first_girl_id :: String.t,
-              second_girl_id :: String.t
+              girl_one_id :: String.t,
+              girl_two_id :: String.t
             ) :: boolean
 end

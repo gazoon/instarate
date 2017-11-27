@@ -3,16 +3,12 @@ defmodule Voting.Supervisor do
 
   alias Voting.Girls.Storages.Mongo, as: GirlsMongoStorage
   alias Voting.Voters.Storages.Mongo, as: VotersMongoStorage
+  alias Voting.Utils
 
   use Supervisor
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg)
-  end
-  def set_child_id(spec, child_id) do
-    spec
-    |> Tuple.delete_at(0)
-    |> Tuple.insert_at(0, child_id)
   end
 
 
@@ -31,8 +27,8 @@ defmodule Voting.Supervisor do
           port: 8080
         ]
       },
-      set_child_id(Mongo.child_spec(mongo_girls_options), {Mongo, :girls}),
-      set_child_id(Mongo.child_spec(mongo_voters_options), {Mongo, :voters}),
+      Utils.set_child_id(Mongo.child_spec(mongo_girls_options), {Mongo, :girls}),
+      Utils.set_child_id(Mongo.child_spec(mongo_voters_options), {Mongo, :voters}),
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

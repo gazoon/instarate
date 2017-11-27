@@ -10,7 +10,7 @@ defmodule Voting.EloRating do
     {new_winner_rating, new_loser_rating}
   end
 
-  @spec recalculate(integer, integer) :: float
+  @spec expected_probabilty(integer, integer) :: float
   defp expected_probabilty(rating_a, rating_b) do
     1 / (1 + :math.pow(10, (rating_b - rating_a) / 400))
   end
