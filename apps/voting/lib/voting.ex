@@ -2,6 +2,7 @@ defmodule Voting do
   @moduledoc false
   alias Voting.Girls.Girl
   alias Voting.EloRating
+  alias Instagram.Media
   require Logger
 
   @girls_storage Application.get_env(:voting, :girls_storage)
@@ -14,16 +15,13 @@ defmodule Voting do
   def add_girl(photo_id) do
     photo_code = retrieve_photo_code(photo_id)
 
-    with {:ok, username} <- @instagram_client.get_media_owner(photo_code),
-         true <- @instagram_client.is_photo?(photo_code),
-         {:ok, girl} <- photo_code
-                        |> @instagram_client.build_media_url()
-                        |> (&Girl.new(username, &1)).()
+    with {:ok, media_info = %Media{is_photo: true}} <- @instagram_client.get_media_info(photo_code),
+         {:ok, girl} <- Girl.new(media_info.owner, media_info.url)
                         |> @girls_storage.add_girl do
       {:ok, girl}
     else
       {:error, error} -> {:error, error}
-      false -> {:error, "#{photo_code} is not a photo"}
+      {:ok, %Media{is_photo: false}} -> {:error, "#{photo_code} is not a photo"}
     end
   end
 
@@ -39,7 +37,7 @@ defmodule Voting do
     @girls_storage.get_top(number)
   end
 
-  @spec vote(String.t, String.t, String.t) :: :ok
+  @spec vote(String.t, String.t, String.t) :: {Girl.t, Girl.t}
   def vote(voter_id, winner_username, loser_username) do
     with :ok <- @voters_storage.try_vote(voter_id, winner_username, loser_username),
          {:ok, winner} <- @girls_storage.get_girl(winner_username),
@@ -50,7 +48,7 @@ defmodule Voting do
     end
   end
 
-  @spec process_vote(Girl.t, Girl.t) :: :ok
+  @spec process_vote(Girl.t, Girl.t) :: {Girl.t, Girl.t}
   defp process_vote(winner, loser) do
     {new_winner_rating, new_loser_rating} = EloRating.recalculate(winner.rating, loser.rating)
     winner = %{
@@ -62,7 +60,7 @@ defmodule Voting do
     loser = %{loser | rating: new_loser_rating, matches: loser.matches + 1, loses: loser.loses + 1}
     @girls_storage.update_girl(winner)
     @girls_storage.update_girl(loser)
-    :ok
+    {winner, loser}
   end
 
   @spec retrieve_photo_code(String.t) :: String.t
