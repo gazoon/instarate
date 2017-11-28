@@ -42,7 +42,7 @@ defmodule Instagram.Clients.Http do
     end
   end
 
-  @spec retrieve_is_photo(map()) :: String.t
+  @spec retrieve_is_photo(map()) :: boolean
   defp retrieve_is_photo(media_data) do
     !media_data["is_video"]
   end
