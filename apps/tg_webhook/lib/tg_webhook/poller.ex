@@ -16,7 +16,11 @@ defmodule TGWebhook.Poller do
     :timer.sleep(1000)
     next_cast()
     Logger.info("get updates2")
-    {:noreply, new_offset + 1, 100}
+    if is_integer(new_offset) do
+      {:noreply, new_offset + 1}
+    else
+      {:noreply, offset + 1}
+    end
   end
 
   defp process_updates({:ok, results}) do
@@ -41,22 +45,24 @@ defmodule TGWebhook.Poller do
     bot_message = cond do
       update.message != nil ->
         message = update.message
-        %TGBot.Message{
+        %{
           type: TextMessage.type,
-          data: %TextMessage{
+          data: %{
             user_id: message.from.id,
             chat_id: message.chat.id,
-            text: message.text
+            text: message.text,
+            is_group_chat: update.message.chat.type != "private"
           }
         }
       update.callback_query != nil && update.callback_query.message.chat ->
         callback = update.callback_query
-        %TGBot.Message{
+        %{
           type: CallbackMessage.type,
-          data: %CallbackMessage{
+          data: %{
             callback_id: callback.id,
             user_id: callback.from.id,
             chat_id: callback.message.chat.id,
+            is_group_chat: callback.message.chat.type != "private",
             payload: callback.data
           }
         }

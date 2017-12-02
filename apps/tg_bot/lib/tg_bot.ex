@@ -1,38 +1,73 @@
 defmodule TGBot do
   @moduledoc false
+  require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: CallbackMessage
+  @start_cmd "start"
+  @add_girl_cmd "addgirl"
+  @get_top_cmd "showtop"
+  @get_girl_info_cmd "girlinfo"
 
-  def on_message(message) do
-    case message.type do
-      :text -> on_text_message(message.data)
-      :callback -> on_callback(message.data)
+  def on_message(message_container) do
+    message_type = message_container.type
+    message_data = message_container.data
+    case message_type do
+      :text ->
+        message = TextMessage.from_data(message_data)
+        on_text_message(message)
+      :callback ->
+        message = CallbackMessage.from_data(message_data)
+        on_callback(message)
+      _ -> Logger.error("Unsupported message type: #{message_type}")
     end
   end
 
-  def on_text_message(message) do
-    reply_markup = %Nadia.Model.InlineKeyboardMarkup{
-      inline_keyboard: [
-        [
-          %Nadia.Model.InlineKeyboardButton{text: "first", callback_data: "first data", url: ""},
-          %Nadia.Model.InlineKeyboardButton{text: "second", callback_data: "second data", url: ""},
-        ],
-        [
-          %Nadia.Model.InlineKeyboardButton{text: "third", callback_data: "third data", url: ""},
-          %Nadia.Model.InlineKeyboardButton{text: "fourth", callback_data: "fourth data", url: ""},
-        ]
-      ]
-    }
-    x = Nadia.send_photo(
-      message.chat_id,
-      "https://scontent-arn2-1.cdninstagram.com/t51.2885-15/e35/23498332_181024335786384_452312429100007424_n.jpg",
-      reply_markup: reply_markup
-    )
+  defp on_text_message(message) do
+    if TextMessage.appeal_to_bot?(message) || !message.is_group_chat do
+      process_text_message(message)
+    else
+      Logger.info("Skip message #{inspect message} it's not an appeal")
+    end
   end
 
-  def on_callback(message) do
+  defp process_text_message(message) do
+    commands = [
+      {@start_cmd, &handle_start_cmd/1},
+      {@add_girl_cmd, &handle_add_girl_cmd/1},
+      {@get_top_cmd, &handle_get_top_cmd/1},
+      {@get_girl_info_cmd, &handle_get_girl_info_cmd/1},
+    ]
+    message_text = message.text_lowercase
+    command = commands
+              |> Enum.find(fn ({cmd_name, _}) -> String.contains?(message_text, cmd_name) end)
+    case command do
+      {command_name, handler} -> Logger.info("Handle #{command_name} command")
+                                 handler.(message)
+      nil -> Logger.info("Message #{message_text} doesn't contain commands")
+    end
 
-    IO.inspect("caaaaaaaaaaaaalllllback")
+    IO.inspect(message)
+  end
+
+  defp handle_start_cmd(message) do
+
+  end
+
+  defp handle_add_girl_cmd(message) do
+
+  end
+
+  defp handle_get_top_cmd(message) do
+
+  end
+
+  defp handle_get_girl_info_cmd(message) do
+
+  end
+
+  defp on_callback(message) do
+
+    IO.inspect("caaaaaaaaaaaaalllllback2222")
     IO.inspect(message)
   end
 
