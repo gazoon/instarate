@@ -9,6 +9,7 @@ defmodule TGBot do
       :callback -> on_callback(message.data)
     end
   end
+
   def on_text_message(message) do
     reply_markup = %Nadia.Model.InlineKeyboardMarkup{
       inline_keyboard: [
@@ -30,6 +31,7 @@ defmodule TGBot do
   end
 
   def on_callback(message) do
+
     IO.inspect("caaaaaaaaaaaaalllllback")
     IO.inspect(message)
   end

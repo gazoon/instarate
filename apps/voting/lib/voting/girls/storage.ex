@@ -5,6 +5,7 @@ defmodule Voting.Girls.Storage do
   @callback get_top(number :: integer) :: [Girl.t]
   @callback get_random_pair() :: {Girl.t, Girl.t}
   @callback get_girl(username :: String.t) :: {:ok, Girl.t} | {:error, Stringt.t}
+  @callback get_higher_ratings_number(rating :: integer) :: integer
   @callback update_girl(girl :: Girl.t) :: Girl.t
   @callback add_girl(girl :: Girl.t) :: {:ok, Girl.t} | {:error, String.t}
 end

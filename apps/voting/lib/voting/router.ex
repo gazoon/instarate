@@ -19,6 +19,8 @@ defmodule Voting.Router do
     #    IO.inspect(Voting.get_top(3))
     IO.inspect Voting.add_girl("Bap6TqcjowK")
     IO.puts("fff")
+    x = Voting.get_girl_position("svetabily2")
+    IO.inspect(x)
     conn
     |> send_resp(200, "Plug!")
   end

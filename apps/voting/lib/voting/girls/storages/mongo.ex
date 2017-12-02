@@ -34,6 +34,21 @@ defmodule Voting.Girls.Storages.Mongo do
     end
   end
 
+  @spec get_higher_ratings_number(integer) :: integer
+  def get_higher_ratings_number(rating) do
+    {:ok, ratings} = Mongo.distinct(
+      @process_name,
+      @collection,
+      "rating",
+      %{
+        rating: %{
+          "$gt" => rating
+        }
+      }
+    )
+    length(ratings)
+  end
+
   @spec update_girl(Girl.t) :: Girl.t
   def update_girl(girl) do
     Mongo.update_one(

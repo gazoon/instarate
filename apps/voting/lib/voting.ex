@@ -31,6 +31,13 @@ defmodule Voting do
     get_next_pair(voter_id, attempt)
   end
 
+  @spec get_girl_position(String.t) :: {:ok, integer} | {:error, String.t}
+  def get_girl_position(username) do
+    case @girls_storage.get_girl(username) do
+      {:ok, girl} -> {:ok, @girls_storage.get_higher_ratings_number(girl.rating) + 1}
+      error -> error
+    end
+  end
 
   @spec get_top(integer) :: [Girl.t]
   def get_top(number) do
