@@ -66,9 +66,34 @@ defmodule TGBot do
   @spec handle_start_cmd(TextMessage.t) :: any
   defp handle_start_cmd(message) do
     voter_id = build_voter_id(message)
+    send_next_girls_pair(message.chat_id, voter_id)
+  end
+
+  @spec send_next_girls_pair(integer, String.t) :: any
+  defp send_next_girls_pair(chat_id, voter_id) do
     {girl_one, girl_two} = Voting.get_next_pair(voter_id)
-    IO.inspect(girl_one)
-    IO.inspect(girl_two)
+    girl_one_url = Girl.get_profile_url(girl_one)
+    girl_two_url = Girl.get_profile_url(girl_two)
+    text = "[#{girl_one.username}](#{girl_one_url}) vs [#{girl_two.username}](#{girl_two_url})"
+    keyboard = [
+      [
+        %{
+          text: "left",
+          payload: %{
+            winner_username: girl_one.username,
+            loser_username: girl_two.username
+          }
+        },
+        %{
+          text: "right",
+          payload: %{
+            winner_username: girl_two.username,
+            loser_username: girl_one.username
+          }
+        },
+      ]
+    ]
+    Messenger.send_markdown(chat_id, text, keyboard: keyboard)
   end
 
   @spec handle_add_girl_cmd(TextMessage.t) :: any
@@ -79,7 +104,7 @@ defmodule TGBot do
         profile_url = Girl.get_profile_url(girl)
         text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
         Messenger.send_markdown(message.chat_id, text)
-      {:error, error_msg} -> Nadia.send_message(message.chat_id, error_msg)
+      {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
     end
   end
 
@@ -100,7 +125,7 @@ defmodule TGBot do
     girl_link = TextMessage.get_command_arg(message)
     case Voting.get_girl(girl_link) do
       {:ok, girl} -> display_girl_info(message.chat_id, girl)
-      {:error, error_msg} -> Nadia.send_message(message.chat_id, error_msg)
+      {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
     end
   end
 
@@ -118,9 +143,19 @@ defmodule TGBot do
     Messenger.send_text(chat_id, text)
   end
 
+  @spec on_callback(CallbackMessage.t) :: any
   defp on_callback(message) do
-
-    IO.inspect("caaaaaaaaaaaaalllllback2222")
+    winner_username = message.payload["winner_username"]
+    loser_username = message.payload["loser_username"]
+    if winner_username && loser_username do
+      voter_id = build_voter_id(message)
+      Voting.vote(voter_id, winner_username, loser_username)
+      send_next_girls_pair(message.chat_id, voter_id)
+    else
+      Logger.error(
+        "Payload #{inspect message.payload }doesn't contain winner_username or loser_username"
+      )
+    end
     IO.inspect(message)
   end
 

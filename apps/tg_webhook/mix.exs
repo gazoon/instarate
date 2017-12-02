@@ -29,6 +29,7 @@ defmodule TgWebhook.Mixfile do
       {:cowboy, "~> 1.1.2"},
       {:plug, "~> 1.4.3"},
       {:nadia, "~> 0.4.2"},
+      {:poison, "~> 3.1"},
       {:tg_bot, in_umbrella: true}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
