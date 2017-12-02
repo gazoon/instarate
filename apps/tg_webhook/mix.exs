@@ -18,7 +18,7 @@ defmodule TgWebhook.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger, :cowboy, :plug, :httpoison],
+      extra_applications: [:logger],
       mod: {TGWebhook.Application, []}
     ]
   end

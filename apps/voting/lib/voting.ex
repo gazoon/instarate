@@ -12,8 +12,8 @@ defmodule Voting do
   @max_random_attempt 10
 
   @spec add_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
-  def add_girl(photo_id) do
-    photo_code = retrieve_photo_code(photo_id)
+  def add_girl(photo_uri) do
+    photo_code = @instagram_client.parse_media_code(photo_uri)
 
     with {:ok, media_info = %Media{is_photo: true}} <- @instagram_client.get_media_info(photo_code),
          {:ok, girl} <- Girl.new(media_info.owner, media_info.url)
@@ -31,12 +31,10 @@ defmodule Voting do
     get_next_pair(voter_id, attempt)
   end
 
-  @spec get_girl_position(String.t) :: {:ok, integer} | {:error, String.t}
-  def get_girl_position(username) do
-    case @girls_storage.get_girl(username) do
-      {:ok, girl} -> {:ok, @girls_storage.get_higher_ratings_number(girl.rating) + 1}
-      error -> error
-    end
+  @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, Stringt.t}
+  def get_girl(girl_uri) do
+    girl_username = @instagram_client.parse_username(girl_uri)
+    @girls_storage.get_girl(girl_username)
   end
 
   @spec get_top(integer) :: [Girl.t]
@@ -68,13 +66,6 @@ defmodule Voting do
     @girls_storage.update_girl(winner)
     @girls_storage.update_girl(loser)
     {winner, loser}
-  end
-
-  @spec retrieve_photo_code(String.t) :: String.t
-  defp retrieve_photo_code(photo_link) do
-    URI.parse(photo_link).path
-    |> Path.split()
-    |> List.last()
   end
 
   defp get_next_pair(_voting, _attempt = @max_random_attempt) do

@@ -43,7 +43,7 @@ defmodule TGWebhook.Poller do
 
     IO.inspect(update)
     bot_message = cond do
-      update.message != nil ->
+      update.message != nil && update.message.text != nil ->
         message = update.message
         %{
           type: TextMessage.type,
