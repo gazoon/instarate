@@ -25,6 +25,7 @@ defmodule TGBot.Messenger do
 
   @spec send_photo(integer, binary, Keyword.t) :: integer
   def send_photo(chat_id, photo, opts \\ []) do
+    opts = transform_opts(opts)
     case Nadia.send_photo(chat_id, photo, opts) do
       {:error, error} -> raise error
       {:ok, msg} -> msg.message_id
@@ -33,9 +34,9 @@ defmodule TGBot.Messenger do
 
   @spec transform_opts(Keyword.t) :: Keyword.t
   defp transform_opts(opts) do
-    reply_markup = Keyword.get(opts, :keyboard)
-                   |> transform_keyboard()
-    if reply_markup, do: [reply_markup: reply_markup], else: []
+    {keyboard, opts} = Keyword.pop(opts, :keyboard)
+    reply_markup = transform_keyboard(keyboard)
+    if reply_markup, do: Keyword.put(opts, :reply_markup, reply_markup), else: opts
   end
 
   defp transform_keyboard(nil), do: nil

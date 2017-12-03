@@ -77,24 +77,20 @@ defmodule TGBot do
 
     match_photo = Pictures.concatenate(girl_one.photo, girl_two.photo)
 
-    try do
-      Messenger.send_photo(chat_id, match_photo)
-    after
-      File.rm!(match_photo)
-    end
-
     text = "[#{girl_one.username}](#{girl_one_url}) vs [#{girl_two.username}](#{girl_two_url})"
+    Messenger.send_markdown(chat_id, text)
+
     keyboard = [
       [
         %{
-          text: "left",
+          text: "Left",
           payload: %{
             winner_username: girl_one.username,
             loser_username: girl_two.username
           }
         },
         %{
-          text: "right",
+          text: "Right",
           payload: %{
             winner_username: girl_two.username,
             loser_username: girl_one.username
@@ -102,7 +98,11 @@ defmodule TGBot do
         },
       ]
     ]
-    Messenger.send_markdown(chat_id, text, keyboard: keyboard)
+    try do
+      Messenger.send_photo(chat_id, match_photo, keyboard: keyboard)
+    after
+      File.rm!(match_photo)
+    end
   end
 
   @spec handle_add_girl_cmd(TextMessage.t) :: any

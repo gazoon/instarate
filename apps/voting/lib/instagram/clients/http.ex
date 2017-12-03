@@ -57,7 +57,7 @@ defmodule Instagram.Clients.Http do
 
   @spec retrieve_display_url_from_data(map()) :: String.t
   defp retrieve_display_url_from_data(media_data) do
-    display_url = media_data["display_url"]
+    display_url = List.first(media_data["display_resources"])["src"]
     if display_url do
       display_url
     else
