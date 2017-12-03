@@ -12,15 +12,8 @@ defmodule TGWebhook.Supervisor do
 
   def init(_) do
     children = [
-      Poller
-      #      {
-      #        Plug.Adapters.Cowboy,
-      #        scheme: :http,
-      #        plug: TGWebhook.Router,
-      #        options: [
-      #          port: 8080
-      #        ]
-      #      },
+      Poller,
+      {Task.Supervisor, name: :messages_supervisor}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

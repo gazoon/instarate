@@ -4,3 +4,4 @@
 4. replay polling by webhooks, add queue and reader
 5. add request_id
 7. add voters_group
+8. add notification after voting

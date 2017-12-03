@@ -6,10 +6,13 @@ defmodule TGBot do
   alias Voting.Girls.Girl
   alias TGBot.UserMessage
   alias TGBot.Messenger
+
   @start_cmd "start"
   @add_girl_cmd "addgirl"
   @get_top_cmd "showtop"
   @get_girl_info_cmd "girlinfo"
+  @help_cmd "help"
+
   @voter_prefix  "tg:"
   @top_page_size 3
 
@@ -44,6 +47,7 @@ defmodule TGBot do
       {@add_girl_cmd, &handle_add_girl_cmd/1},
       {@get_top_cmd, &handle_get_top_cmd/1},
       {@get_girl_info_cmd, &handle_get_girl_info_cmd/1},
+      {@help_cmd, &handle_help_cmd/1},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -127,6 +131,11 @@ defmodule TGBot do
            Messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
          end
        )
+  end
+
+  @spec handle_help_cmd(TextMessage.t) :: any
+  defp handle_help_cmd(message) do
+    Messenger.send_text(message.chat_id, "No")
   end
 
   @spec handle_get_girl_info_cmd(TextMessage.t) :: any

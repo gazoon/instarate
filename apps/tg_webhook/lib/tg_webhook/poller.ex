@@ -69,7 +69,10 @@ defmodule TGWebhook.Poller do
       true -> nil
     end
     if bot_message do
-      TGBot.on_message(bot_message)
+      Task.Supervisor.start_child(
+        :messages_supervisor,
+        fn -> TGBot.on_message(bot_message) end
+      )
       update
     else
       Logger.error("unsupported message format")
