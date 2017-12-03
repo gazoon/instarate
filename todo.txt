@@ -5,3 +5,4 @@
 5. add request_id
 8. add notification after voting
 9. add timeouts or retries during the top sending
+10. add ecto migrations
