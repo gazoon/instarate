@@ -74,6 +74,15 @@ defmodule TGBot do
     {girl_one, girl_two} = Voting.get_next_pair(voter_id)
     girl_one_url = Girl.get_profile_url(girl_one)
     girl_two_url = Girl.get_profile_url(girl_two)
+
+    match_photo = Pictures.concatenate(girl_one.photo, girl_two.photo)
+
+    try do
+      Messenger.send_photo(chat_id, match_photo)
+    after
+      File.rm!(match_photo)
+    end
+
     text = "[#{girl_one.username}](#{girl_one_url}) vs [#{girl_two.username}](#{girl_two_url})"
     keyboard = [
       [
