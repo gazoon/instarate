@@ -43,6 +43,7 @@ defmodule TGBot do
 
   @spec process_text_message(TextMessage.t) :: any
   defp process_text_message(message) do
+    Logger.info("Process text message #{inspect message}")
     commands = [
       {@start_cmd, &handle_start_cmd/1},
       {@add_girl_cmd, &handle_add_girl_cmd/1},
@@ -58,8 +59,6 @@ defmodule TGBot do
                                  handler.(message)
       nil -> Logger.info("Message #{message_text} doesn't contain commands")
     end
-
-    IO.inspect(message)
   end
 
   @spec build_voter_id(integer) :: String.t
@@ -184,6 +183,7 @@ defmodule TGBot do
 
   @spec on_callback(CallbackMessage.t) :: any
   defp on_callback(message) do
+    Logger.info("Process callback #{inspect message}")
     [winner_username, loser_username] = String.split(message.payload, @usernames_separator)
     voters_group_id = build_voters_group_id(message.chat_id)
     voter_id = build_voter_id(message.user_id)

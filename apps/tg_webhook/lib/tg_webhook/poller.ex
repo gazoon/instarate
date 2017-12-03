@@ -13,9 +13,7 @@ defmodule TGWebhook.Poller do
     Logger.info("get updates")
     new_offset = Nadia.get_updates([offset: offset, timeout: 60])
                  |> process_updates
-    :timer.sleep(1000)
     next_cast()
-    Logger.info("get updates2")
     if is_integer(new_offset) do
       {:noreply, new_offset + 1}
     else
@@ -41,7 +39,7 @@ defmodule TGWebhook.Poller do
 
   defp process_update(update) do
 
-    IO.inspect(update)
+    Logger.info("Receive update #{inspect update}")
     bot_message = cond do
       update.message != nil && update.message.text != nil ->
         message = update.message
