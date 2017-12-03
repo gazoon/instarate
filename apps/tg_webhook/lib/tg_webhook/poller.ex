@@ -63,7 +63,7 @@ defmodule TGWebhook.Poller do
             user_id: callback.from.id,
             chat_id: callback.message.chat.id,
             is_group_chat: callback.message.chat.type != "private",
-            payload: Poison.decode!(callback.data)
+            payload: callback.data
           }
         }
       true -> nil

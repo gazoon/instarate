@@ -50,7 +50,7 @@ defmodule TGBot.Messenger do
           fn item_data ->
             %InlineKeyboardButton{
               text: item_data.text,
-              callback_data: Poison.encode!(item_data.payload),
+              callback_data: item_data.payload,
               url: "",
               switch_inline_query: ""
             }

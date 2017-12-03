@@ -26,9 +26,9 @@ defmodule Voting do
   end
 
   @spec get_next_pair(String.t) :: {Girl.t, Girl.t}
-  def get_next_pair(voter_id) do
+  def get_next_pair(voters_group_id) do
     attempt = 0
-    get_next_pair(voter_id, attempt)
+    get_next_pair(voters_group_id, attempt)
   end
 
   @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, Stringt.t}
@@ -42,18 +42,24 @@ defmodule Voting do
     @girls_storage.get_top(number)
   end
 
-  @spec vote(String.t, String.t, String.t) :: {Girl.t, Girl.t}
-  def vote(voter_id, winner_username, loser_username) do
-    with :ok <- @voters_storage.try_vote(voter_id, winner_username, loser_username),
+  @spec vote(String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}
+  def vote(voters_group_id, voter_id, winner_username, loser_username) do
+    with :ok <- @voters_storage.try_vote(
+      voters_group_id,
+      voter_id,
+      winner_username,
+      loser_username
+    ),
          {:ok, winner} <- @girls_storage.get_girl(winner_username),
          {:ok, loser} <- @girls_storage.get_girl(loser_username) do
       process_vote(winner, loser)
+      :ok
     else
-      {:error, error} -> Logger.warn "Can't vote: #{error}"
+      error -> error
     end
   end
 
-  @spec process_vote(Girl.t, Girl.t) :: {Girl.t, Girl.t}
+  @spec process_vote(Girl.t, Girl.t) :: any
   defp process_vote(winner, loser) do
     {new_winner_rating, new_loser_rating} = EloRating.recalculate(winner.rating, loser.rating)
     winner = %{
@@ -62,22 +68,26 @@ defmodule Voting do
       matches: winner.matches + 1,
       wins: winner.wins + 1
     }
-    loser = %{loser | rating: new_loser_rating, matches: loser.matches + 1, loses: loser.loses + 1}
+    loser = %{
+      loser |
+      rating: new_loser_rating,
+      matches: loser.matches + 1,
+      loses: loser.loses + 1
+    }
     @girls_storage.update_girl(winner)
     @girls_storage.update_girl(loser)
-    {winner, loser}
   end
 
-  defp get_next_pair(_voting, _attempt = @max_random_attempt) do
+  defp get_next_pair(_voters_group_id, _attempt = @max_random_attempt) do
     raise "Can't get girl to vote to, it seems you've voted for a lot of girls"
   end
   @spec get_next_pair(String.t, integer) :: {Girl.t, Girl.t}
-  defp get_next_pair(voter_id, attempt) do
+  defp get_next_pair(voters_group_id, attempt) do
     {girl_one, girl_two} = @girls_storage.get_random_pair()
-    if @voters_storage.can_vote?(voter_id, girl_one.username, girl_two.username) do
+    if @voters_storage.new_pair?(voters_group_id, girl_one.username, girl_two.username) do
       {girl_one, girl_two}
     else
-      get_next_pair(voter_id, attempt + 1)
+      get_next_pair(voters_group_id, attempt + 1)
     end
   end
 end

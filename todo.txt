@@ -3,5 +3,5 @@
 3. add pools
 4. replay polling by webhooks, add queue and reader
 5. add request_id
-7. add voters_group
 8. add notification after voting
+9. add timeouts or retries during the top sending

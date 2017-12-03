@@ -13,8 +13,9 @@ defmodule TGBot do
   @get_girl_info_cmd "girlinfo"
   @help_cmd "help"
 
-  @voter_prefix  "tg:"
-  @top_page_size 3
+  @usernames_separator "|"
+
+  @top_page_size 10
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
@@ -61,21 +62,25 @@ defmodule TGBot do
     IO.inspect(message)
   end
 
-  @spec build_voter_id(UserMessage.t) :: any
-  defp build_voter_id(user_message) do
-    user_id = UserMessage.user_id(user_message)
-    @voter_prefix <> Integer.to_string(user_id)
+  @spec build_voter_id(integer) :: String.t
+  defp build_voter_id(user_id) do
+    "tg_user:" <> Integer.to_string(user_id)
+  end
+
+  @spec build_voters_group_id(integer) :: String.t
+  defp build_voters_group_id(chat_id) do
+    "tg_chat:" <> Integer.to_string(chat_id)
   end
 
   @spec handle_start_cmd(TextMessage.t) :: any
   defp handle_start_cmd(message) do
-    voter_id = build_voter_id(message)
-    send_next_girls_pair(message.chat_id, voter_id)
+    send_next_girls_pair(message.chat_id)
   end
 
-  @spec send_next_girls_pair(integer, String.t) :: any
-  defp send_next_girls_pair(chat_id, voter_id) do
-    {girl_one, girl_two} = Voting.get_next_pair(voter_id)
+  @spec send_next_girls_pair(integer) :: any
+  defp send_next_girls_pair(chat_id) do
+    voters_group_id = build_voters_group_id(chat_id)
+    {girl_one, girl_two} = Voting.get_next_pair(voters_group_id)
     girl_one_url = Girl.get_profile_url(girl_one)
     girl_two_url = Girl.get_profile_url(girl_two)
 
@@ -83,22 +88,15 @@ defmodule TGBot do
 
     text = "[#{girl_one.username}](#{girl_one_url}) vs [#{girl_two.username}](#{girl_two_url})"
     Messenger.send_markdown(chat_id, text)
-
     keyboard = [
       [
         %{
           text: "Left",
-          payload: %{
-            winner_username: girl_one.username,
-            loser_username: girl_two.username
-          }
+          payload: girl_one.username <> @usernames_separator <> girl_two.username
         },
         %{
           text: "Right",
-          payload: %{
-            winner_username: girl_two.username,
-            loser_username: girl_one.username
-          }
+          payload: girl_two.username <> @usernames_separator <> girl_one.username
         },
       ]
     ]
@@ -135,7 +133,30 @@ defmodule TGBot do
 
   @spec handle_help_cmd(TextMessage.t) :: any
   defp handle_help_cmd(message) do
-    Messenger.send_text(message.chat_id, "No")
+    text = """
+    Hi here! My purpose is to detect the most attractive girls on instagram!
+    Just compare girls and vote pair by pair and we will see the winners.
+    I support following commands:
+
+    /start - Get the next girls pair to compare.
+
+    /showtop - Show the top ten girls in the competition.
+
+    /help - Show this message.
+
+    And also another type of commands, with additional input:
+
+    addgirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste link of her instagram photo. The girl must have a public account. For example:
+    addgirl https://www.instagram.com/p/BcPqz6sFMbb/
+
+    girlinfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
+    girlinfo https://www.instagram.com/svetabily/
+    girlinfo svetabily
+
+    Some notes:
+    In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
+    """
+    Messenger.send_text(message.chat_id, text, disable_web_page_preview: true)
   end
 
   @spec handle_get_girl_info_cmd(TextMessage.t) :: any
@@ -163,18 +184,12 @@ defmodule TGBot do
 
   @spec on_callback(CallbackMessage.t) :: any
   defp on_callback(message) do
-    winner_username = message.payload["winner_username"]
-    loser_username = message.payload["loser_username"]
-    if winner_username && loser_username do
-      voter_id = build_voter_id(message)
-      Voting.vote(voter_id, winner_username, loser_username)
-      send_next_girls_pair(message.chat_id, voter_id)
-    else
-      Logger.error(
-        "Payload #{inspect message.payload }doesn't contain winner_username or loser_username"
-      )
+    [winner_username, loser_username] = String.split(message.payload, @usernames_separator)
+    voters_group_id = build_voters_group_id(message.chat_id)
+    voter_id = build_voter_id(message.user_id)
+    case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
+      :ok -> send_next_girls_pair(message.chat_id)
+      {:error, error} -> Logger.warn("Can't vote: #{error}")
     end
-    IO.inspect(message)
   end
-
 end
