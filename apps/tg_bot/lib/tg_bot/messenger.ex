@@ -32,6 +32,14 @@ defmodule TGBot.Messenger do
     end
   end
 
+  @spec send_notification(String.t, String.t) :: any
+  def send_notification(callback_id, text) do
+    case Nadia.answer_callback_query(callback_id, text: text) do
+      {:error, error} -> raise error
+      _ -> nil
+    end
+  end
+
   @spec transform_opts(Keyword.t) :: Keyword.t
   defp transform_opts(opts) do
     {keyboard, opts} = Keyword.pop(opts, :keyboard)

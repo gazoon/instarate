@@ -4,7 +4,6 @@ defmodule TGBot do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: CallbackMessage
   alias Voting.Girls.Girl
-  alias TGBot.UserMessage
   alias TGBot.Messenger
 
   @start_cmd "start"
@@ -188,8 +187,15 @@ defmodule TGBot do
     voters_group_id = build_voters_group_id(message.chat_id)
     voter_id = build_voter_id(message.user_id)
     case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
-      :ok -> send_next_girls_pair(message.chat_id)
-      {:error, error} -> Logger.warn("Can't vote: #{error}")
+      :ok ->
+        task = Task.async(
+          fn -> Messenger.send_notification(message.callback_id, "Vote for #{winner_username}")end
+        )
+        send_next_girls_pair(message.chat_id)
+        Task.await(task)
+      {:error, error} ->
+        Messenger.send_notification(message.callback_id, "You already voted")
+        Logger.warn("Can't vote: #{error}")
     end
   end
 end

@@ -29,7 +29,7 @@ defmodule Pictures do
            if String.starts_with?(file_path, @tmp_dir)  do
              case File.rm(file_path) do
                {:error, details} -> Logger.warn("Can't delete tmp file #{file_path}: #{details}")
-               _ ->
+               _ -> nil
              end
            end
          end
