@@ -67,7 +67,11 @@ defmodule Instagram.Clients.Http do
 
   @spec retrieve_is_photo_from_data(map()) :: boolean
   defp retrieve_is_photo_from_data(media_data) do
-    !media_data["is_video"]
+    if media_data["is_video"] do
+      false
+    else
+      !List.first(media_data["edge_sidecar_to_children"]["edges"] || [])["node"]["is_video"]
+    end
   end
 
   @spec retrieve_media_data(map()) :: map()
