@@ -1,5 +1,5 @@
 defmodule Voting.Girls.Storage do
-  @moduledoc false
+
   alias Voting.Girls.Girl
 
   @callback get_top(number :: integer, offset :: integer) :: [Girl.t]

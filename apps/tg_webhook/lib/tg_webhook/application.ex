@@ -1,5 +1,4 @@
 defmodule TGWebhook.Application do
-  @moduledoc false
 
   use Application
 

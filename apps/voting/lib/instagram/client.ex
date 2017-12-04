@@ -1,5 +1,5 @@
 defmodule Instagram.Client do
-  @moduledoc false
+
   alias Instagram.Media
 
   @callback parse_username(profile_uri :: String.t) :: String.t

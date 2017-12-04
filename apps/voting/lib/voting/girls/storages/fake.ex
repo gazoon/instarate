@@ -1,5 +1,5 @@
 defmodule Voting.Girls.Storages.Fake do
-  @moduledoc false
+
   use Agent
 
   def start_link(_opt) do
@@ -8,6 +8,4 @@ defmodule Voting.Girls.Storages.Fake do
 
   def add_girl(_girl) do
   end
-
-
 end

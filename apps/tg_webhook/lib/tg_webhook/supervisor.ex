@@ -1,14 +1,12 @@
 defmodule TGWebhook.Supervisor do
-  @moduledoc false
-
 
   use Supervisor
+
   alias TGWebhook.Poller
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg)
   end
-
 
   def init(_) do
     children = [

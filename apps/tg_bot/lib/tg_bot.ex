@@ -1,5 +1,5 @@
 defmodule TGBot do
-  @moduledoc false
+
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
@@ -125,6 +125,17 @@ defmodule TGBot do
       {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
     end
   end
+  #  @spec handle_get_top_cmd(TextMessage.t) :: any
+  #  defp handle_get_top_cmd(message) do
+  #    Voting.get_top(@top_page_size)
+  #    |> Enum.with_index(1)
+  #    |> Enum.each(
+  #         fn ({girl, i}) ->
+  #           Messenger.send_text(message.chat_id, "#{i}th place:")
+  #           Messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
+  #         end
+  #       )
+  #  end
 
   #  @spec handle_get_top_cmd(TextMessage.t) :: any
   #  defp handle_get_top_cmd(message) do
@@ -144,36 +155,30 @@ defmodule TGBot do
 
   @spec handle_get_top_cmd(TextMessage.t) :: any
   defp handle_get_top_cmd(message) do
-    0..5
-    |> Enum.each(
-         fn (part) ->
-           start_index = part * @top_page_size
-           photos = Voting.get_top(@top_page_size, offset: start_index)
-                    |> Enum.map(
-                         fn (girl) -> %{url: girl.photo, caption: Girl.get_profile_url(girl)} end
-                       )
-           Messenger.send_photos(message.chat_id, photos)
-           :timer.sleep(5000)
-         end
-       )
+    optional_start_position = TextMessage.get_command_arg(message)
+    offset = case Integer.parse(optional_start_position) do
+      {start_position, ""} when start_position > 0 -> start_position - 1
+      _ -> 0
+    end
+    send_girl_from_top(message.chat_id, offset)
   end
 
   @spec handle_help_cmd(TextMessage.t) :: any
   defp handle_help_cmd(message) do
     text = """
-    Hi here! My purpose is to detect the most attractive girls on instagram!
-    Just compare girls and vote pair by pair and we will see the winners.
+    Hi there! My mission is to find the most attractive girls on Instagram!
+    Just select which of two girls looks better and vote by pressing a button below.
     I support following commands:
 
     /start - Get the next girls pair to compare.
 
-    /showtop - Show the top ten girls in the competition.
+    /showtop - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
 
     /help - Show this message.
 
-    And also another type of commands, with additional input:
+    And also another type of commands, with an additional input:
 
-    addgirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste link of her instagram photo. The girl must have a public account. For example:
+    addgirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link of her instagram photo. The girl must have a public account. For example:
     addgirl https://www.instagram.com/p/BcPqz6sFMbb/
 
     girlinfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
@@ -219,7 +224,7 @@ defmodule TGBot do
     callback_name = Callback.get_name(message)
     handler = callbacks[callback_name]
     if handler do
-      Logger.info("handle #{callback_name} callback #{inspect handler}")
+      Logger.info("handle #{callback_name} callback")
       handler.(message)
     else
       Logger.warn("Unknown callback: #{callback_name}")
@@ -247,6 +252,34 @@ defmodule TGBot do
 
   @spec handle_get_top_callback(Callback.t) :: any
   defp handle_get_top_callback(message) do
+    Messenger.delete_keyboard(message.chat_id, message.parent_msg_id)
+    callback_args = Callback.get_args(message)
+    girl_offset = case Integer.parse(callback_args) do
+      {offset, ""} -> offset
+      _ -> raise "Non-int arg for get top callback: #{callback_args}"
+    end
+    send_girl_from_top(message.chat_id, girl_offset)
+    Messenger.answer_callback(message.callback_id)
+  end
 
+  @spec send_girl_from_top(integer, integer) :: any
+  defp send_girl_from_top(chat_id, girl_offset) do
+    case Voting.get_top(2, offset: girl_offset) do
+      [current_girl | next_girls] ->
+        keyboard = if length(next_girls) != 0 do
+          next_girl_offset = Integer.to_string(girl_offset + 1)
+          [[%{text: "Next", payload: Callback.build_payload(@get_top_callback, next_girl_offset)}]]
+        else
+          nil
+        end
+        Messenger.send_text(chat_id, "#{girl_offset + 1}th place")
+        Messenger.send_photo(
+          chat_id,
+          current_girl.photo,
+          caption: Girl.get_profile_url(current_girl),
+          keyboard: keyboard
+        )
+      [] -> Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
+    end
   end
 end

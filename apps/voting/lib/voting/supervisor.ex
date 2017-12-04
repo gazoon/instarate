@@ -1,5 +1,4 @@
 defmodule Voting.Supervisor do
-  @moduledoc false
 
   alias Voting.Girls.Storages.Mongo, as: GirlsMongoStorage
   alias Voting.Voters.Storages.Mongo, as: VotersMongoStorage
@@ -10,7 +9,6 @@ defmodule Voting.Supervisor do
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg)
   end
-
 
   def init(_) do
     mongo_girls_options = [name: GirlsMongoStorage.process_name] ++

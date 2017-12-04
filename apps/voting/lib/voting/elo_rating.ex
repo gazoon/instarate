@@ -1,5 +1,4 @@
 defmodule Voting.EloRating do
-  @moduledoc false
 
   @significance_coeff 16
 

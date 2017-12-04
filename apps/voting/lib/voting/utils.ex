@@ -1,5 +1,4 @@
 defmodule Voting.Utils do
-  @moduledoc false
 
   def set_child_id(spec, child_id) do
     spec

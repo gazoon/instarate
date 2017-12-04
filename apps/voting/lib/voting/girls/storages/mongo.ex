@@ -1,10 +1,10 @@
 defmodule Voting.Girls.Storages.Mongo do
-  @moduledoc false
+
   alias Voting.Girls.Girl
   @behaviour Voting.Girls.Storage
 
   @collection "girls"
-  @duplication_code 11000
+  @duplication_code 11_000
   @max_random_get_attempt 5
 
   @process_name :mongo_girls
@@ -12,7 +12,8 @@ defmodule Voting.Girls.Storages.Mongo do
 
   @spec get_top(integer, integer) :: [Girl.t]
   def get_top(number, offset) do
-    Mongo.find(
+    transform_girls(
+      Mongo.find(
       @process_name,
       @collection,
       %{},
@@ -21,8 +22,8 @@ defmodule Voting.Girls.Storages.Mongo do
       },
       limit: number,
       skip: offset
+      )
     )
-    |> transform_girls()
   end
 
   @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
@@ -80,8 +81,8 @@ defmodule Voting.Girls.Storages.Mongo do
     end
   end
 
-  @spec get_random_pair() :: {Girl.t, Girl.t}
-  def get_random_pair() do
+  @spec get_random_pair :: {Girl.t, Girl.t}
+  def get_random_pair do
     attempt = 0
     get_random_pair(attempt)
   end
@@ -91,18 +92,20 @@ defmodule Voting.Girls.Storages.Mongo do
   end
   @spec get_random_pair(integer) :: {Girl.t, Girl.t}
   defp get_random_pair(attempt) do
-    girls = Mongo.aggregate(
-              @process_name,
-              @collection,
-              [
-                %{
-                  "$sample" => %{
-                    size: 2
-                  }
-                }
-              ]
-            )
-            |> transform_girls()
+    girls = transform_girls(
+      Mongo.aggregate(
+        @process_name,
+        @collection,
+        [
+          %{
+            "$sample" => %{
+              size: 2
+            }
+          }
+        ]
+      )
+    )
+
     [girl_one, girl_two] = girls
     if girl_one.username != girl_two.username do
       {girl_one, girl_two}

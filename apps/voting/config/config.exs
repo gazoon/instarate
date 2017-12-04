@@ -32,8 +32,6 @@ config :voting,
          port: 27017,
        ]
 
-
-
 config :voting,
        :bar,
        key: :value,

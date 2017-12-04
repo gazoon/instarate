@@ -1,5 +1,4 @@
 defmodule Voting.Application do
-  @moduledoc false
 
   use Application
 

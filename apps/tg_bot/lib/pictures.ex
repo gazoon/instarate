@@ -1,4 +1,5 @@
 defmodule Pictures do
+
   @app_dir File.cwd!()
   @tmp_dir Path.join(@app_dir, "tmp_files")
   File.mkdir(@tmp_dir)
@@ -23,17 +24,17 @@ defmodule Pictures do
 
   @spec clean_tmp_files([String.t]) :: any
   defp clean_tmp_files(files) do
-    files
-    |> Enum.each(
-         fn file_path ->
-           if String.starts_with?(file_path, @tmp_dir)  do
-             case File.rm(file_path) do
-               {:error, details} -> Logger.warn("Can't delete tmp file #{file_path}: #{details}")
-               _ -> nil
-             end
-           end
-         end
-       )
+    Enum.each(files, &clean_tmp_file/1)
+  end
+
+  @spec clean_tmp_file(String.t) :: any
+  defp clean_tmp_file(file_path) do
+    if String.starts_with?(file_path, @tmp_dir)  do
+      case File.rm(file_path) do
+        {:error, details} -> Logger.warn("Can't delete tmp file #{file_path}: #{details}")
+        _ -> nil
+      end
+    end
   end
 
   @spec ensure_same_height(String.t, String.t) :: {String.t, String.t}

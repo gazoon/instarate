@@ -1,5 +1,5 @@
 defmodule TGBot.Messages.Text do
-  @moduledoc false
+
   alias TGBot.Messages.Text, as: TextMessage
   @type t :: %TextMessage{
                text: String.t,

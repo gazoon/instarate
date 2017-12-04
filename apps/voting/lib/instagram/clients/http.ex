@@ -1,5 +1,5 @@
 defmodule Instagram.Clients.Http do
-  @moduledoc false
+
   alias Instagram.Media
 
   @behaviour Instagram.Client

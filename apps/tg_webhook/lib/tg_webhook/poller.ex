@@ -1,5 +1,5 @@
 defmodule TGWebhook.Poller do
-  @moduledoc false
+
   use GenServer
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
@@ -33,7 +33,7 @@ defmodule TGWebhook.Poller do
     |> List.last
   end
 
-  defp next_cast() do
+  defp next_cast do
     GenServer.cast(self(), :update)
   end
 
@@ -78,7 +78,6 @@ defmodule TGWebhook.Poller do
       update
     end
   end
-
 
   def init(state) do
     next_cast()

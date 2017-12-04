@@ -1,5 +1,5 @@
 defmodule EloTest do
-  @moduledoc false
+
   use ExUnit.Case
   alias Voting.EloRating
 

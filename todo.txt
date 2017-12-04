@@ -1,11 +1,9 @@
-1. add top pagination
 2. add voting timeouts
 3. add pools
 4. replace polling by webhooks, add queue and reader
 5. add request_id
-8. add notification after voting
-9. add timeouts or retries during the top sending
 10. add ecto migrations
 11. scale coefficient depending on number of matches or and current rating
 12. display voters chooses in small chats
 13. add global messages limits
+14. add categories

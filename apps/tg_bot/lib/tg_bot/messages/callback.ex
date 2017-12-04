@@ -1,5 +1,5 @@
 defmodule TGBot.Messages.Callback do
-  @moduledoc false
+
   alias TGBot.Messages.Callback
   @type t :: %Callback{
                callback_id: String.t,

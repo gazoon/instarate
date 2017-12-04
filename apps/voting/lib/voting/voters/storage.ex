@@ -1,5 +1,4 @@
 defmodule Voting.Voters.Storage do
-  @moduledoc false
 
   @callback try_vote(
               voters_group_id :: String.t,

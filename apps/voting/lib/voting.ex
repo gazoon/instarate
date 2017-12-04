@@ -1,5 +1,5 @@
 defmodule Voting do
-  @moduledoc false
+
   alias Voting.Girls.Girl
   alias Voting.EloRating
   alias Instagram.Media
@@ -16,8 +16,7 @@ defmodule Voting do
     photo_code = @instagram_client.parse_media_code(photo_uri)
 
     with {:ok, media_info = %Media{is_photo: true}} <- @instagram_client.get_media_info(photo_code),
-         {:ok, girl} <- Girl.new(media_info.owner, media_info.url)
-                        |> @girls_storage.add_girl do
+         {:ok, girl} <- @girls_storage.add_girl(Girl.new(media_info.owner, media_info.url)) do
       {:ok, girl}
     else
       {:error, error} -> {:error, error}

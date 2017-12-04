@@ -1,5 +1,5 @@
 defmodule VotingTest do
-  @moduledoc false
+
   use ExUnit.Case
 
   #  test "winner has higher rating" do

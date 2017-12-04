@@ -1,5 +1,5 @@
 defmodule Voting.Girls.Girl do
-  @moduledoc false
+
   alias Voting.Girls.Girl
   @initial_rating 1500
   @instagram_client Application.get_env(:voting, :instagram_client)

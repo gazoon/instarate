@@ -1,5 +1,5 @@
 defmodule TGBot.Messenger do
-  @moduledoc false
+
   alias Nadia.Model.InlineKeyboardButton
   alias Nadia.Model.InlineKeyboardMarkup
 
@@ -34,9 +34,22 @@ defmodule TGBot.Messenger do
 
   @spec send_notification(String.t, String.t) :: any
   def send_notification(callback_id, text) do
-    case Nadia.answer_callback_query(callback_id, text: text) do
+    answer_callback(callback_id, text: text)
+  end
+
+  @spec answer_callback(String.t, Keyword.t) :: any
+  def answer_callback(callback_id, opts \\ []) do
+    case Nadia.answer_callback_query(callback_id, opts) do
       {:error, error} -> raise error
       _ -> nil
+    end
+  end
+
+  @spec delete_keyboard(integer, integer) :: integer
+  def delete_keyboard(chat_id, message_id) do
+    case Nadia.API.request("editMessageReplyMarkup", chat_id: chat_id, message_id: message_id) do
+      {:error, error} -> raise error
+      {:ok, msg} -> msg.message_id
     end
   end
 

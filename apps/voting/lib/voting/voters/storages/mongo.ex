@@ -1,15 +1,15 @@
 defmodule Voting.Voters.Storages.Mongo do
-  @moduledoc false
+
   alias Voting.Utils
   @behaviour Voting.Voters.Storage
 
   @collection "voters"
-  @duplication_code 11000
+  @duplication_code 11_000
 
   @process_name :mongo_voters
   def process_name, do: @process_name
 
-  def init() do
+  def init do
     mongo_options = [name: @process_name] ++ Application.get_env(:voting, :voters_girls)
     Utils.set_child_id(Mongo.child_spec(mongo_options), {Mongo, :voters})
   end

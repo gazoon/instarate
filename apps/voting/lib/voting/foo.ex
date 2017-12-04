@@ -1,5 +1,4 @@
 defmodule Voting.Foo do
-  @moduledoc false
 
   use GenServer
 
