@@ -40,6 +40,23 @@ defmodule TGBot.Messenger do
     end
   end
 
+  @spec send_photos(integer, [map()]) :: any
+  def send_photos(chat_id, photos) do
+    media = Enum.map(
+      photos,
+      fn (photo) -> %{type: "photo", media: photo.url, caption: photo.caption} end
+    )
+    media_encoded = Poison.encode!(media)
+    try do
+      case Nadia.API.request("sendMediaGroup", chat_id: chat_id, media: media_encoded) do
+        {:error, error} -> raise error
+        _ -> nil
+      end
+    rescue
+      FunctionClauseError -> nil
+    end
+  end
+
   @spec transform_opts(Keyword.t) :: Keyword.t
   defp transform_opts(opts) do
     {keyboard, opts} = Keyword.pop(opts, :keyboard)

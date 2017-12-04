@@ -10,8 +10,8 @@ defmodule Voting.Girls.Storages.Mongo do
   @process_name :mongo_girls
   def process_name, do: @process_name
 
-  @spec get_top(integer) :: [Girl.t]
-  def get_top(number) do
+  @spec get_top(integer, integer) :: [Girl.t]
+  def get_top(number, offset) do
     Mongo.find(
       @process_name,
       @collection,
@@ -19,7 +19,8 @@ defmodule Voting.Girls.Storages.Mongo do
       sort: %{
         rating: -1
       },
-      limit: number
+      limit: number,
+      skip: offset
     )
     |> transform_girls()
   end

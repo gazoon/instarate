@@ -2,7 +2,7 @@ defmodule Voting.Girls.Storage do
   @moduledoc false
   alias Voting.Girls.Girl
 
-  @callback get_top(number :: integer) :: [Girl.t]
+  @callback get_top(number :: integer, offset :: integer) :: [Girl.t]
   @callback get_random_pair() :: {Girl.t, Girl.t}
   @callback get_girl(username :: String.t) :: {:ok, Girl.t} | {:error, Stringt.t}
   @callback get_higher_ratings_number(rating :: integer) :: integer

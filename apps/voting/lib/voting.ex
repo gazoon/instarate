@@ -37,9 +37,10 @@ defmodule Voting do
     @girls_storage.get_girl(girl_username)
   end
 
-  @spec get_top(integer) :: [Girl.t]
-  def get_top(number) do
-    @girls_storage.get_top(number)
+  @spec get_top(integer, [offset: integer]) :: [Girl.t]
+  def get_top(number, opts \\ []) do
+    offset = Keyword.get(opts, :offset, 0)
+    @girls_storage.get_top(number, offset)
   end
 
   @spec vote(String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}

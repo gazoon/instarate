@@ -2,7 +2,7 @@ defmodule TGBot do
   @moduledoc false
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
-  alias TGBot.Messages.Callback, as: CallbackMessage
+  alias TGBot.Messages.Callback, as: Callback
   alias Voting.Girls.Girl
   alias TGBot.Messenger
 
@@ -11,6 +11,9 @@ defmodule TGBot do
   @get_top_cmd "showtop"
   @get_girl_info_cmd "girlinfo"
   @help_cmd "help"
+
+  @vote_callback "vt"
+  @get_top_callback "top"
 
   @usernames_separator "|"
 
@@ -25,7 +28,7 @@ defmodule TGBot do
         message = TextMessage.from_data(message_data)
         on_text_message(message)
       :callback ->
-        message = CallbackMessage.from_data(message_data)
+        message = Callback.from_data(message_data)
         on_callback(message)
       _ -> Logger.error("Unsupported message type: #{message_type}")
     end
@@ -90,11 +93,17 @@ defmodule TGBot do
       [
         %{
           text: "Left",
-          payload: girl_one.username <> @usernames_separator <> girl_two.username
+          payload: Callback.build_payload(
+            @vote_callback,
+            girl_one.username <> @usernames_separator <> girl_two.username
+          )
         },
         %{
           text: "Right",
-          payload: girl_two.username <> @usernames_separator <> girl_one.username
+          payload: Callback.build_payload(
+            @vote_callback,
+            girl_two.username <> @usernames_separator <> girl_one.username
+          )
         },
       ]
     ]
@@ -117,14 +126,34 @@ defmodule TGBot do
     end
   end
 
+  #  @spec handle_get_top_cmd(TextMessage.t) :: any
+  #  defp handle_get_top_cmd(message) do
+  #    0..5
+  #    |> Enum.each(
+  #         fn (part) ->
+  #           start_index = part * @top_page_size
+  #           photos = Voting.get_top(@top_page_size, offset: start_index)
+  #                    |> Enum.map(
+  #                         fn (girl) -> %{url: girl.photo, caption: Girl.get_profile_url(girl)} end
+  #                       )
+  #           Messenger.send_photos(message.chat_id, photos)
+  #           :timer.sleep(5000)
+  #         end
+  #       )
+  #  end
+
   @spec handle_get_top_cmd(TextMessage.t) :: any
   defp handle_get_top_cmd(message) do
-    Voting.get_top(@top_page_size)
-    |> Enum.with_index(1)
+    0..5
     |> Enum.each(
-         fn ({girl, i}) ->
-           Messenger.send_text(message.chat_id, "#{i}th place:")
-           Messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
+         fn (part) ->
+           start_index = part * @top_page_size
+           photos = Voting.get_top(@top_page_size, offset: start_index)
+                    |> Enum.map(
+                         fn (girl) -> %{url: girl.photo, caption: Girl.get_profile_url(girl)} end
+                       )
+           Messenger.send_photos(message.chat_id, photos)
+           :timer.sleep(5000)
          end
        )
   end
@@ -180,10 +209,27 @@ defmodule TGBot do
     Messenger.send_text(chat_id, text)
   end
 
-  @spec on_callback(CallbackMessage.t) :: any
+  @spec on_callback(Callback.t) :: any
   defp on_callback(message) do
     Logger.info("Process callback #{inspect message}")
-    [winner_username, loser_username] = String.split(message.payload, @usernames_separator)
+    callbacks = %{
+      @vote_callback => &handle_vote_callback/1,
+      @get_top_callback => &handle_get_top_callback/1,
+    }
+    callback_name = Callback.get_name(message)
+    handler = callbacks[callback_name]
+    if handler do
+      Logger.info("handle #{callback_name} callback #{inspect handler}")
+      handler.(message)
+    else
+      Logger.warn("Unknown callback: #{callback_name}")
+    end
+  end
+
+  @spec handle_vote_callback(Callback.t) :: any
+  defp handle_vote_callback(message) do
+    callback_args = Callback.get_args(message)
+    [winner_username, loser_username] = String.split(callback_args, @usernames_separator)
     voters_group_id = build_voters_group_id(message.chat_id)
     voter_id = build_voter_id(message.user_id)
     case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
@@ -197,5 +243,10 @@ defmodule TGBot do
         Messenger.send_notification(message.callback_id, "You already voted")
         Logger.warn("Can't vote: #{error}")
     end
+  end
+
+  @spec handle_get_top_callback(Callback.t) :: any
+  defp handle_get_top_callback(message) do
+
   end
 end

@@ -8,3 +8,4 @@
 10. add ecto migrations
 11. scale coefficient depending on number of matches or and current rating
 12. display voters chooses in small chats
+13. add global messages limits

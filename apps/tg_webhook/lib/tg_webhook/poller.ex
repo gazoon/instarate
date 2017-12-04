@@ -60,6 +60,7 @@ defmodule TGWebhook.Poller do
             callback_id: callback.id,
             user_id: callback.from.id,
             chat_id: callback.message.chat.id,
+            parent_msg_id: callback.message.message_id,
             is_group_chat: callback.message.chat.type != "private",
             payload: callback.data
           }
