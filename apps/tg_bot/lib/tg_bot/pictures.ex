@@ -1,4 +1,4 @@
-defmodule Pictures do
+defmodule TGBot.Pictures do
 
   @app_dir File.cwd!()
   @tmp_dir Path.join(@app_dir, "tmp_files")

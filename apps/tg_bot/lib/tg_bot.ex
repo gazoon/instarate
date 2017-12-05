@@ -4,8 +4,9 @@ defmodule TGBot do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.User, as: MessageUser
-  alias Voting.Girls.Girl
   alias TGBot.Messenger
+  alias TGBot.Pictures
+  alias Voting.Girls.Girl
 
   @start_cmd "start"
   @add_girl_cmd "addgirl"

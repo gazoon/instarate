@@ -14,4 +14,3 @@ defmodule TGBot.Messages.User do
     user.username == Application.get_env(:tg_bot, :bot_username)
   end
 end
-

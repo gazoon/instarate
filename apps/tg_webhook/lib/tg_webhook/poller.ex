@@ -38,14 +38,10 @@ defmodule TGWebhook.Poller do
   end
 
   defp concatenate_name(user_from) do
-    IO.inspect("concate")
-    IO.inspect(user_from)
     user_from.first_name <> (user_from.last_name || "")
   end
 
   defp convert_user_to_data(user_from) do
-    IO.inspect("convert")
-    IO.inspect(user_from)
     %{
       id: user_from.id,
       name: concatenate_name(user_from),
@@ -71,7 +67,6 @@ defmodule TGWebhook.Poller do
         reply_to = message.reply_to_message
         reply_to_data = if reply_to, do: convert_message_to_data(reply_to), else: nil
         message_data = convert_message_to_data(message)
-        IO.inspect(message_data)
         message_data = Map.put(message_data, :reply_to, reply_to_data)
         %{
           type: TextMessage.type,
@@ -79,7 +74,6 @@ defmodule TGWebhook.Poller do
         }
       update.callback_query != nil && update.callback_query.message.chat ->
         callback = update.callback_query
-        IO.inspect(update)
         %{
           type: CallbackMessage.type,
           data: %{
