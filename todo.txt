@@ -1,4 +1,4 @@
-2. add voting timeouts
+2. add voting timeouts, don't react on callbacks not from the last match
 3. add pools
 4. replace polling by webhooks, add queue and reader
 5. add request_id
@@ -7,3 +7,5 @@
 13. add global messages limits
 14. add categories
 15. play with not inline keyboards, try to implement show top with them
+16. display voters chooses
+17. cleanup deps

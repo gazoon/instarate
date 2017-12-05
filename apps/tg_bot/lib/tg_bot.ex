@@ -3,6 +3,7 @@ defmodule TGBot do
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
+  alias TGBot.Messages.User, as: MessageUser
   alias Voting.Girls.Girl
   alias TGBot.Messenger
 
@@ -36,10 +37,11 @@ defmodule TGBot do
 
   @spec on_text_message(TextMessage.t) :: any
   defp on_text_message(message) do
-    if TextMessage.appeal_to_bot?(message) || !message.is_group_chat do
+    if TextMessage.appeal_to_bot?(message) || TextMessage.reply_to_bot?(message)
+       || !message.is_group_chat do
       process_text_message(message)
     else
-      Logger.info("Skip message #{inspect message} it's not an appeal")
+      Logger.info("Skip message #{inspect message} it's not an appeal, reply to the bot or private")
     end
   end
 
@@ -63,9 +65,9 @@ defmodule TGBot do
     end
   end
 
-  @spec build_voter_id(integer) :: String.t
-  defp build_voter_id(user_id) do
-    "tg_user:" <> Integer.to_string(user_id)
+  @spec build_voter_id(MessageUser.t) :: String.t
+  defp build_voter_id(user) do
+    "tg_user:" <> Integer.to_string(user.id)
   end
 
   @spec build_voters_group_id(integer) :: String.t
@@ -235,7 +237,7 @@ defmodule TGBot do
     callback_args = Callback.get_args(message)
     [winner_username, loser_username] = String.split(callback_args, @usernames_separator)
     voters_group_id = build_voters_group_id(message.chat_id)
-    voter_id = build_voter_id(message.user_id)
+    voter_id = build_voter_id(message.user)
     case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
       :ok ->
         task = Task.async(
@@ -266,8 +268,8 @@ defmodule TGBot do
     case Voting.get_top(2, offset: girl_offset) do
       [current_girl | next_girls] ->
         keyboard = if length(next_girls) != 0 do
-          next_girl_offset = Integer.to_string(girl_offset + 1)
-          [[%{text: "Next", payload: Callback.build_payload(@get_top_callback, next_girl_offset)}]]
+          next_girl_position = Integer.to_string(girl_offset + 2)
+          [["Showtop #{next_girl_position}"]]
         else
           nil
         end
@@ -275,7 +277,7 @@ defmodule TGBot do
           chat_id,
           current_girl.photo,
           caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
-          keyboard: keyboard
+          static_keyboard: keyboard
         )
       [] -> Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
     end

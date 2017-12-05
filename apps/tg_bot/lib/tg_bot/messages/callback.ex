@@ -1,16 +1,17 @@
 defmodule TGBot.Messages.Callback do
 
   alias TGBot.Messages.Callback
+  alias TGBot.Messages.User, as: MessageUser
   @type t :: %Callback{
                callback_id: String.t,
                chat_id: integer,
-               user_id: integer,
+               user: MessageUser.t,
                parent_msg_id: integer,
                is_group_chat: boolean,
                payload: map
              }
   defstruct callback_id: nil,
-            user_id: nil,
+            user: nil,
             chat_id: nil,
             parent_msg_id: nil,
             is_group_chat: true,
@@ -21,7 +22,10 @@ defmodule TGBot.Messages.Callback do
 
   @spec from_data(map()) :: Callback.t
   def from_data(message_data) do
-    struct(Callback, message_data)
+    {user_data, message_data} = Map.pop(message_data, :user)
+    user = MessageUser.from_data(user_data)
+    callback = struct(Callback, message_data)
+    %Callback{callback | user: user}
   end
 
   @spec get_name(Callback.t) :: String.t

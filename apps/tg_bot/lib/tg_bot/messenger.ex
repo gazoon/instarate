@@ -2,6 +2,8 @@ defmodule TGBot.Messenger do
 
   alias Nadia.Model.InlineKeyboardButton
   alias Nadia.Model.InlineKeyboardMarkup
+  alias Nadia.Model.ReplyKeyboardMarkup
+  alias Nadia.Model.KeyboardButton, as: ReplyKeyboardButton
 
   @spec send_text(integer, String.t, Keyword.t) :: integer
   def send_text(chat_id, text, opts \\ []) do
@@ -73,8 +75,26 @@ defmodule TGBot.Messenger do
   @spec transform_opts(Keyword.t) :: Keyword.t
   defp transform_opts(opts) do
     {keyboard, opts} = Keyword.pop(opts, :keyboard)
-    reply_markup = transform_keyboard(keyboard)
-    if reply_markup, do: Keyword.put(opts, :reply_markup, reply_markup), else: opts
+    inline_markup = transform_keyboard(keyboard)
+    {static_keyboard, opts} = Keyword.pop(opts, :static_keyboard)
+    reply_markup = transform_static_keyboard(static_keyboard)
+    cond do
+      inline_markup -> Keyword.put(opts, :reply_markup, inline_markup)
+      reply_markup -> Keyword.put(opts, :reply_markup, reply_markup)
+      true -> opts
+    end
+  end
+
+  defp transform_static_keyboard(nil), do: nil
+  @spec transform_static_keyboard([[map()]]) :: ReplyKeyboardMarkup.t
+  defp transform_static_keyboard(keyboard_data) do
+    keyboard = Enum.map(
+      keyboard_data,
+      fn keyboard_line ->
+        Enum.map(keyboard_line, fn key_text -> %ReplyKeyboardButton{text: key_text} end)
+      end
+    )
+    %ReplyKeyboardMarkup{keyboard: keyboard, resize_keyboard: true}
   end
 
   defp transform_keyboard(nil), do: nil
@@ -88,9 +108,7 @@ defmodule TGBot.Messenger do
           fn item_data ->
             %InlineKeyboardButton{
               text: item_data.text,
-              callback_data: item_data.payload,
-              url: "",
-              switch_inline_query: ""
+              callback_data: item_data.payload
             }
           end
         )
