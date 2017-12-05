@@ -87,8 +87,6 @@ defmodule TGBot do
 
     match_photo = Pictures.concatenate(girl_one.photo, girl_two.photo)
 
-    text = "[#{girl_one.username}](#{girl_one_url}) vs [#{girl_two.username}](#{girl_two_url})"
-    Messenger.send_markdown(chat_id, text)
     keyboard = [
       [
         %{
@@ -107,8 +105,9 @@ defmodule TGBot do
         },
       ]
     ]
+    caption_text = "#{girl_one_url} vs #{girl_two_url}"
     try do
-      Messenger.send_photo(chat_id, match_photo, keyboard: keyboard)
+      Messenger.send_photo(chat_id, match_photo, keyboard: keyboard, caption: caption_text)
     after
       File.rm!(match_photo)
     end
@@ -252,7 +251,7 @@ defmodule TGBot do
 
   @spec handle_get_top_callback(Callback.t) :: any
   defp handle_get_top_callback(message) do
-    Messenger.delete_keyboard(message.chat_id, message.parent_msg_id)
+    #    Messenger.delete_keyboard(message.chat_id, message.parent_msg_id)
     callback_args = Callback.get_args(message)
     girl_offset = case Integer.parse(callback_args) do
       {offset, ""} -> offset
@@ -272,11 +271,10 @@ defmodule TGBot do
         else
           nil
         end
-        Messenger.send_text(chat_id, "#{girl_offset + 1}th place")
         Messenger.send_photo(
           chat_id,
           current_girl.photo,
-          caption: Girl.get_profile_url(current_girl),
+          caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
           keyboard: keyboard
         )
       [] -> Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
