@@ -1,7 +1,6 @@
 defmodule TGBot.Messenger do
 
-  alias Nadia.Model.InlineKeyboardButton
-  alias Nadia.Model.InlineKeyboardMarkup
+  alias Nadia.Model.{InlineKeyboardButton, ReplyKeyboardHide, InlineKeyboardMarkup}
   alias Nadia.Model.ReplyKeyboardMarkup
   alias Nadia.Model.KeyboardButton, as: ReplyKeyboardButton
 
@@ -86,6 +85,7 @@ defmodule TGBot.Messenger do
   end
 
   defp transform_static_keyboard(nil), do: nil
+  defp transform_static_keyboard(:remove), do: %ReplyKeyboardHide{}
   @spec transform_static_keyboard([[map()]]) :: ReplyKeyboardMarkup.t
   defp transform_static_keyboard(keyboard_data) do
     keyboard = Enum.map(

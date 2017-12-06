@@ -13,11 +13,6 @@ defmodule Voting.Voters.Storages.Mongo do
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :voters})
   end
 
-  def init do
-    mongo_options = [name: @process_name] ++ Application.get_env(:voting, :voters_girls)
-    Utils.set_child_id(Mongo.child_spec(mongo_options), {Mongo, :voters})
-  end
-
   @spec try_vote(String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}
   def try_vote(voters_group_id, voter_id, girl_one_id, girl_two_id)  do
     girls_id = to_girls_id(girl_one_id, girl_two_id)

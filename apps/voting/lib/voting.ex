@@ -25,6 +25,11 @@ defmodule Voting do
     end
   end
 
+  @spec get_girls_number :: integer
+  def get_girls_number do
+    @girls_storage.get_girls_number()
+  end
+
   @spec get_next_pair(String.t) :: {Girl.t, Girl.t}
   def get_next_pair(voters_group_id) do
     attempt = 0

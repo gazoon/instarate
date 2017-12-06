@@ -28,15 +28,20 @@ defmodule TGBot.Chats.Storages.Mongo do
   @spec transform_chat(map()) :: Chat.t
   defp transform_chat(row) do
     last_match_data = row["last_match"]
-    %Chat{
-      chat_id: row["chat_id"],
-      current_top_offset: row["current_top_offset"] || 0,
-      last_match: %Chat.Match{
+    last_match = if last_match_data do
+      %Chat.Match{
         message_id: last_match_data["message_id"],
         left_girl: last_match_data["left_girl"],
         right_girl: last_match_data["right_girl"],
         shown_at: last_match_data["shown_at"],
-      },
+      }
+    else
+      nil
+    end
+    %Chat{
+      chat_id: row["chat_id"],
+      current_top_offset: row["current_top_offset"] || 0,
+      last_match: last_match,
     }
   end
 end

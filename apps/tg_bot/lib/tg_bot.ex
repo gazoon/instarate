@@ -11,6 +11,7 @@ defmodule TGBot do
   @start_cmd "start"
   @add_girl_cmd "addgirl"
   @get_top_cmd "showtop"
+  @next_top_cmd "Next girl"
   @get_girl_info_cmd "girlinfo"
   @help_cmd "help"
 
@@ -78,12 +79,16 @@ defmodule TGBot do
       {@start_cmd, &handle_start_cmd/2},
       {@add_girl_cmd, &handle_add_girl_cmd/2},
       {@get_top_cmd, &handle_get_top_cmd/2},
+      {@next_top_cmd, &handle_next_top_cmd/2},
       {@get_girl_info_cmd, &handle_get_girl_info_cmd/2},
       {@help_cmd, &handle_help_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
-              |> Enum.find(fn ({cmd_name, _}) -> String.contains?(message_text, cmd_name) end)
+              |> Enum.find(
+                   fn ({cmd_name, _}) -> String.contains?(message_text, String.downcase(cmd_name))
+                   end
+                 )
     case command do
       {command_name, handler} -> Logger.info("Handle #{command_name} command")
                                  handler.(message, chat)
@@ -191,8 +196,13 @@ defmodule TGBot do
       {start_position, ""} when start_position > 0 -> start_position - 1
       _ -> 0
     end
-    send_girl_from_top(message.chat_id, offset)
-    chat
+    send_girl_from_top(chat, offset)
+  end
+
+  @spec handle_next_top_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_next_top_cmd(message, chat) do
+    next_offset = chat.current_top_offset + 1
+    send_girl_from_top(chat, next_offset)
   end
 
   @spec handle_help_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -294,28 +304,31 @@ defmodule TGBot do
       {offset, ""} -> offset
       _ -> raise "Non-int arg for get top callback: #{callback_args}"
     end
-    send_girl_from_top(message.chat_id, girl_offset)
+    send_girl_from_top(chat, girl_offset)
     Messenger.answer_callback(message.callback_id)
     chat
   end
 
-  @spec send_girl_from_top(integer, integer) :: any
-  defp send_girl_from_top(chat_id, girl_offset) do
+  @spec send_girl_from_top(Chat.t, integer) :: Chat.t
+  defp send_girl_from_top(chat, girl_offset) do
     case Voting.get_top(2, offset: girl_offset) do
       [current_girl | next_girls] ->
-        keyboard = if length(next_girls) != 0 do
-          next_girl_position = Integer.to_string(girl_offset + 2)
-          [["Showtop #{next_girl_position}"]]
-        else
-          nil
-        end
+        keyboard = if length(next_girls) != 0, do: [[@next_top_cmd]], else: :remove
         Messenger.send_photo(
-          chat_id,
+          chat.chat_id,
           current_girl.photo,
           caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
           static_keyboard: keyboard
         )
-      [] -> Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
+        %Chat{chat | current_top_offset: girl_offset}
+      [] ->
+        Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
+        girls_number = Voting.get_girls_number()
+        Messenger.send_text(
+          chat.chat_id,
+          "Sorry, but there are only #{girls_number} girls in the competition"
+        )
+        chat
     end
   end
 end

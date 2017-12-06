@@ -31,6 +31,11 @@ defmodule Voting.Girls.Storages.Mongo do
     )
   end
 
+  @spec get_girls_number :: integer
+  def get_girls_number do
+    Mongo.count!(@process_name, @collection, %{})
+  end
+
   @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
   def get_girl(username) do
     row = Mongo.find_one(@process_name, @collection, %{username: username})
