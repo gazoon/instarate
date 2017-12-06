@@ -1,9 +1,8 @@
 defmodule TGBot.Pictures do
 
-  @app_dir File.cwd!()
-  @tmp_dir Path.join(@app_dir, "tmp_files")
+  @resources_dir :code.priv_dir(:tg_bot)
+  @tmp_dir Path.join(@resources_dir, "tmp_files")
   File.mkdir(@tmp_dir)
-  @resources_dir Path.join(@app_dir, "resources")
   @glue_image Path.join(@resources_dir, "glue_gap.jpg")
   require Logger
 
@@ -62,7 +61,6 @@ defmodule TGBot.Pictures do
 
   @spec new_tmp_file_path :: String.t
   defp new_tmp_file_path do
-    File.mkdir(@tmp_dir)
     Path.join(@tmp_dir, UUID.uuid4() <> ".jpg")
   end
 
