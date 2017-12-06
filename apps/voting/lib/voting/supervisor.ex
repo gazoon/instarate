@@ -11,7 +11,6 @@ defmodule Voting.Supervisor do
 
   def init(_) do
     children = [
-      # TODO: add pool
       {
         Plug.Adapters.Cowboy,
         scheme: :http,

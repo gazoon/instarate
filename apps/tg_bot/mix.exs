@@ -18,7 +18,8 @@ defmodule TgBot.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {TGBot.Application, []}
     ]
   end
 
@@ -28,7 +29,8 @@ defmodule TgBot.Mixfile do
       {:poison, "~> 3.1"},
       {:uuid, "~> 1.1"},
       {:nadia, git: "https://github.com/gazoon/nadia.git"},
-      {:voting, in_umbrella: true}
+      {:voting, in_umbrella: true},
+      {:utils, in_umbrella: true}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
     ]

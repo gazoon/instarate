@@ -4,10 +4,8 @@ defmodule TGBot do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.User, as: MessageUser
-  alias TGBot.MessageBuilder
-  alias TGBot.Message
-  alias TGBot.Messenger
-  alias TGBot.Pictures
+  alias TGBot.{Message, Messenger, Pictures}
+  alias TGBot.Chats.Chat
   alias Voting.Girls.Girl
 
   @start_cmd "start"
@@ -23,16 +21,19 @@ defmodule TGBot do
 
   @top_page_size 10
 
+  @config Application.get_env(:tg_bot, __MODULE__)
+  @chats_storage @config[:chats_storage]
+
   @spec on_message(map()) :: any
   def on_message(message_container) do
     message_type = message_container.type
     message_data = message_container.data
     message_info = case message_type do
       :text ->
-        {TextMessage, &on_text_message/1}
+        {TextMessage, &on_text_message/2}
 
       :callback ->
-        {Callback, &on_callback/1}
+        {Callback, &on_callback/2}
       _ -> nil
     end
     case message_info do
@@ -43,38 +44,52 @@ defmodule TGBot do
     end
   end
 
-  @spec process_message(Message.t, ((Message.t) -> any)) :: any
+  @spec process_message(Message.t, ((Message.t, Chat.t) -> Chat.t)) :: any
   def process_message(message, handler) do
-    handler.(message)
+    chat = get_chat(message)
+    chat_after_processing = handler.(message, chat)
+    @chats_storage.save(chat_after_processing)
   end
 
-  @spec on_text_message(TextMessage.t) :: any
-  defp on_text_message(message) do
-    if TextMessage.appeal_to_bot?(message) || TextMessage.reply_to_bot?(message)
-       || !message.is_group_chat do
-      process_text_message(message)
-    else
-      Logger.info("Skip message #{inspect message} it's not an appeal, reply to the bot or private")
+  @spec get_chat(Message.t) :: Chat.t
+  defp get_chat(message) do
+    chat_id = Message.chat_id(message)
+    case @chats_storage.get(chat_id) do
+      nil -> Chat.new(chat_id)
+      chat -> chat
     end
   end
 
-  @spec process_text_message(TextMessage.t) :: any
-  defp process_text_message(message) do
+  @spec on_text_message(TextMessage.t, Chat.t) :: Chat.t
+  defp on_text_message(message, chat) do
+    if TextMessage.appeal_to_bot?(message) || TextMessage.reply_to_bot?(message)
+       || !message.is_group_chat do
+      process_text_message(message, chat)
+    else
+      Logger.info("Skip message #{inspect message} it's not an appeal, reply to the bot or private")
+      chat
+    end
+  end
+
+  @spec process_text_message(TextMessage.t, Chat.t) :: Chat.t
+  defp process_text_message(message, chat) do
     Logger.info("Process text message #{inspect message}")
     commands = [
-      {@start_cmd, &handle_start_cmd/1},
-      {@add_girl_cmd, &handle_add_girl_cmd/1},
-      {@get_top_cmd, &handle_get_top_cmd/1},
-      {@get_girl_info_cmd, &handle_get_girl_info_cmd/1},
-      {@help_cmd, &handle_help_cmd/1},
+      {@start_cmd, &handle_start_cmd/2},
+      {@add_girl_cmd, &handle_add_girl_cmd/2},
+      {@get_top_cmd, &handle_get_top_cmd/2},
+      {@get_girl_info_cmd, &handle_get_girl_info_cmd/2},
+      {@help_cmd, &handle_help_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
               |> Enum.find(fn ({cmd_name, _}) -> String.contains?(message_text, cmd_name) end)
     case command do
       {command_name, handler} -> Logger.info("Handle #{command_name} command")
-                                 handler.(message)
-      nil -> Logger.info("Message #{message_text} doesn't contain commands")
+                                 handler.(message, chat)
+      nil ->
+        Logger.info("Message #{message_text} doesn't contain commands")
+        chat
     end
   end
 
@@ -88,9 +103,10 @@ defmodule TGBot do
     "tg_chat:" <> Integer.to_string(chat_id)
   end
 
-  @spec handle_start_cmd(TextMessage.t) :: any
-  defp handle_start_cmd(message) do
+  @spec handle_start_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_start_cmd(message, chat) do
     send_next_girls_pair(message.chat_id)
+    chat
   end
 
   @spec send_next_girls_pair(integer) :: any
@@ -128,8 +144,8 @@ defmodule TGBot do
     end
   end
 
-  @spec handle_add_girl_cmd(TextMessage.t) :: any
-  defp handle_add_girl_cmd(message) do
+  @spec handle_add_girl_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
     case Voting.add_girl(photo_link) do
       {:ok, girl} ->
@@ -138,6 +154,7 @@ defmodule TGBot do
         Messenger.send_markdown(message.chat_id, text)
       {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
     end
+    chat
   end
   #  @spec handle_get_top_cmd(TextMessage.t) :: any
   #  defp handle_get_top_cmd(message) do
@@ -167,18 +184,19 @@ defmodule TGBot do
   #       )
   #  end
 
-  @spec handle_get_top_cmd(TextMessage.t) :: any
-  defp handle_get_top_cmd(message) do
+  @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_get_top_cmd(message, chat) do
     optional_start_position = TextMessage.get_command_arg(message)
     offset = case Integer.parse(optional_start_position) do
       {start_position, ""} when start_position > 0 -> start_position - 1
       _ -> 0
     end
     send_girl_from_top(message.chat_id, offset)
+    chat
   end
 
-  @spec handle_help_cmd(TextMessage.t) :: any
-  defp handle_help_cmd(message) do
+  @spec handle_help_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_help_cmd(message, chat) do
     text = """
     Hi there! My mission is to find the most attractive girls on Instagram!
     Just select which of two girls looks better and vote by pressing a button below.
@@ -203,15 +221,17 @@ defmodule TGBot do
     In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
     """
     Messenger.send_text(message.chat_id, text, disable_web_page_preview: true)
+    chat
   end
 
-  @spec handle_get_girl_info_cmd(TextMessage.t) :: any
-  defp handle_get_girl_info_cmd(message) do
+  @spec handle_get_girl_info_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_get_girl_info_cmd(message, chat) do
     girl_link = TextMessage.get_command_arg(message)
     case Voting.get_girl(girl_link) do
       {:ok, girl} -> display_girl_info(message.chat_id, girl)
       {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
     end
+    chat
   end
 
   @spec display_girl_info(integer, Girl.t) :: any
@@ -228,25 +248,26 @@ defmodule TGBot do
     Messenger.send_text(chat_id, text)
   end
 
-  @spec on_callback(Callback.t) :: any
-  defp on_callback(message) do
+  @spec on_callback(Callback.t, Chat.t) :: Chat.t
+  defp on_callback(message, chat) do
     Logger.info("Process callback #{inspect message}")
     callbacks = %{
-      @vote_callback => &handle_vote_callback/1,
-      @get_top_callback => &handle_get_top_callback/1,
+      @vote_callback => &handle_vote_callback/2,
+      @get_top_callback => &handle_get_top_callback/2,
     }
     callback_name = Callback.get_name(message)
     handler = callbacks[callback_name]
     if handler do
       Logger.info("handle #{callback_name} callback")
-      handler.(message)
+      handler.(message, chat)
     else
       Logger.warn("Unknown callback: #{callback_name}")
+      chat
     end
   end
 
-  @spec handle_vote_callback(Callback.t) :: any
-  defp handle_vote_callback(message) do
+  @spec handle_vote_callback(Callback.t, Chat.t) :: Chat.t
+  defp handle_vote_callback(message, chat) do
     callback_args = Callback.get_args(message)
     [winner_username, loser_username] = String.split(callback_args, @usernames_separator)
     voters_group_id = build_voters_group_id(message.chat_id)
@@ -262,10 +283,11 @@ defmodule TGBot do
         Messenger.send_notification(message.callback_id, "You already voted")
         Logger.warn("Can't vote: #{error}")
     end
+    chat
   end
 
-  @spec handle_get_top_callback(Callback.t) :: any
-  defp handle_get_top_callback(message) do
+  @spec handle_get_top_callback(Callback.t, Chat.t) :: Chat.t
+  defp handle_get_top_callback(message, chat) do
     #    Messenger.delete_keyboard(message.chat_id, message.parent_msg_id)
     callback_args = Callback.get_args(message)
     girl_offset = case Integer.parse(callback_args) do
@@ -274,6 +296,7 @@ defmodule TGBot do
     end
     send_girl_from_top(message.chat_id, girl_offset)
     Messenger.answer_callback(message.callback_id)
+    chat
   end
 
   @spec send_girl_from_top(integer, integer) :: any

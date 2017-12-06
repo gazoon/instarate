@@ -2,7 +2,7 @@ defmodule TGBot.Chats.Storages.Mongo do
   @behaviour TGBot.Chats.Storage
   alias TGBot.Chats.Chat
 
-  @collection "girls"
+  @collection "insta_chats"
   @process_name :mongo_chats
 
   @spec child_spec :: tuple
@@ -19,7 +19,8 @@ defmodule TGBot.Chats.Storages.Mongo do
 
   @spec save(Chat.t) :: Chat.t
   def save(chat) do
-    Mongo.replace_one(@process_name, @collection, %{chat_id: chat.chat_id}, chat, upsert: true)
+    chat_data = Map.from_struct(chat)
+    Mongo.replace_one(@process_name, @collection, %{chat_id: chat.chat_id}, chat_data, upsert: true)
     chat
   end
 
