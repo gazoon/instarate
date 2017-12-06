@@ -1,4 +1,5 @@
 defmodule TGBot.Messages.Text do
+  @behaviour TGBot.MessageBuilder
 
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.User, as: MessageUser
@@ -9,7 +10,7 @@ defmodule TGBot.Messages.Text do
                user: MessageUser.t,
                is_group_chat: boolean,
                message_id: integer,
-               reply_to: TextMessage.t
+               reply_to: TextMessage.t | nil
              }
   defstruct text: "",
             text_lowercase: "",
@@ -18,15 +19,15 @@ defmodule TGBot.Messages.Text do
             is_group_chat: true,
             message_id: nil,
             reply_to: nil
+
   def type, do: :text
 
-  def from_data(nil), do: nil
   @spec from_data(map()) :: TextMessage.t
   def from_data(message_data) do
     {reply_to_data, message_data} = Map.pop(message_data, :reply_to)
     {user_data, message_data} = Map.pop(message_data, :user)
     user = MessageUser.from_data(user_data)
-    reply_to = from_data(reply_to_data)
+    reply_to = if reply_to_data, do: from_data(reply_to_data), else: nil
     message = struct(TextMessage, message_data)
     %TextMessage{
       message |

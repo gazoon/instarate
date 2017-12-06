@@ -2,7 +2,6 @@ defmodule Voting.Supervisor do
 
   alias Voting.Girls.Storages.Mongo, as: GirlsMongoStorage
   alias Voting.Voters.Storages.Mongo, as: VotersMongoStorage
-  alias Voting.Utils
 
   use Supervisor
 
@@ -11,10 +10,6 @@ defmodule Voting.Supervisor do
   end
 
   def init(_) do
-    mongo_girls_options = [name: GirlsMongoStorage.process_name] ++
-                          Application.get_env(:voting, :mongo_girls)
-    mongo_voters_options = [name: VotersMongoStorage.process_name] ++
-                           Application.get_env(:voting, :mongo_voters)
     children = [
       # TODO: add pool
       {
@@ -25,8 +20,8 @@ defmodule Voting.Supervisor do
           port: 8080
         ]
       },
-      Utils.set_child_id(Mongo.child_spec(mongo_girls_options), {Mongo, :girls}),
-      Utils.set_child_id(Mongo.child_spec(mongo_voters_options), {Mongo, :voters}),
+      GirlsMongoStorage.child_spec(),
+      VotersMongoStorage.child_spec(),
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -3,19 +3,20 @@ defmodule Voting do
   alias Voting.Girls.Girl
   alias Voting.EloRating
   alias Instagram.Media
+  alias Instagram.Client, as: InstagramClient
   require Logger
 
-  @girls_storage Application.get_env(:voting, :girls_storage)
-  @voters_storage Application.get_env(:voting, :voters_storage)
-  @instagram_client Application.get_env(:voting, :instagram_client)
+  @config Application.get_env(:voting, __MODULE__)
+  @girls_storage @config[:girls_storage]
+  @voters_storage @config[:voters_storage]
 
   @max_random_attempt 10
 
   @spec add_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
   def add_girl(photo_uri) do
-    photo_code = @instagram_client.parse_media_code(photo_uri)
+    photo_code = InstagramClient.parse_media_code(photo_uri)
 
-    with {:ok, media_info = %Media{is_photo: true}} <- @instagram_client.get_media_info(photo_code),
+    with {:ok, media_info = %Media{is_photo: true}} <- InstagramClient.get_media_info(photo_code),
          {:ok, girl} <- @girls_storage.add_girl(Girl.new(media_info.owner, media_info.url)) do
       {:ok, girl}
     else
@@ -32,7 +33,7 @@ defmodule Voting do
 
   @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, Stringt.t}
   def get_girl(girl_uri) do
-    girl_username = @instagram_client.parse_username(girl_uri)
+    girl_username = InstagramClient.parse_username(girl_uri)
     @girls_storage.get_girl(girl_username)
   end
 

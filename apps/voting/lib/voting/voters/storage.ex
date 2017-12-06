@@ -1,5 +1,5 @@
 defmodule Voting.Voters.Storage do
-
+  @type t :: module
   @callback try_vote(
               voters_group_id :: String.t,
               voter_id :: String.t,

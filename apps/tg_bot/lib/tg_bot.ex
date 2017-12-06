@@ -4,6 +4,8 @@ defmodule TGBot do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.User, as: MessageUser
+  alias TGBot.MessageBuilder
+  alias TGBot.Message
   alias TGBot.Messenger
   alias TGBot.Pictures
   alias Voting.Girls.Girl
@@ -25,15 +27,25 @@ defmodule TGBot do
   def on_message(message_container) do
     message_type = message_container.type
     message_data = message_container.data
-    case message_type do
+    message_info = case message_type do
       :text ->
-        message = TextMessage.from_data(message_data)
-        on_text_message(message)
+        {TextMessage, &on_text_message/1}
+
       :callback ->
-        message = Callback.from_data(message_data)
-        on_callback(message)
-      _ -> Logger.error("Unsupported message type: #{message_type}")
+        {Callback, &on_callback/1}
+      _ -> nil
     end
+    case message_info do
+      {message_cls, handler_func} ->
+        message = message_cls.from_data(message_data)
+        process_message(message, handler_func)
+      nil -> Logger.error("Unsupported message type: #{message_type}")
+    end
+  end
+
+  @spec process_message(Message.t, ((Message.t) -> any)) :: any
+  def process_message(message, handler) do
+    handler.(message)
   end
 
   @spec on_text_message(TextMessage.t) :: any

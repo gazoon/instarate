@@ -10,32 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-config :voting,
-       Voting,
-       girls_storage: Voting.Girls.Storages.Mongo,
-       voters_storage: Voting.Voters.Storages.Mongo
-
-config :voting,
-       Voting.Girls.Girl,
-       storage: Voting.Girls.Storages.Mongo
-
-config :utils, Instagram.Client, Instagram.Clients.Http
-
-config :voting,
-       mongo_girls: [
-         database: "local",
-         host: "localhost",
-         port: 27017,
-       ],
-       mongo_voters: [
-         database: "local",
-         host: "localhost",
-         port: 27017,
-       ]
+#     config :utils, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:voting, :key)
+#     Application.get_env(:utils, :key)
 #
 # You can also configure a 3rd-party app:
 #
@@ -48,4 +27,4 @@ config :voting,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-import_config "#{Mix.env}.exs"
+#     import_config "#{Mix.env}.exs"

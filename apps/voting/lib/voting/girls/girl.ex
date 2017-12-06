@@ -1,9 +1,9 @@
 defmodule Voting.Girls.Girl do
 
   alias Voting.Girls.Girl
+  alias Instagram.Client, as: InstagramClient
   @initial_rating 1500
-  @instagram_client Application.get_env(:voting, :instagram_client)
-  @storage Application.get_env(:voting, :girls_storage)
+  @storage Application.get_env(:voting, __MODULE__)[:storage]
 
   @type t :: %Girl{
                username: String.t,
@@ -32,7 +32,7 @@ defmodule Voting.Girls.Girl do
 
   @spec get_profile_url(Girl.t) :: String.t
   def get_profile_url(girl) do
-    @instagram_client.build_profile_url(girl.username)
+    InstagramClient.build_profile_url(girl.username)
   end
 
   @spec get_position(Girl.t) :: integer

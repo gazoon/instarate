@@ -1,6 +1,7 @@
 defmodule Voting.Girls.Storage do
 
   alias Voting.Girls.Girl
+  @type t :: module
 
   @callback get_top(number :: integer, offset :: integer) :: [Girl.t]
   @callback get_random_pair() :: {Girl.t, Girl.t}

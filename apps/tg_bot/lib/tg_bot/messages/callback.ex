@@ -1,4 +1,5 @@
 defmodule TGBot.Messages.Callback do
+  @behaviour TGBot.MessageBuilder
 
   alias TGBot.Messages.Callback
   alias TGBot.Messages.User, as: MessageUser

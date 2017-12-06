@@ -3,8 +3,13 @@ defmodule TGBot.Chats.Storages.Mongo do
   alias TGBot.Chats.Chat
 
   @collection "girls"
-  @process_name :mongo_girls
-  def process_name, do: @process_name
+  @process_name :mongo_chats
+
+  @spec child_spec :: tuple
+  def child_spec do
+    options = [name: @process_name] ++ Application.get_env(:tg_bot, :mongo_chats)
+    Utils.set_child_id(Mongo.child_spec(options), {Mongo, :chats})
+  end
 
   @spec get(integer) :: Chat.t | nil
   def get(chat_id) do

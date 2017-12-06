@@ -8,7 +8,12 @@ defmodule Voting.Girls.Storages.Mongo do
   @max_random_get_attempt 5
 
   @process_name :mongo_girls
-  def process_name, do: @process_name
+
+  @spec child_spec :: tuple
+  def child_spec do
+    options = [name: @process_name] ++ Application.get_env(:voting, :mongo_girls)
+    Utils.set_child_id(Mongo.child_spec(options), {Mongo, :girls})
+  end
 
   @spec get_top(integer, integer) :: [Girl.t]
   def get_top(number, offset) do
