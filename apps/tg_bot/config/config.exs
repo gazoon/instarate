@@ -10,5 +10,6 @@ config :tg_bot,
        ]
 
 config :tg_bot, TGBot,
-       chats_storage: TGBot.Chats.Storages.Mongo
+       chats_storage: TGBot.Chats.Storages.Mongo,
+       messenger: TGBot.Messengers.NadiaLib
 

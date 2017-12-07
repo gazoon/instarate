@@ -7,6 +7,5 @@
 13. add global messages limits
 14. add categories
 16. display voters chooses
-18. add messenger behaviour
 19. create tasks
 20. think about webview based top page

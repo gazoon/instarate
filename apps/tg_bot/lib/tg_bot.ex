@@ -4,7 +4,7 @@ defmodule TGBot do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.User, as: MessageUser
-  alias TGBot.{Message, Messenger, Pictures}
+  alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
   alias Voting.Girls.Girl
 
@@ -22,6 +22,7 @@ defmodule TGBot do
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @chats_storage @config[:chats_storage]
+  @messenger @config[:messenger]
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
@@ -143,7 +144,7 @@ defmodule TGBot do
     ]
     caption_text = "#{girl_one_url} vs #{girl_two_url}"
     message_id = try do
-      Messenger.send_photo(
+      @messenger.send_photo(
         chat.chat_id,
         match_photo,
         keyboard: keyboard,
@@ -163,8 +164,8 @@ defmodule TGBot do
       {:ok, girl} ->
         profile_url = Girl.get_profile_url(girl)
         text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
-        Messenger.send_markdown(message.chat_id, text)
-      {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
+        @messenger.send_markdown(message.chat_id, text)
+      {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
     end
     chat
   end
@@ -174,8 +175,8 @@ defmodule TGBot do
   #    |> Enum.with_index(1)
   #    |> Enum.each(
   #         fn ({girl, i}) ->
-  #           Messenger.send_text(message.chat_id, "#{i}th place:")
-  #           Messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
+  #           @messenger.send_text(message.chat_id, "#{i}th place:")
+  #           @messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
   #         end
   #       )
   #  end
@@ -190,7 +191,7 @@ defmodule TGBot do
   #                    |> Enum.map(
   #                         fn (girl) -> %{url: girl.photo, caption: Girl.get_profile_url(girl)} end
   #                       )
-  #           Messenger.send_photos(message.chat_id, photos)
+  #           @messenger.send_photos(message.chat_id, photos)
   #           :timer.sleep(5000)
   #         end
   #       )
@@ -237,7 +238,7 @@ defmodule TGBot do
     Some notes:
     In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
     """
-    Messenger.send_text(message.chat_id, text, disable_web_page_preview: true)
+    @messenger.send_text(message.chat_id, text, disable_web_page_preview: true)
     chat
   end
 
@@ -246,7 +247,7 @@ defmodule TGBot do
     girl_link = TextMessage.get_command_arg(message)
     case Voting.get_girl(girl_link) do
       {:ok, girl} -> display_girl_info(message.chat_id, girl)
-      {:error, error_msg} -> Messenger.send_text(message.chat_id, error_msg)
+      {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
     end
     chat
   end
@@ -254,15 +255,15 @@ defmodule TGBot do
   @spec display_girl_info(integer, Girl.t) :: any
   defp display_girl_info(chat_id, girl) do
     profile_url = Girl.get_profile_url(girl)
-    Messenger.send_markdown(chat_id, "[#{girl.username}](#{profile_url})")
-    Messenger.send_photo(chat_id, girl.photo)
+    @messenger.send_markdown(chat_id, "[#{girl.username}](#{profile_url})")
+    @messenger.send_photo(chat_id, girl.photo)
     girl_position = Girl.get_position(girl)
     text = """
     Position in the competition: #{girl_position}
     Number of wins: #{girl.wins}
     Number of loses: #{girl.loses}
     """
-    Messenger.send_text(chat_id, text)
+    @messenger.send_text(chat_id, text)
   end
 
   @spec on_callback(Callback.t, Chat.t) :: Chat.t
@@ -291,14 +292,14 @@ defmodule TGBot do
     voter_id = build_voter_id(message.user)
     case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
       :ok ->
-        Messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
+        @messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
         if chat.last_match.message_id == message.parent_msg_id do
           send_next_girls_pair(chat)
         else
           chat
         end
       {:error, error} ->
-        Messenger.send_notification(message.callback_id, "You already voted.")
+        @messenger.send_notification(message.callback_id, "You already voted.")
         Logger.warn("Can't vote: #{error}")
         chat
     end
@@ -306,7 +307,7 @@ defmodule TGBot do
 
   @spec handle_get_top_callback(Callback.t, Chat.t) :: Chat.t
   defp handle_get_top_callback(message, chat) do
-    #    Messenger.delete_keyboard(message.chat_id, message.parent_msg_id)
+    #    @messenger.delete_attached_keyboard(message.chat_id, message.parent_msg_id)
     callback_args = Callback.get_args(message)
     girl_offset = case Integer.parse(callback_args) do
       {offset, ""} -> offset
@@ -314,10 +315,10 @@ defmodule TGBot do
     end
     if chat.current_top_offset == girl_offset - 1 do
       chat = send_girl_from_top(chat, girl_offset)
-      Messenger.answer_callback(message.callback_id)
+      @messenger.answer_callback(message.callback_id)
       chat
     else
-      Messenger.send_notification(
+      @messenger.send_notification(
         message.callback_id,
         "Please, continue from the most recent girl."
       )
@@ -336,7 +337,7 @@ defmodule TGBot do
         #        else
         #          nil
         #        end
-        Messenger.send_photo(
+        @messenger.send_photo(
           chat.chat_id,
           current_girl.photo,
           caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
@@ -347,7 +348,7 @@ defmodule TGBot do
       [] ->
         Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
         girls_number = Voting.get_girls_number()
-        Messenger.send_text(
+        @messenger.send_text(
           chat.chat_id,
           "Sorry, but there are only #{girls_number} girls in the competition"
         )
