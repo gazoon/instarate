@@ -1,4 +1,4 @@
-2. add voting timeouts, don't react on callbacks not from the last match
+2. add voting timeouts
 3. add pools
 4. replace polling by webhooks, add queue and reader
 5. add request_id
@@ -6,8 +6,7 @@
 11. scale coefficient depending on number of matches or and current rating
 13. add global messages limits
 14. add categories
-15. play with not inline keyboards, try to implement show top with them
 16. display voters chooses
 18. add messenger behaviour
 19. create tasks
-https://www.instagram.com/galina_dub/
+20. think about webview based top page

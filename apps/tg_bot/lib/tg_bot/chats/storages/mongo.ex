@@ -20,6 +20,9 @@ defmodule TGBot.Chats.Storages.Mongo do
   @spec save(Chat.t) :: Chat.t
   def save(chat) do
     chat_data = Map.from_struct(chat)
+    chat_data = if chat.last_match,
+                   do: %{chat_data | last_match: Map.from_struct(chat.last_match)},
+                   else: chat_data
     Mongo.replace_one(@process_name, @collection, %{chat_id: chat.chat_id}, chat_data, upsert: true)
     chat
   end

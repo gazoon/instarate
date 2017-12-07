@@ -20,8 +20,6 @@ defmodule TGBot do
 
   @usernames_separator "|"
 
-  @top_page_size 10
-
   @config Application.get_env(:tg_bot, __MODULE__)
   @chats_storage @config[:chats_storage]
 
@@ -49,7 +47,10 @@ defmodule TGBot do
   def process_message(message, handler) do
     chat = get_chat(message)
     chat_after_processing = handler.(message, chat)
-    @chats_storage.save(chat_after_processing)
+    if chat_after_processing != chat do
+      Logger.info("Save updated chat info")
+      @chats_storage.save(chat_after_processing)
+    end
   end
 
   @spec get_chat(Message.t) :: Chat.t
@@ -109,14 +110,13 @@ defmodule TGBot do
   end
 
   @spec handle_start_cmd(TextMessage.t, Chat.t) :: Chat.t
-  defp handle_start_cmd(message, chat) do
-    send_next_girls_pair(message.chat_id)
-    chat
+  defp handle_start_cmd(_message, chat) do
+    send_next_girls_pair(chat)
   end
 
-  @spec send_next_girls_pair(integer) :: any
-  defp send_next_girls_pair(chat_id) do
-    voters_group_id = build_voters_group_id(chat_id)
+  @spec send_next_girls_pair(Chat.t) :: Chat.t
+  defp send_next_girls_pair(chat) do
+    voters_group_id = build_voters_group_id(chat.chat_id)
     {girl_one, girl_two} = Voting.get_next_pair(voters_group_id)
     girl_one_url = Girl.get_profile_url(girl_one)
     girl_two_url = Girl.get_profile_url(girl_two)
@@ -142,11 +142,18 @@ defmodule TGBot do
       ]
     ]
     caption_text = "#{girl_one_url} vs #{girl_two_url}"
-    try do
-      Messenger.send_photo(chat_id, match_photo, keyboard: keyboard, caption: caption_text)
+    message_id = try do
+      Messenger.send_photo(
+        chat.chat_id,
+        match_photo,
+        keyboard: keyboard,
+        caption: caption_text
+      )
     after
       File.rm!(match_photo)
     end
+    current_match = Chat.Match.new(message_id, girl_one.username, girl_two.username)
+    %Chat{chat | last_match: current_match}
   end
 
   @spec handle_add_girl_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -200,7 +207,7 @@ defmodule TGBot do
   end
 
   @spec handle_next_top_cmd(TextMessage.t, Chat.t) :: Chat.t
-  defp handle_next_top_cmd(message, chat) do
+  defp handle_next_top_cmd(_message, chat) do
     next_offset = chat.current_top_offset + 1
     send_girl_from_top(chat, next_offset)
   end
@@ -284,16 +291,17 @@ defmodule TGBot do
     voter_id = build_voter_id(message.user)
     case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
       :ok ->
-        task = Task.async(
-          fn -> Messenger.send_notification(message.callback_id, "Vote for #{winner_username}")end
-        )
-        send_next_girls_pair(message.chat_id)
-        Task.await(task)
+        Messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
+        if chat.last_match.message_id == message.parent_msg_id do
+          send_next_girls_pair(chat)
+        else
+          chat
+        end
       {:error, error} ->
-        Messenger.send_notification(message.callback_id, "You already voted")
+        Messenger.send_notification(message.callback_id, "You already voted.")
         Logger.warn("Can't vote: #{error}")
+        chat
     end
-    chat
   end
 
   @spec handle_get_top_callback(Callback.t, Chat.t) :: Chat.t
@@ -304,9 +312,17 @@ defmodule TGBot do
       {offset, ""} -> offset
       _ -> raise "Non-int arg for get top callback: #{callback_args}"
     end
-    send_girl_from_top(chat, girl_offset)
-    Messenger.answer_callback(message.callback_id)
-    chat
+    if chat.current_top_offset == girl_offset - 1 do
+      chat = send_girl_from_top(chat, girl_offset)
+      Messenger.answer_callback(message.callback_id)
+      chat
+    else
+      Messenger.send_notification(
+        message.callback_id,
+        "Please, continue from the most recent girl."
+      )
+      chat
+    end
   end
 
   @spec send_girl_from_top(Chat.t, integer) :: Chat.t
@@ -314,11 +330,18 @@ defmodule TGBot do
     case Voting.get_top(2, offset: girl_offset) do
       [current_girl | next_girls] ->
         keyboard = if length(next_girls) != 0, do: [[@next_top_cmd]], else: :remove
+        #        keyboard = if length(next_girls) != 0 do
+        #          next_girl_offset = Integer.to_string(girl_offset + 1)
+        #          [[%{text: "Next", payload: Callback.build_payload(@get_top_callback, next_girl_offset)}]]
+        #        else
+        #          nil
+        #        end
         Messenger.send_photo(
           chat.chat_id,
           current_girl.photo,
           caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
-          static_keyboard: keyboard
+          #          keyboard: keyboard,
+          static_keyboard: keyboard,
         )
         %Chat{chat | current_top_offset: girl_offset}
       [] ->

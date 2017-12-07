@@ -1,6 +1,7 @@
 defmodule TGBot.Chats.Chat do
   alias TGBot.Chats.Chat
   defmodule Match do
+    alias TGBot.Chats.Chat.Match
     @type t :: %Match{
                  message_id: integer,
                  left_girl: String.t,
@@ -8,6 +9,16 @@ defmodule TGBot.Chats.Chat do
                  shown_at: integer
                }
     defstruct message_id: nil, left_girl: nil, right_girl: nil, shown_at: nil
+
+    @spec new(integer, String.t, String.t) :: Match.t
+    def new(message_id, left_girl, right_girl) do
+      %Match{
+        message_id: message_id,
+        left_girl: left_girl,
+        right_girl: right_girl,
+        shown_at: Utils.current_timestamp()
+      }
+    end
   end
 
   @type t :: %Chat{
