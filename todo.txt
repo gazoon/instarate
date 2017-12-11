@@ -1,11 +1,10 @@
-2. add voting timeouts
 3. add pools
-4. replace polling by webhooks, add queue and reader
+4. replace polling by webhooks
 5. add request_id
 10. add ecto migrations
 11. scale coefficient depending on number of matches or and current rating
-13. add global messages limits
 14. add categories
 16. display voters chooses
-19. create tasks
 20. think about webview based top page
+21. add messages queue and reader
+

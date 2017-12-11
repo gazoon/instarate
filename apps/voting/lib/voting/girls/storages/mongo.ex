@@ -48,7 +48,7 @@ defmodule Voting.Girls.Storages.Mongo do
 
   @spec get_higher_ratings_number(integer) :: integer
   def get_higher_ratings_number(rating) do
-    {:ok, ratings} = Mongo.distinct(
+    ratings = Mongo.distinct!(
       @process_name,
       @collection,
       "rating",
@@ -63,7 +63,7 @@ defmodule Voting.Girls.Storages.Mongo do
 
   @spec update_girl(Girl.t) :: Girl.t
   def update_girl(girl) do
-    Mongo.update_one(
+    Mongo.update_one!(
       @process_name,
       @collection,
       %{username: girl.username},
@@ -88,6 +88,7 @@ defmodule Voting.Girls.Storages.Mongo do
         {:ok, girl}
       {:error, %Mongo.Error{code: @duplication_code}} ->
         {:error, "Girl #{girl.username} already added"}
+      {:error, error} -> raise error
     end
   end
 

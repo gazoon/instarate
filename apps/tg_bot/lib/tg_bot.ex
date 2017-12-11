@@ -3,6 +3,7 @@ defmodule TGBot do
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
+  alias TGBot.Messages.Task
   alias TGBot.Messages.User, as: MessageUser
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
@@ -19,21 +20,22 @@ defmodule TGBot do
   @get_top_callback "top"
 
   @usernames_separator "|"
+  @voting_timeout 5
+  @next_pair_task :send_next_pair
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @chats_storage @config[:chats_storage]
   @messenger @config[:messenger]
+  @scheduler @config[:scheduler]
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
     message_type = message_container.type
     message_data = message_container.data
     message_info = case message_type do
-      :text ->
-        {TextMessage, &on_text_message/2}
-
-      :callback ->
-        {Callback, &on_callback/2}
+      :text -> {TextMessage, &on_text_message/2}
+      :callback -> {Callback, &on_callback/2}
+      :task -> {Task, &on_task/2}
       _ -> nil
     end
     case message_info do
@@ -60,6 +62,36 @@ defmodule TGBot do
     case @chats_storage.get(chat_id) do
       nil -> Chat.new(chat_id)
       chat -> chat
+    end
+  end
+
+  @spec on_task(Task.t, Chat.t) :: Chat.t
+  defp on_task(task, chat)  do
+    handler = case task.name do
+      @next_pair_task -> &handle_next_pair_task/2
+      _ -> nil
+    end
+    if handler do
+      Logger.info("Handle #{task.name} task")
+      handler.(task, chat)
+    else
+      Logger.info("Received unknown #{task.name} task")
+      chat
+    end
+  end
+
+  @spec handle_next_pair_task(Task.t, Chat.t) :: Chat.t
+  defp handle_next_pair_task(task, chat) do
+    task_match_message_id = task.args.last_match_message_id
+    actual_match_message_id = chat.last_match.message_id
+    if task_match_message_id == actual_match_message_id do
+      send_next_girls_pair(chat)
+    else
+      Logger.info(
+        "Skip next pair task, not invalid match message id: #{task_match_message_id}
+         actual one: #{actual_match_message_id}"
+      )
+      chat
     end
   end
 
@@ -112,7 +144,7 @@ defmodule TGBot do
 
   @spec handle_start_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_start_cmd(_message, chat) do
-    send_next_girls_pair(chat)
+    try_to_send_pair(chat)
   end
 
   @spec send_next_girls_pair(Chat.t) :: Chat.t
@@ -269,18 +301,44 @@ defmodule TGBot do
   @spec on_callback(Callback.t, Chat.t) :: Chat.t
   defp on_callback(message, chat) do
     Logger.info("Process callback #{inspect message}")
-    callbacks = %{
-      @vote_callback => &handle_vote_callback/2,
-      @get_top_callback => &handle_get_top_callback/2,
-    }
     callback_name = Callback.get_name(message)
-    handler = callbacks[callback_name]
+    handler = case callback_name do
+      @vote_callback -> &handle_vote_callback/2
+      @get_top_callback -> &handle_get_top_callback/2
+      _ -> nil
+    end
     if handler do
       Logger.info("handle #{callback_name} callback")
       handler.(message, chat)
     else
       Logger.warn("Unknown callback: #{callback_name}")
       chat
+    end
+  end
+
+  @spec try_to_send_pair(Chat.t) :: Chat.t
+  defp try_to_send_pair(chat) do
+    if chat.last_match do
+      time_to_show = 1000 * @voting_timeout + chat.last_match.shown_at
+      if time_to_show > Utils.timestamp_milliseconds() do
+        task_args = %{last_match_message_id: chat.last_match.message_id}
+        task = Task.new(
+          chat.chat_id,
+          time_to_show,
+          @next_pair_task,
+          args: task_args,
+          unique_mark: @next_pair_task
+        )
+        case @scheduler.create_task(task) do
+          {:ok, _} -> Logger.info("Schedule send next pair task")
+          {:error, _} -> Logger.info("Send next pair task already created")
+        end
+        chat
+      else
+        send_next_girls_pair(chat)
+      end
+    else
+      send_next_girls_pair(chat)
     end
   end
 
@@ -294,7 +352,7 @@ defmodule TGBot do
       :ok ->
         @messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
         if chat.last_match.message_id == message.parent_msg_id do
-          send_next_girls_pair(chat)
+          try_to_send_pair(chat)
         else
           chat
         end

@@ -6,9 +6,20 @@ defmodule Utils do
     |> Tuple.insert_at(0, child_id)
   end
 
-  @spec current_timestamp :: integer
-  def current_timestamp do
-    DateTime.utc_now()
-    |> DateTime.to_unix()
+  @spec timestamp :: integer
+  def timestamp do
+    :os.system_time(:seconds)
+  end
+
+  @spec timestamp_milliseconds :: integer
+  def timestamp_milliseconds do
+    :os.system_time(:milli_seconds)
+  end
+
+  @spec keys_to_atoms(map()) :: map()
+  def keys_to_atoms(input_map) do
+    input_map
+    |> Enum.map(fn ({k, v}) -> {String.to_atom(k), v} end)
+    |> Map.new()
   end
 end

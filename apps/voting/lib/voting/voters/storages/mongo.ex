@@ -28,6 +28,7 @@ defmodule Voting.Voters.Storages.Mongo do
           :error,
           "#{voters_group_id} #{voter_id} already voted for #{girl_one_id} and #{girl_two_id}"
         }
+      {:error, error} -> raise error
     end
 
   end

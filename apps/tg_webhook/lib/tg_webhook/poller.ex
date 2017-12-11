@@ -1,6 +1,6 @@
 defmodule TGWebhook.Poller do
 
-  use GenServer
+  use GenServer, shutdown: 10_000
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: CallbackMessage
@@ -9,7 +9,7 @@ defmodule TGWebhook.Poller do
     GenServer.start_link(__MODULE__, 0, opts)
   end
 
-  def handle_cast(:update, offset) do
+  def handle_info(_msg, offset) do
     Logger.info("get updates")
     new_offset = Nadia.get_updates([offset: offset, timeout: 60])
                  |> process_updates
@@ -34,7 +34,7 @@ defmodule TGWebhook.Poller do
   end
 
   defp next_cast do
-    GenServer.cast(self(), :update)
+    send(self(), :next)
   end
 
   defp concatenate_name(user_from) do
@@ -100,6 +100,7 @@ defmodule TGWebhook.Poller do
   end
 
   def init(state) do
+    Process.flag(:trap_exit, true)
     next_cast()
     {:ok, state}
   end

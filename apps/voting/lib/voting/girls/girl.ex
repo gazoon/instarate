@@ -25,7 +25,7 @@ defmodule Voting.Girls.Girl do
 
   @spec new(String.t, String.t) :: Girl.t
   def new(username, photo) do
-    current_time = Utils.current_timestamp()
+    current_time = Utils.timestamp()
     %Girl{username: username, photo: photo, added_at: current_time}
   end
 

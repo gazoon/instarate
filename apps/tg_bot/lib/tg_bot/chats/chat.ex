@@ -16,7 +16,7 @@ defmodule TGBot.Chats.Chat do
         message_id: message_id,
         left_girl: left_girl,
         right_girl: right_girl,
-        shown_at: Utils.current_timestamp()
+        shown_at: Utils.timestamp_milliseconds()
       }
     end
   end
@@ -31,6 +31,6 @@ defmodule TGBot.Chats.Chat do
 
   @spec new(integer) :: Chat.t
   def new(chat_id) do
-    %Chat{chat_id: chat_id, created_at: Utils.current_timestamp()}
+    %Chat{chat_id: chat_id, created_at: Utils.timestamp()}
   end
 end
