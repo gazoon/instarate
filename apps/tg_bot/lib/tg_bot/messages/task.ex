@@ -32,7 +32,7 @@ defmodule TGBot.Messages.Task do
   end
 
 
-  @spec new(integer, integer, String.t, Keyword.t) :: Task.t
+  @spec new(integer, integer, atom, Keyword.t) :: Task.t
   def new(chat_id, do_at, name, opts \\ []) do
     args = Keyword.get(opts, :args)
     unique_mark = Keyword.get(opts, :unique_mark)
