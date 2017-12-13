@@ -80,7 +80,11 @@ defmodule TGBot.Messengers.NadiaLib do
     reply_markup = transform_static_keyboard(static_keyboard)
     cond do
       inline_markup -> Keyword.put(opts, :reply_markup, inline_markup)
-      reply_markup -> Keyword.put(opts, :reply_markup, reply_markup)
+      reply_markup ->
+        reply_markup = if Keyword.get(opts, :one_time_keyboard, false),
+                          do: %ReplyKeyboardMarkup{reply_markup | one_time_keyboard: true},
+                          else: reply_markup
+        Keyword.put(opts, :reply_markup, reply_markup)
       true -> opts
     end
   end

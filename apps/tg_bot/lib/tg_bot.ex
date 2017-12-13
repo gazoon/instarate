@@ -15,6 +15,8 @@ defmodule TGBot do
   @next_top_cmd "Next girl"
   @get_girl_info_cmd "girlinfo"
   @help_cmd "help"
+  @left_vote_cmd "left"
+  @right_vote_cmd "right"
 
   @vote_callback "vt"
   @get_top_callback "top"
@@ -116,6 +118,8 @@ defmodule TGBot do
       {@next_top_cmd, &handle_next_top_cmd/2},
       {@get_girl_info_cmd, &handle_get_girl_info_cmd/2},
       {@help_cmd, &handle_help_cmd/2},
+      {@left_vote_cmd, &handle_left_vote_cmd/2},
+      {@right_vote_cmd, &handle_right_vote_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -156,31 +160,33 @@ defmodule TGBot do
 
     match_photo = Pictures.concatenate(girl_one.photo, girl_two.photo)
 
-    keyboard = [
-      [
-        %{
-          text: "Left",
-          payload: Callback.build_payload(
-            @vote_callback,
-            girl_one.username <> @usernames_separator <> girl_two.username
-          )
-        },
-        %{
-          text: "Right",
-          payload: Callback.build_payload(
-            @vote_callback,
-            girl_two.username <> @usernames_separator <> girl_one.username
-          )
-        },
-      ]
-    ]
+    #    keyboard = [
+    #      [
+    #        %{
+    #          text: "Left",
+    #          payload: Callback.build_payload(
+    #            @vote_callback,
+    #            girl_one.username <> @usernames_separator <> girl_two.username
+    #          )
+    #        },
+    #        %{
+    #          text: "Right",
+    #          payload: Callback.build_payload(
+    #            @vote_callback,
+    #            girl_two.username <> @usernames_separator <> girl_one.username
+    #          )
+    #        },
+    #      ]
+    #    ]
+    keyboard = [["Left", "Right"]]
     caption_text = "#{girl_one_url} vs #{girl_two_url}"
     message_id = try do
       @messenger.send_photo(
         chat.chat_id,
         match_photo,
-        keyboard: keyboard,
-        caption: caption_text
+        caption: caption_text,
+        static_keyboard: keyboard,
+        one_time_keyboard: true,
       )
     after
       File.rm!(match_photo)
@@ -201,33 +207,6 @@ defmodule TGBot do
     end
     chat
   end
-  #  @spec handle_get_top_cmd(TextMessage.t) :: any
-  #  defp handle_get_top_cmd(message) do
-  #    Voting.get_top(@top_page_size)
-  #    |> Enum.with_index(1)
-  #    |> Enum.each(
-  #         fn ({girl, i}) ->
-  #           @messenger.send_text(message.chat_id, "#{i}th place:")
-  #           @messenger.send_photo(message.chat_id, girl.photo, caption: Girl.get_profile_url(girl))
-  #         end
-  #       )
-  #  end
-
-  #  @spec handle_get_top_cmd(TextMessage.t) :: any
-  #  defp handle_get_top_cmd(message) do
-  #    0..5
-  #    |> Enum.each(
-  #         fn (part) ->
-  #           start_index = part * @top_page_size
-  #           photos = Voting.get_top(@top_page_size, offset: start_index)
-  #                    |> Enum.map(
-  #                         fn (girl) -> %{url: girl.photo, caption: Girl.get_profile_url(girl)} end
-  #                       )
-  #           @messenger.send_photos(message.chat_id, photos)
-  #           :timer.sleep(5000)
-  #         end
-  #       )
-  #  end
 
   @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_get_top_cmd(message, chat) do
@@ -342,6 +321,40 @@ defmodule TGBot do
     end
   end
 
+  @spec handle_left_vote_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_left_vote_cmd(message, chat)  do
+    if chat.last_match do
+      winer_username = chat.last_match.left_girl
+      loser_username = chat.last_match.right_girl
+      process_vote_message(message, chat, winer_username, loser_username)
+    else
+      chat
+    end
+  end
+
+  @spec handle_right_vote_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_right_vote_cmd(message, chat)  do
+    if chat.last_match do
+      loser_username = chat.last_match.left_girl
+      winer_username = chat.last_match.right_girl
+      process_vote_message(message, chat, winer_username, loser_username)
+    else
+      chat
+    end
+  end
+
+  @spec process_vote_message(TextMessage.t, Chat.t, String.t, String.t) :: Chat.t
+  defp process_vote_message(message, chat, winner_username, loser_username) do
+    voters_group_id = build_voters_group_id(message.chat_id)
+    voter_id = build_voter_id(message.user)
+    case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
+      :ok -> try_to_send_pair(chat)
+      {:error, error} ->
+        Logger.warn("Can't vote by message: #{error}")
+        chat
+    end
+  end
+
   @spec handle_vote_callback(Callback.t, Chat.t) :: Chat.t
   defp handle_vote_callback(message, chat) do
     callback_args = Callback.get_args(message)
@@ -358,7 +371,7 @@ defmodule TGBot do
         end
       {:error, error} ->
         @messenger.send_notification(message.callback_id, "You already voted.")
-        Logger.warn("Can't vote: #{error}")
+        Logger.warn("Can't vote by callback: #{error}")
         chat
     end
   end
