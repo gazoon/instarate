@@ -11,8 +11,10 @@ defmodule Utils.Reader do
       use GenServer
       @behaviour Utils.Reader
 
-      @fetch_delay Keyword.get(opts, :fetch_delay, 100)
-      @workers_number Keyword.get(opts, :workers_number, 1)
+      @otp_app  Keyword.fetch!(opts, :otp_app)
+      @config  Application.get_env(@otp_app, __MODULE__)
+      @fetch_delay Keyword.get(@config, :fetch_delay, 200)
+      @workers_number Keyword.get(@config, :workers_number, 2)
 
       def init(state) do
         Process.flag(:trap_exit, true)

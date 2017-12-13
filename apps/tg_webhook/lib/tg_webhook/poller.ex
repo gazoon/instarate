@@ -1,6 +1,6 @@
 defmodule TGWebhook.Poller do
 
-  use GenServer, shutdown: 10_000
+  use GenServer
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: CallbackMessage

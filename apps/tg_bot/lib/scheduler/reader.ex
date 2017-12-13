@@ -5,7 +5,7 @@ defmodule Scheduler.Reader do
   @storage @config[:tasks_storage]
   @queue @config[:queue]
 
-  use Utils.Reader, workers_number: 2
+  use Utils.Reader, otp_app: :tg_bot
 
   @spec fetch :: Task.t
   def fetch do

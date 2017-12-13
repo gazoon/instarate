@@ -2,7 +2,7 @@ defmodule TGBot.Queue.Reader do
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @queue @config[:queue]
-  use Utils.Reader, wokers_number: 2
+  use Utils.Reader, otp_app: :tg_bot
 
   @spec fetch :: {any, String.t}
   def fetch do

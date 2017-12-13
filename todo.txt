@@ -6,7 +6,5 @@
 14. add categories
 16. display voters chooses
 20. think about webview based top page
-21. add messages queue and reader
 22. add proper tg timeout logging
-23. move some module constants to config
 

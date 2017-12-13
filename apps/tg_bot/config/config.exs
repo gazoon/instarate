@@ -31,4 +31,6 @@ config :tg_bot, Scheduler.Reader,
        queue: TGBot.Queue.Impls.Mongo
 
 config :tg_bot, TGBot.Queue.Reader,
-       queue: TGBot.Queue.Impls.Mongo
+       queue: TGBot.Queue.Impls.Mongo,
+       fetch_delay: 100,
+       workers_number: 1
