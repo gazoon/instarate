@@ -11,7 +11,6 @@ defmodule TGWebhook.Supervisor do
   def init(_) do
     children = [
       Poller,
-      {Task.Supervisor, name: :messages_supervisor}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -29,3 +29,6 @@ use Mix.Config
 #
 #     import_config "#{Mix.env}.exs"
 config :nadia, token: "486613348:AAF04zCRRzKLr0fxSWG2ykKsmGlCQtXLWvU"
+
+config :tg_webhook, TGWebhook.Poller,
+       queue: TGBot.Queue.Impls.Mongo

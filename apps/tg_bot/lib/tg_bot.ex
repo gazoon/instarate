@@ -30,8 +30,8 @@ defmodule TGBot do
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
-    message_type = message_container.type
-    message_data = message_container.data
+    message_type = String.to_atom(message_container["type"])
+    message_data = message_container["data"]
     message_info = case message_type do
       :text -> {TextMessage, &on_text_message/2}
       :callback -> {Callback, &on_callback/2}

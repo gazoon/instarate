@@ -23,6 +23,7 @@ defmodule TGBot.Messages.Callback do
 
   @spec from_data(map()) :: Callback.t
   def from_data(message_data) do
+    message_data = Utils.keys_to_atoms(message_data)
     {user_data, message_data} = Map.pop(message_data, :user)
     user = MessageUser.from_data(user_data)
     callback = struct(Callback, message_data)

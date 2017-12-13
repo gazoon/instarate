@@ -5,6 +5,9 @@ defmodule TGWebhook.Poller do
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: CallbackMessage
 
+  @config Application.get_env(:tg_webhook, __MODULE__)
+  @queue @config[:queue]
+
   def start_link(opts) do
     GenServer.start_link(__MODULE__, 0, opts)
   end
@@ -88,10 +91,7 @@ defmodule TGWebhook.Poller do
       true -> nil
     end
     if bot_message do
-      Task.Supervisor.start_child(
-        :messages_supervisor,
-        fn -> TGBot.on_message(bot_message) end
-      )
+      @queue.put(bot_message.data.chat_id, bot_message)
       update
     else
       Logger.error("unsupported message format")

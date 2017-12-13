@@ -24,6 +24,7 @@ defmodule TGBot.Messages.Text do
 
   @spec from_data(map()) :: TextMessage.t
   def from_data(message_data) do
+    message_data = Utils.keys_to_atoms(message_data)
     {reply_to_data, message_data} = Map.pop(message_data, :reply_to)
     {user_data, message_data} = Map.pop(message_data, :user)
     user = MessageUser.from_data(user_data)

@@ -6,6 +6,7 @@ defmodule TGBot.Messages.User do
 
   @spec from_data(map()) :: TextMessage.t
   def from_data(user_data) do
+    user_data = Utils.keys_to_atoms(user_data)
     struct(User, user_data)
   end
 
