@@ -1,6 +1,7 @@
 defmodule Voting.Supervisor do
 
-  alias Voting.Girls.Storages.Mongo, as: GirlsMongoStorage
+  alias Voting.Competitors.Storages.Mongo, as: CompetitorsMongoStorage
+  alias Voting.InstagramProfiles.Storages.Mongo, as: ProfilesMongoStorage
   alias Voting.Voters.Storages.Mongo, as: VotersMongoStorage
 
   use Supervisor
@@ -19,7 +20,8 @@ defmodule Voting.Supervisor do
           port: 8080
         ]
       },
-      GirlsMongoStorage.child_spec(),
+      CompetitorsMongoStorage.child_spec(),
+      ProfilesMongoStorage.child_spec(),
       VotersMongoStorage.child_spec(),
     ]
 

@@ -6,6 +6,7 @@ defmodule Instagram.Client do
   @client Application.get_env(:utils, __MODULE__)
 
   @callback parse_username(profile_uri :: String.t) :: String.t
+  @callback get_followers_number(username :: String.t) :: integer
   @callback parse_media_code(media_uri :: String.t) :: String.t
   @callback get_media_info(media_code :: String.t) :: {:ok, Media.t} | {:error, String.t}
   @callback build_profile_url(username :: String.t) :: String.t
@@ -28,5 +29,10 @@ defmodule Instagram.Client do
   @spec build_profile_url(String.t) :: String.t
   def build_profile_url(username) do
     @client.build_profile_url(username)
+  end
+
+  @spec get_followers_number(String.t) :: integer
+  def get_followers_number(username) do
+    @client.get_followers_number(username)
   end
 end

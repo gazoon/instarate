@@ -12,12 +12,17 @@ use Mix.Config
 #
 config :voting,
        Voting,
-       girls_storage: Voting.Girls.Storages.Mongo,
-       voters_storage: Voting.Voters.Storages.Mongo
+       girls_storage: Voting.Competitor.Storages.Mongo,
+       voters_storage: Voting.Voters.Storages.Mongo,
+       profiles_storage: Voting.InstagramProfiles.Storages.Mongo
 
 config :voting,
-       Voting.Girls.Girl,
-       storage: Voting.Girls.Storages.Mongo
+       Voting.Competitors.Model,
+       storage: Voting.Competitors.Storages.Mongo
+
+config :voting,
+       Voting.Girl,
+       storage: Voting.Competitors.Storages.Mongo
 
 config :utils, Instagram.Client, Instagram.Clients.Http
 
@@ -28,6 +33,11 @@ config :voting,
          port: 27017,
        ],
        mongo_voters: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
+       ],
+       mongo_profiles: [
          database: "local",
          host: "localhost",
          port: 27017,

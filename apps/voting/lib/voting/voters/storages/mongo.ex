@@ -13,13 +13,18 @@ defmodule Voting.Voters.Storages.Mongo do
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :voters})
   end
 
-  @spec try_vote(String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}
-  def try_vote(voters_group_id, voter_id, girl_one_id, girl_two_id)  do
+  @spec try_vote(String.t, String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}
+  def try_vote(competition, voters_group_id, voter_id, girl_one_id, girl_two_id)  do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     insert_result = Mongo.insert_one(
       @process_name,
       @collection,
-      %{voters_group: voters_group_id, voter: voter_id, girls_id: girls_id}
+      %{
+        competition: competition,
+        voters_group: voters_group_id,
+        voter: voter_id,
+        girls_id: girls_id
+      }
     )
     case insert_result do
       {:ok, _} -> :ok
@@ -33,13 +38,13 @@ defmodule Voting.Voters.Storages.Mongo do
 
   end
 
-  @spec new_pair?(String.t, String.t, String.t) :: boolean
-  def new_pair?(voters_group_id, girl_one_id, girl_two_id) do
+  @spec new_pair?(String.t, String.t, String.t, String.t) :: boolean
+  def new_pair?(competition, voters_group_id, girl_one_id, girl_two_id) do
     girls_id = to_girls_id(girl_one_id, girl_two_id)
     row = Mongo.find_one(
       @process_name,
       @collection,
-      %{voters_group: voters_group_id, girls_id: girls_id}
+      %{competition: competition, voters_group: voters_group_id, girls_id: girls_id}
     )
     !row
   end

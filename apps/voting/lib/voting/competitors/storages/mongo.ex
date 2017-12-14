@@ -1,10 +1,9 @@
-defmodule Voting.Girls.Storages.Mongo do
+defmodule Voting.Competitors.Storages.Mongo do
 
-  alias Voting.Girls.Girl
-  @behaviour Voting.Girls.Storage
+  alias Voting.Competitors.Model, as: Competitor
+  @behaviour Voting.Competitors.Storage
 
   @collection "girls"
-  @duplication_code 11_000
   @max_random_get_attempt 5
 
   @process_name :mongo_girls
@@ -15,30 +14,34 @@ defmodule Voting.Girls.Storages.Mongo do
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :girls})
   end
 
-  @spec get_top(integer, integer) :: [Girl.t]
-  def get_top(number, offset) do
+  @spec get_top(String.t, integer, integer) :: [Competitor.t]
+  def get_top(competition, number, offset) do
     transform_girls(
       Mongo.find(
-      @process_name,
-      @collection,
-      %{},
-      sort: %{
+        @process_name,
+        @collection,
+        %{competition: competition},
+        sort: %{
         rating: -1
-      },
-      limit: number,
-      skip: offset
+        },
+        limit: number,
+        skip: offset
       )
     )
   end
 
-  @spec get_girls_number :: integer
-  def get_girls_number do
-    Mongo.count!(@process_name, @collection, %{})
+  @spec get_girls_number(String.t) :: integer
+  def get_girls_number(competition) do
+    Mongo.count!(@process_name, @collection, %{competition: competition})
   end
 
-  @spec get_girl(String.t) :: {:ok, Girl.t} | {:error, String.t}
-  def get_girl(username) do
-    row = Mongo.find_one(@process_name, @collection, %{username: username})
+  @spec get_girl(String.t, String.t) :: {:ok, Competitor.t} | {:error, String.t}
+  def get_girl(competition, username) do
+    row = Mongo.find_one(
+      @process_name,
+      @collection,
+      %{competition: competition, username: username}
+    )
     if row do
       {:ok, transform_girl(row)}
     else
@@ -46,13 +49,14 @@ defmodule Voting.Girls.Storages.Mongo do
     end
   end
 
-  @spec get_higher_ratings_number(integer) :: integer
-  def get_higher_ratings_number(rating) do
+  @spec get_higher_ratings_number(String.t, integer) :: integer
+  def get_higher_ratings_number(competition, rating) do
     ratings = Mongo.distinct!(
       @process_name,
       @collection,
       "rating",
       %{
+        competition: competition,
         rating: %{
           "$gt" => rating
         }
@@ -61,12 +65,12 @@ defmodule Voting.Girls.Storages.Mongo do
     length(ratings)
   end
 
-  @spec update_girl(Girl.t) :: Girl.t
+  @spec update_girl(Competitor.t) :: Competitor.t
   def update_girl(girl) do
     Mongo.update_one!(
       @process_name,
       @collection,
-      %{username: girl.username},
+      %{competition: girl.competition, username: girl.username},
       %{
         "$set" => %{
           rating: girl.rating,
@@ -80,34 +84,36 @@ defmodule Voting.Girls.Storages.Mongo do
     girl
   end
 
-  @spec add_girl(Girl.t) :: {:ok, Girl.t} | {:error, String.t}
+  @spec add_girl(Competitor.t) :: Competitor.t
   def add_girl(girl) do
     insert_result = Mongo.insert_one(@process_name, @collection, girl)
     case insert_result do
-      {:ok, _} ->
-        {:ok, girl}
-      {:error, %Mongo.Error{code: @duplication_code}} ->
-        {:error, "Girl #{girl.username} already added"}
+      {:ok, _} -> girl
       {:error, error} -> raise error
     end
   end
 
-  @spec get_random_pair :: {Girl.t, Girl.t}
-  def get_random_pair do
+  @spec get_random_pair(String.t) :: {Competitor.t, Competitor.t}
+  def get_random_pair(competition) do
     attempt = 0
-    get_random_pair(attempt)
+    get_random_pair(competition, attempt)
   end
 
-  defp get_random_pair(_attempt = @max_random_get_attempt) do
+  defp get_random_pair(_competition, _attempt = @max_random_get_attempt) do
     raise "Can't get two distinct rows, attempts limit is reached"
   end
-  @spec get_random_pair(integer) :: {Girl.t, Girl.t}
-  defp get_random_pair(attempt) do
+  @spec get_random_pair(String.t, integer) :: {Competitor.t, Competitor.t}
+  defp get_random_pair(competition, attempt) do
     girls = transform_girls(
       Mongo.aggregate(
         @process_name,
         @collection,
         [
+          %{
+            "$match" => %{
+              competition: competition
+            }
+          },
           %{
             "$sample" => %{
               size: 2
@@ -125,17 +131,16 @@ defmodule Voting.Girls.Storages.Mongo do
     end
   end
 
-  @spec transform_girls(Enum.t) :: [Girl.t]
+  @spec transform_girls(Enum.t) :: [Competitor.t]
   defp transform_girls(rows) do
     Enum.map(rows, &transform_girl/1)
   end
 
-  @spec transform_girl(map() | Mongo.Cursor.t) :: Girl.t
+  @spec transform_girl(map() | Mongo.Cursor.t) :: Competitor.t
   defp transform_girl(row) do
-    %Girl{
+    %Competitor{
       username: row["username"],
-      added_at: row["added_at"],
-      photo: row["photo"],
+      competition: row["competition"],
       rating: row["rating"],
       matches: row["matches"],
       wins: row["wins"],

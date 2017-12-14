@@ -23,6 +23,24 @@ defmodule Instagram.Clients.Http do
     end
   end
 
+  @spec get_followers_number(String.t) :: integer
+  def get_followers_number(username) do
+    profile_url = @api_url <> username <> @magic_suffix
+    resp = HTTPoison.get!(profile_url)
+    if resp.status_code == 404 do
+      raise "Instagram profile #{username} not found"
+    end
+
+    data = case Poison.decode(resp.body, as: %{}) do
+      {:ok, data} -> data
+      _ -> raise  "Profile got invalid json, url #{profile_url}, response code #{resp.status_code}"
+    end
+    followers = data["user"]["followed_by"]["count"]
+    if is_integer(followers),
+       do: followers,
+       else: raise "Profile response doesn't contain followers"
+  end
+
   @spec build_profile_url(String.t) :: String.t
   def build_profile_url(username) do
     @api_url <> username <> "/"
@@ -86,7 +104,7 @@ defmodule Instagram.Clients.Http do
     else
       case Poison.decode(resp.body, as: %{}) do
         {:ok, data} -> {:ok, data}
-        _ -> raise  "Got invalid json url #{media_url}, response code #{resp.status_code}"
+        _ -> raise  "Media got invalid json url #{media_url}, response code #{resp.status_code}"
       end
     end
   end

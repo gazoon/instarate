@@ -10,6 +10,7 @@
 23. add notifications
 24. add voting timeout chat setting
 25. return callback top implementation
-26. chose callback or buttons depending on size of the chat
-27. think about cities
+26. choose callback or buttons depending on size of the chat
+27. add photo verification
+28. add ban mechanism
 
