@@ -22,13 +22,16 @@ defmodule TGBot do
   @normal_competition_cmd "normalCompetition"
   @enable_daily_activation_cmd "enableActivation"
   @disable_daily_activation_cmd "disableActivation"
+  @set_voting_timeout_cmd "votingTimeout"
+  @min_voting_timeout 5
 
   @vote_callback "vt"
   @get_top_callback "top"
 
   @session_duration 1_200_000 # 20 minutes in milliseconds
+
+  @session_duration_seconds div(@session_duration, 1000)
   @usernames_separator "|"
-  @voting_timeout 5
 
   @next_pair_task :send_next_pair
   @daily_activation_task :daily_activation
@@ -139,6 +142,7 @@ defmodule TGBot do
       {@normal_competition_cmd, &handle_normal_competition_cmd/2},
       {@enable_daily_activation_cmd, &handle_enable_activation_cmd/2},
       {@disable_daily_activation_cmd, &handle_disable_activation_cmd/2},
+      {@set_voting_timeout_cmd, &handle_set_voting_timeout_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -271,6 +275,27 @@ defmodule TGBot do
     send_girl_from_top(chat, next_offset)
   end
 
+  @spec handle_set_voting_timeout_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_set_voting_timeout_cmd(message, chat) do
+    arg = TextMessage.get_command_arg(message)
+    case Integer.parse(arg) do
+      {timeout, ""} when @min_voting_timeout <= timeout and timeout < @session_duration_seconds ->
+        @messenger.send_text(chat.chat_id, "Now voting timeout is #{timeout} seconds")
+        %Chat{chat | voting_timeout: timeout}
+      {_, ""} ->
+        @messenger.send_text(
+          chat.chat_id,
+          "Timeout must be more than #{@min_voting_timeout - 1} seconds and less than #{
+            div @session_duration_seconds, 60
+          } minutes"
+        )
+        chat
+      _ ->
+        @messenger.send_text(chat.chat_id, "Please, enter valid number")
+        chat
+    end
+  end
+
   @spec handle_help_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_help_cmd(message, chat) do
     text = """
@@ -302,6 +327,9 @@ defmodule TGBot do
     girlInfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
     girlInfo https://www.instagram.com/svetabily/
     girlInfo svetabily
+
+    votingTimeout <timeout> - Set the time, I will wait before sendind a new girls pair. In seconds, minimum - 5 seconds.
+    votingTimeout 10
 
     Some notes:
     In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
@@ -373,7 +401,7 @@ defmodule TGBot do
   @spec try_to_send_pair(Chat.t) :: Chat.t
   defp try_to_send_pair(chat) do
     if chat.last_match do
-      time_to_show = 1000 * @voting_timeout + chat.last_match.shown_at
+      time_to_show = 1000 * chat.voting_timeout + chat.last_match.shown_at
       if time_to_show > Utils.timestamp_milliseconds() do
         task_args = %{last_match_message_id: chat.last_match.message_id}
         task = Task.new(
