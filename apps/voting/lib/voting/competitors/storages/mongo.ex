@@ -8,6 +8,9 @@ defmodule Voting.Competitors.Storages.Mongo do
 
   @process_name :mongo_girls
 
+  def process_name, do: @process_name
+  def collection, do: @collection
+
   @spec child_spec :: tuple
   def child_spec do
     options = [name: @process_name] ++ Application.get_env(:voting, :mongo_girls)
@@ -22,7 +25,7 @@ defmodule Voting.Competitors.Storages.Mongo do
         @collection,
         %{competition: competition},
         sort: %{
-        rating: -1
+          rating: -1
         },
         limit: number,
         skip: offset
@@ -45,7 +48,7 @@ defmodule Voting.Competitors.Storages.Mongo do
     if row do
       {:ok, transform_girl(row)}
     else
-      {:error, "Girl #{username} not found"}
+      {:error, "Girl #{username} not found in the '#{competition}' competition"}
     end
   end
 
@@ -74,7 +77,6 @@ defmodule Voting.Competitors.Storages.Mongo do
       %{
         "$set" => %{
           rating: girl.rating,
-          photo: girl.photo,
           matches: girl.matches,
           wins: girl.wins,
           loses: girl.loses,
@@ -127,7 +129,7 @@ defmodule Voting.Competitors.Storages.Mongo do
     if girl_one.username != girl_two.username do
       {girl_one, girl_two}
     else
-      get_random_pair(attempt + 1)
+      get_random_pair(competition, attempt + 1)
     end
   end
 

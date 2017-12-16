@@ -94,7 +94,6 @@ defmodule TGWebhook.Poller do
       @queue.put(bot_message.data.chat_id, bot_message)
       update
     else
-      Logger.error("unsupported message format")
       update
     end
   end

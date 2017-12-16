@@ -12,7 +12,7 @@ use Mix.Config
 #
 config :voting,
        Voting,
-       girls_storage: Voting.Competitor.Storages.Mongo,
+       girls_storage: Voting.Competitors.Storages.Mongo,
        voters_storage: Voting.Voters.Storages.Mongo,
        profiles_storage: Voting.InstagramProfiles.Storages.Mongo
 

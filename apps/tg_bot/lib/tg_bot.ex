@@ -7,16 +7,19 @@ defmodule TGBot do
   alias TGBot.Messages.User, as: MessageUser
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
-  alias Voting.Girls.Girl
+  alias Voting.Girl
 
   @start_cmd "start"
-  @add_girl_cmd "addgirl"
-  @get_top_cmd "showtop"
+  @add_girl_cmd "addGirl"
+  @get_top_cmd "showTop"
   @next_top_cmd "Next girl"
-  @get_girl_info_cmd "girlinfo"
+  @get_girl_info_cmd "girlInfo"
   @help_cmd "help"
   @left_vote_cmd "left"
   @right_vote_cmd "right"
+  @global_competition_cmd "globalCompetition"
+  @celebrities_competition_cmd "celebritiesCompetition"
+  @normal_competition_cmd "normalCompetition"
 
   @vote_callback "vt"
   @get_top_callback "top"
@@ -120,6 +123,9 @@ defmodule TGBot do
       {@help_cmd, &handle_help_cmd/2},
       {@left_vote_cmd, &handle_left_vote_cmd/2},
       {@right_vote_cmd, &handle_right_vote_cmd/2},
+      {@global_competition_cmd, &handle_global_competition_cmd/2},
+      {@celebrities_competition_cmd, &handle_celebrities_competition_cmd/2},
+      {@normal_competition_cmd, &handle_normal_competition_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -154,7 +160,7 @@ defmodule TGBot do
   @spec send_next_girls_pair(Chat.t) :: Chat.t
   defp send_next_girls_pair(chat) do
     voters_group_id = build_voters_group_id(chat.chat_id)
-    {girl_one, girl_two} = Voting.get_next_pair(voters_group_id)
+    {girl_one, girl_two} = Voting.get_next_pair(chat.competition, voters_group_id)
     girl_one_url = Girl.get_profile_url(girl_one)
     girl_two_url = Girl.get_profile_url(girl_two)
 
@@ -233,18 +239,24 @@ defmodule TGBot do
 
     /start - Get the next girls pair to compare.
 
-    /showtop - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
+    /showTop - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
+
+    /celebritiesCompetition - You will vote and see only girls with 500k+ followers.
+
+    /normalCompetition - You will vote and see girls who have less than 500k followers
+
+    /globalCompetition - You will vote for all girls, it's a default option.
 
     /help - Show this message.
 
     And also another type of commands, with an additional input:
 
-    addgirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link of her instagram photo. The girl must have a public account. For example:
-    addgirl https://www.instagram.com/p/BcPqz6sFMbb/
+    addGirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link of her instagram photo. The girl must have a public account. For example:
+    addGirl https://www.instagram.com/p/BcPqz6sFMbb/
 
-    girlinfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
-    girlinfo https://www.instagram.com/svetabily/
-    girlinfo svetabily
+    girlInfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
+    girlInfo https://www.instagram.com/svetabily/
+    girlInfo svetabily
 
     Some notes:
     In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
@@ -253,10 +265,28 @@ defmodule TGBot do
     chat
   end
 
+  @spec handle_global_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_global_competition_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Now you see all girls")
+    %Chat{chat | competition: Voting.global_competition()}
+  end
+
+  @spec handle_celebrities_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_celebrities_competition_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Now you see only celebrity-level girls")
+    %Chat{chat | competition: Voting.celebrities_competition()}
+  end
+
+  @spec handle_normal_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_normal_competition_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Now you see only ordinary girls")
+    %Chat{chat | competition: Voting.normal_competition()}
+  end
+
   @spec handle_get_girl_info_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_get_girl_info_cmd(message, chat) do
     girl_link = TextMessage.get_command_arg(message)
-    case Voting.get_girl(girl_link) do
+    case Voting.get_girl(chat.competition, girl_link) do
       {:ok, girl} -> display_girl_info(message.chat_id, girl)
       {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
     end
@@ -347,7 +377,13 @@ defmodule TGBot do
   defp process_vote_message(message, chat, winner_username, loser_username) do
     voters_group_id = build_voters_group_id(message.chat_id)
     voter_id = build_voter_id(message.user)
-    case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
+    case Voting.vote(
+           chat.competition,
+           voters_group_id,
+           voter_id,
+           winner_username,
+           loser_username
+         ) do
       :ok -> try_to_send_pair(chat)
       {:error, error} ->
         Logger.warn("Can't vote by message: #{error}")
@@ -361,7 +397,13 @@ defmodule TGBot do
     [winner_username, loser_username] = String.split(callback_args, @usernames_separator)
     voters_group_id = build_voters_group_id(message.chat_id)
     voter_id = build_voter_id(message.user)
-    case Voting.vote(voters_group_id, voter_id, winner_username, loser_username) do
+    case Voting.vote(
+           chat.competition,
+           voters_group_id,
+           voter_id,
+           winner_username,
+           loser_username
+         ) do
       :ok ->
         @messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
         if chat.last_match.message_id == message.parent_msg_id do
@@ -399,7 +441,7 @@ defmodule TGBot do
 
   @spec send_girl_from_top(Chat.t, integer) :: Chat.t
   defp send_girl_from_top(chat, girl_offset) do
-    case Voting.get_top(2, offset: girl_offset) do
+    case Voting.get_top(chat.competition, 2, offset: girl_offset) do
       [current_girl | next_girls] ->
         keyboard = if length(next_girls) != 0, do: [[@next_top_cmd]], else: :remove
         #        keyboard = if length(next_girls) != 0 do
@@ -418,7 +460,7 @@ defmodule TGBot do
         %Chat{chat | current_top_offset: girl_offset}
       [] ->
         Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
-        girls_number = Voting.get_girls_number()
+        girls_number = Voting.get_girls_number(chat.competition)
         @messenger.send_text(
           chat.chat_id,
           "Sorry, but there are only #{girls_number} girls in the competition"

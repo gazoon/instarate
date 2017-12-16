@@ -16,6 +16,8 @@ defmodule Voting.Girl do
                loses: integer
              }
 
+  defstruct username: nil, photo: nil, competition: nil, rating: nil, matches: 0, wins: 0, loses: 0
+
 
   @spec combine(Competitor.t, Profile.t) :: Girl.t
   def combine(competitor, profile) do
@@ -30,7 +32,7 @@ defmodule Voting.Girl do
     }
   end
 
-  @spec get_profile_url(Girl.t) :: String.t
+  @spec get_profile_url(Girl.t | Profile.t) :: String.t
   def get_profile_url(girl) do
     InstagramClient.build_profile_url(girl.username)
   end

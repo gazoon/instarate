@@ -29,7 +29,7 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
   @spec get(String.t) :: Profile.t
   def get(username) do
     row = Mongo.find_one(@process_name, @collection, %{username: username})
-    if row, do: transform_girl(row), else: raise "dd"
+    if row, do: transform_profile(row), else: raise "Profile #{username} not found"
   end
 
   @spec get_multiple([String.t]) :: [Profile.t]

@@ -6,7 +6,7 @@ defmodule TGBot.Chats.Chat do
                  message_id: integer,
                  left_girl: String.t,
                  right_girl: String.t,
-                 shown_at: integer
+                 shown_at: integer,
                }
     defstruct message_id: nil, left_girl: nil, right_girl: nil, shown_at: nil
 
@@ -25,12 +25,17 @@ defmodule TGBot.Chats.Chat do
                chat_id: integer,
                current_top_offset: integer,
                last_match: Match.t,
-               created_at: integer
+               created_at: integer,
+               competition: String.t
              }
-  defstruct chat_id: nil, current_top_offset: 0, last_match: nil, created_at: nil
+  defstruct chat_id: nil,
+            current_top_offset: 0,
+            last_match: nil,
+            created_at: nil,
+            competition: nil
 
   @spec new(integer) :: Chat.t
   def new(chat_id) do
-    %Chat{chat_id: chat_id, created_at: Utils.timestamp()}
+    %Chat{chat_id: chat_id, created_at: Utils.timestamp(), competition: Voting.global_competition()}
   end
 end

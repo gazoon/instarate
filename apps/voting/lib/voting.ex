@@ -15,10 +15,14 @@ defmodule Voting do
 
   @celebrities_competition "celebrities"
   @normal_competition "normal"
-  @all_competition "all"
+  @global_competition "global"
   @followers_threshold 500_000
 
   @max_random_attempt 10
+
+  def global_competition, do: @global_competition
+  def normal_competition, do: @normal_competition
+  def celebrities_competition, do: @celebrities_competition
 
   @spec add_girl(String.t) :: {:ok, Profile.t} | {:error, String.t}
   def add_girl(photo_uri) do
@@ -67,6 +71,7 @@ defmodule Voting do
   @spec get_top(String.t, integer, [offset: integer]) :: [Girl.t]
   def get_top(competition, number, opts \\ []) do
     offset = Keyword.get(opts, :offset, 0)
+
     competitors = @girls_storage.get_top(competition, number, offset)
     build_girls(competitors)
   end
@@ -89,16 +94,16 @@ defmodule Voting do
     end
   end
 
-  @spec process_vote(Girl.t, Girl.t) :: any
+  @spec process_vote(Competitor.t, Competitor.t) :: any
   defp process_vote(winner, loser) do
     {new_winner_rating, new_loser_rating} = EloRating.recalculate(winner.rating, loser.rating)
-    winner = %{
+    winner = %Competitor{
       winner |
       rating: new_winner_rating,
       matches: winner.matches + 1,
       wins: winner.wins + 1
     }
-    loser = %{
+    loser = %Competitor{
       loser |
       rating: new_loser_rating,
       matches: loser.matches + 1,
@@ -120,7 +125,7 @@ defmodule Voting do
          competitor_one.username,
          competitor_two.username
        ) do
-      build_girls([girl_one, girl_two])
+      build_girls([competitor_one, competitor_two])
       |> List.to_tuple()
     else
       get_next_pair(competition, voters_group_id, attempt + 1)
@@ -147,6 +152,6 @@ defmodule Voting do
   defp choose_competitions(followers_number) do
     competition_by_followers = if followers_number < @followers_threshold,
                                   do: @normal_competition, else: @celebrities_competition
-    [@all_competition, competition_by_followers]
+    [@global_competition, competition_by_followers]
   end
 end

@@ -1,5 +1,6 @@
 defmodule Voting.InstagramProfiles.Model do
   alias Voting.InstagramProfiles.Model, as: Profile
+  alias Instagram.Client, as: InstagramClient
 
   @type t :: %Profile{
                username: String.t,

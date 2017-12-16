@@ -5,8 +5,9 @@ defmodule Voting.Competitors.Storage do
 
   @callback get_top(competition :: String.t, number :: integer, offset :: integer) :: [Competitor.t]
   @callback get_random_pair(competition :: String.t) :: {Competitor.t, Competitor.t}
-  @callback get_girl(competition :: String.t, username :: Competitor.t)
-            :: {:ok, Competitor.t} | {:error, Competitor.t}
+  @callback get_girl(competition :: String.t, username :: String.t)
+            :: {:ok, Competitor.t} | {:error, String.t}
+
   @callback get_girls_number(competition :: String.t) :: integer
   @callback get_higher_ratings_number(competition :: String.t, rating :: integer) :: integer
   @callback update_girl(girl :: Competitor.t) :: Competitor.t
