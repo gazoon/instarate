@@ -15,16 +15,33 @@ defmodule Scheduler.Impls.Mongo do
 
   @spec create_task(Task.t) :: {:ok, Task.t} | {:error, String.t}
   def create_task(task) do
-    task_data = if task.unique_mark, do: task, else: Map.delete(task, :unique_mark)
-    insert_result = Mongo.insert_one(@process_name, @collection, task_data)
+    insert_result = Mongo.insert_one(@process_name, @collection, task)
     case insert_result do
       {:ok, _} ->
         {:ok, task}
       {:error, %Mongo.Error{code: @duplication_code}} ->
-        {:error, "Task with mark #{task.unique_mark} for chat #{task.chat_id} already exists"}
+        {:error, "Task #{task.name} for chat #{task.chat_id} already exists"}
       {:error, error} -> raise error
     end
+  end
 
+  @spec create_or_replace_task(Task.t) :: Task.t
+  def create_or_replace_task(task) do
+    task_data = Map.from_struct(task)
+    Mongo.replace_one!(
+      @process_name,
+      @collection,
+      %{chat_id: task.chat_id, name: task.name},
+      task_data,
+      upsert: true
+    )
+    task
+  end
+
+  @spec delete_task(integer, String.t) :: :ok
+  def delete_task(chat_id, name) do
+    Mongo.delete_one!(@process_name, @collection, %{chat_id: chat_id, name: name})
+    :ok
   end
 
   @spec get_available_task :: Task.t

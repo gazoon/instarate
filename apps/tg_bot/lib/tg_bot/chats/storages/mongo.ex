@@ -52,6 +52,7 @@ defmodule TGBot.Chats.Storages.Mongo do
       current_top_offset: row["current_top_offset"] || 0,
       last_match: last_match,
       competition: row["competition"],
+      self_activation_allowed: row["self_activation_allowed"],
     }
   end
 end

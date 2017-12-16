@@ -3,14 +3,12 @@
 5. add request_id
 10. add ecto migrations
 11. scale coefficient depending on number of matches or and current rating
-14. add categories
-16. display voters chooses
 20. think about webview based top page
 22. add proper tg timeout logging
-23. add notifications
 24. add voting timeout chat setting
 25. return callback top implementation
 26. choose callback or buttons depending on size of the chat
 27. add photo verification
 28. add ban mechanism
+29. add cities categories
 

@@ -26,13 +26,15 @@ defmodule TGBot.Chats.Chat do
                current_top_offset: integer,
                last_match: Match.t,
                created_at: integer,
-               competition: String.t
+               competition: String.t,
+               self_activation_allowed: boolean
              }
   defstruct chat_id: nil,
             current_top_offset: 0,
             last_match: nil,
             created_at: nil,
-            competition: nil
+            competition: nil,
+            self_activation_allowed: true
 
   @spec new(integer) :: Chat.t
   def new(chat_id) do

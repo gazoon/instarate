@@ -20,13 +20,18 @@ defmodule TGBot do
   @global_competition_cmd "globalCompetition"
   @celebrities_competition_cmd "celebritiesCompetition"
   @normal_competition_cmd "normalCompetition"
+  @enable_daily_activation_cmd "enableActivation"
+  @disable_daily_activation_cmd "disableActivation"
 
   @vote_callback "vt"
   @get_top_callback "top"
 
+  @session_duration 1_200_000 # 20 minutes in milliseconds
   @usernames_separator "|"
   @voting_timeout 5
+
   @next_pair_task :send_next_pair
+  @daily_activation_task :daily_activation
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @chats_storage @config[:chats_storage]
@@ -74,6 +79,7 @@ defmodule TGBot do
   defp on_task(task, chat)  do
     handler = case task.name do
       @next_pair_task -> &handle_next_pair_task/2
+      @daily_activation_task -> &handle_daily_activation_task/2
       _ -> nil
     end
     if handler do
@@ -98,6 +104,11 @@ defmodule TGBot do
       )
       chat
     end
+  end
+
+  @spec handle_daily_activation_task(Task.t, Chat.t) :: Chat.t
+  defp handle_daily_activation_task(_task, chat) do
+    send_next_girls_pair(chat, message_before: "Hi! don't you mind to vote?")
   end
 
   @spec on_text_message(TextMessage.t, Chat.t) :: Chat.t
@@ -126,6 +137,8 @@ defmodule TGBot do
       {@global_competition_cmd, &handle_global_competition_cmd/2},
       {@celebrities_competition_cmd, &handle_celebrities_competition_cmd/2},
       {@normal_competition_cmd, &handle_normal_competition_cmd/2},
+      {@enable_daily_activation_cmd, &handle_enable_activation_cmd/2},
+      {@disable_daily_activation_cmd, &handle_disable_activation_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -157,8 +170,8 @@ defmodule TGBot do
     try_to_send_pair(chat)
   end
 
-  @spec send_next_girls_pair(Chat.t) :: Chat.t
-  defp send_next_girls_pair(chat) do
+  @spec send_next_girls_pair(Chat.t, Keyword.t) :: Chat.t
+  defp send_next_girls_pair(chat, opts \\ []) do
     voters_group_id = build_voters_group_id(chat.chat_id)
     {girl_one, girl_two} = Voting.get_next_pair(chat.competition, voters_group_id)
     girl_one_url = Girl.get_profile_url(girl_one)
@@ -186,6 +199,8 @@ defmodule TGBot do
     #    ]
     keyboard = [["Left", "Right"]]
     caption_text = "#{girl_one_url} vs #{girl_two_url}"
+    message_before = Keyword.get(opts, :message_before)
+    if message_before, do: @messenger.send_text(chat.chat_id, message_before)
     message_id = try do
       @messenger.send_photo(
         chat.chat_id,
@@ -197,8 +212,21 @@ defmodule TGBot do
     after
       File.rm!(match_photo)
     end
+    schedule_daily_activation(chat)
     current_match = Chat.Match.new(message_id, girl_one.username, girl_two.username)
     %Chat{chat | last_match: current_match}
+  end
+
+  @spec schedule_daily_activation(Chat.t) :: any
+  defp schedule_daily_activation(chat) do
+    if chat.self_activation_allowed do
+      time_to_activate = Utils.timestamp_milliseconds() + 24 * 60 * 60 * 1000 - @session_duration
+      task = Task.new(chat.chat_id, time_to_activate, @daily_activation_task)
+      @scheduler.create_or_replace_task(task)
+      Logger.info("Schedule next day activation")
+    else
+      Logger.info("Self activation disabled for the chat")
+    end
   end
 
   @spec handle_add_girl_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -224,6 +252,19 @@ defmodule TGBot do
     send_girl_from_top(chat, offset)
   end
 
+  @spec handle_enable_activation_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_enable_activation_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Daily notifications enabled")
+    %Chat{chat | self_activation_allowed: true}
+  end
+
+  @spec handle_disable_activation_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_disable_activation_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Daily notifications disabled")
+    @scheduler.delete_task(chat.chat_id, @daily_activation_task)
+    %Chat{chat | self_activation_allowed: false}
+  end
+
   @spec handle_next_top_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_next_top_cmd(_message, chat) do
     next_offset = chat.current_top_offset + 1
@@ -246,6 +287,10 @@ defmodule TGBot do
     /normalCompetition - You will vote and see girls who have less than 500k followers
 
     /globalCompetition - You will vote for all girls, it's a default option.
+
+    /enableActivation - Let me daily send you a new girls pair, just in case you forgot about me.
+
+    /disableActivation - Disable daily new match sending. By default it's enabled.
 
     /help - Show this message.
 
@@ -317,7 +362,7 @@ defmodule TGBot do
       _ -> nil
     end
     if handler do
-      Logger.info("handle #{callback_name} callback")
+      Logger.info("Handle #{callback_name} callback")
       handler.(message, chat)
     else
       Logger.warn("Unknown callback: #{callback_name}")
@@ -335,12 +380,11 @@ defmodule TGBot do
           chat.chat_id,
           time_to_show,
           @next_pair_task,
-          args: task_args,
-          unique_mark: @next_pair_task
+          args: task_args
         )
         case @scheduler.create_task(task) do
           {:ok, _} -> Logger.info("Schedule send next pair task")
-          {:error, _} -> Logger.info("Send next pair task already created")
+          _ -> nil
         end
         chat
       else
@@ -419,24 +463,25 @@ defmodule TGBot do
   end
 
   @spec handle_get_top_callback(Callback.t, Chat.t) :: Chat.t
-  defp handle_get_top_callback(message, chat) do
+  defp handle_get_top_callback(_message, chat) do
     #    @messenger.delete_attached_keyboard(message.chat_id, message.parent_msg_id)
-    callback_args = Callback.get_args(message)
-    girl_offset = case Integer.parse(callback_args) do
-      {offset, ""} -> offset
-      _ -> raise "Non-int arg for get top callback: #{callback_args}"
-    end
-    if chat.current_top_offset == girl_offset - 1 do
-      chat = send_girl_from_top(chat, girl_offset)
-      @messenger.answer_callback(message.callback_id)
-      chat
-    else
-      @messenger.send_notification(
-        message.callback_id,
-        "Please, continue from the most recent girl."
-      )
-      chat
-    end
+    #    callback_args = Callback.get_args(message)
+    #    girl_offset = case Integer.parse(callback_args) do
+    #      {offset, ""} -> offset
+    #      _ -> raise "Non-int arg for get top callback: #{callback_args}"
+    #    end
+    #    if chat.current_top_offset == girl_offset - 1 do
+    #      chat = send_girl_from_top(chat, girl_offset)
+    #      @messenger.answer_callback(message.callback_id)
+    #      chat
+    #    else
+    #      @messenger.send_notification(
+    #        message.callback_id,
+    #        "Please, continue from the most recent girl."
+    #      )
+    #      chat
+    #    end
+    chat
   end
 
   @spec send_girl_from_top(Chat.t, integer) :: Chat.t
