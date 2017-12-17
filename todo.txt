@@ -1,11 +1,8 @@
 3. add pools
 4. replace polling by webhooks
 5. add request_id
-10. add ecto migrations
 11. scale coefficient depending on number of matches or and current rating
 20. think about webview based top page
-22. add proper tg timeout logging
-24. add voting timeout chat setting
 25. return callback top implementation
 26. choose callback or buttons depending on size of the chat
 27. add photo verification
