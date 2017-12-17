@@ -9,13 +9,14 @@ defmodule Scheduler.Impls.Mongo do
 
   @spec child_spec :: tuple
   def child_spec do
-    options = [name: @process_name] ++ Application.get_env(:tg_bot, :mongo_scheduler)
+    options = [name: @process_name, pool: DBConnection.Poolboy] ++
+              Application.get_env(:tg_bot, :mongo_scheduler)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :scheduler})
   end
 
   @spec create_task(Task.t) :: {:ok, Task.t} | {:error, String.t}
   def create_task(task) do
-    insert_result = Mongo.insert_one(@process_name, @collection, task)
+    insert_result = Mongo.insert_one(@process_name, @collection, task, pool: DBConnection.Poolboy)
     case insert_result do
       {:ok, _} ->
         {:ok, task}
@@ -33,14 +34,20 @@ defmodule Scheduler.Impls.Mongo do
       @collection,
       %{chat_id: task.chat_id, name: task.name},
       task_data,
-      upsert: true
+      upsert: true,
+      pool: DBConnection.Poolboy
     )
     task
   end
 
   @spec delete_task(integer, String.t) :: :ok
   def delete_task(chat_id, name) do
-    Mongo.delete_one!(@process_name, @collection, %{chat_id: chat_id, name: name})
+    Mongo.delete_one!(
+      @process_name,
+      @collection,
+      %{chat_id: chat_id, name: name},
+      pool: DBConnection.Poolboy
+    )
     :ok
   end
 
@@ -57,7 +64,8 @@ defmodule Scheduler.Impls.Mongo do
            },
            sort: %{
              do_at: 1
-           }
+           },
+           pool: DBConnection.Poolboy
          ) do
       {:ok, row} -> transform_task(row)
       {:error, error} -> raise  error

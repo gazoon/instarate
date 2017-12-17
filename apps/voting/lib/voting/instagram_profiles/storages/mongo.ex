@@ -13,13 +13,14 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
 
   @spec child_spec :: tuple
   def child_spec do
-    options = [name: @process_name] ++ Application.get_env(:voting, :mongo_profiles)
+    options = [name: @process_name, pool: DBConnection.Poolboy] ++
+              Application.get_env(:voting, :mongo_profiles)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :profiles})
   end
 
   @spec add(Profile.t) :: {:ok, Profile.t} | {:error, String.t}
   def add(girl) do
-    insert_result = Mongo.insert_one(@process_name, @collection, girl)
+    insert_result = Mongo.insert_one(@process_name, @collection, girl, pool: DBConnection.Poolboy)
     case insert_result do
       {:ok, _} ->
         {:ok, girl}
@@ -31,7 +32,12 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
 
   @spec get(String.t) :: Profile.t
   def get(username) do
-    row = Mongo.find_one(@process_name, @collection, %{username: username})
+    row = Mongo.find_one(
+      @process_name,
+      @collection,
+      %{username: username},
+      pool: DBConnection.Poolboy
+    )
     if row, do: transform_profile(row), else: raise "Profile #{username} not found"
   end
 
@@ -44,7 +50,8 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
         username: %{
           "$in" => usernames
         }
-      }
+      },
+      pool: DBConnection.Poolboy
     )
     Enum.map(rows, &transform_profile/1)
   end

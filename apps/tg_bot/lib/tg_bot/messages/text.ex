@@ -52,6 +52,8 @@ defmodule TGBot.Messages.Text do
 
   @spec get_command_arg(TextMessage.t) :: String.t | nil
   def get_command_arg(message) do
-    List.last(String.split(message.text, " "))
+    tokens = String.split(message.text, " ")
+    [_ | args] = tokens
+    List.last(args)
   end
 end

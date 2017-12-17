@@ -248,9 +248,17 @@ defmodule TGBot do
   @spec handle_add_girl_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
-    case Voting.add_girl(photo_link) do
-      {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
-      {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
+    if photo_link do
+      case Voting.add_girl(photo_link) do
+        {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
+        {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
+      end
+    else
+      @messenger.send_text(
+        message.chat_id,
+        "Please send me a link\naddGirl@InstaRateBot <photo_link>",
+        disable_web_page_preview: true
+      )
     end
     chat
   end
@@ -338,11 +346,11 @@ defmodule TGBot do
     And also another type of commands, with an additional input:
 
     addGirl@InstaRateBot <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. For example:
-    addGirl@InstaRateBot https://www.instagram.com/p/BcPqz6sFMbb/
+    addGirl@InstaRateBot <photo_link>
 
     girlInfo@InstaRateBot <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
-    girlInfo@InstaRateBot https://www.instagram.com/svetabily/
-    girlInfo@InstaRateBot svetabily
+    girlInfo@InstaRateBot <username>
+    girlInfo@InstaRateBot <profile_link>
 
     votingTimeout@InstaRateBot <timeout> - Set the time, I will wait before sendind a new girls pair. In seconds, minimum - 5 seconds.
     votingTimeout@InstaRateBot 10
@@ -375,9 +383,17 @@ defmodule TGBot do
   @spec handle_get_girl_info_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_get_girl_info_cmd(message, chat) do
     girl_link = TextMessage.get_command_arg(message)
-    case Voting.get_girl(chat.competition, girl_link) do
-      {:ok, girl} -> display_girl_info(message.chat_id, girl)
-      {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
+    if girl_link do
+      case Voting.get_girl(chat.competition, girl_link) do
+        {:ok, girl} -> display_girl_info(message.chat_id, girl)
+        {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
+      end
+    else
+      @messenger.send_text(
+        message.chat_id,
+        "Please send me a username\ngirlInfo@InstaRateBot <username>",
+        disable_web_page_preview: true
+      )
     end
     chat
   end

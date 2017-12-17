@@ -7,13 +7,19 @@ defmodule TGBot.Chats.Storages.Mongo do
 
   @spec child_spec :: tuple
   def child_spec do
-    options = [name: @process_name] ++ Application.get_env(:tg_bot, :mongo_chats)
+    options = [name: @process_name, pool: DBConnection.Poolboy] ++
+              Application.get_env(:tg_bot, :mongo_chats)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :chats})
   end
 
   @spec get(integer) :: Chat.t | nil
   def get(chat_id) do
-    row = Mongo.find_one(@process_name, @collection, %{chat_id: chat_id})
+    row = Mongo.find_one(
+      @process_name,
+      @collection,
+      %{chat_id: chat_id},
+      pool: DBConnection.Poolboy
+    )
     transform_chat(row)
   end
 
@@ -28,7 +34,8 @@ defmodule TGBot.Chats.Storages.Mongo do
       @collection,
       %{chat_id: chat.chat_id},
       chat_data,
-      upsert: true
+      upsert: true,
+      pool: DBConnection.Poolboy
     )
     chat
   end

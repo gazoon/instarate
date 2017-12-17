@@ -26,6 +26,7 @@ defmodule TgBot.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:poolboy, ">= 0.0.0"},
       {:poison, "~> 3.1"},
       {:uuid, "~> 1.1"},
       {:nadia, git: "https://github.com/gazoon/nadia.git"},

@@ -14,8 +14,11 @@ defmodule TGBot.Queue.Reader do
     Task.Supervisor.start_child(
       :message_workers_supervisor,
       fn ->
-        TGBot.on_message(message)
-        @queue.finish_processing(processing_id)
+        try do
+          TGBot.on_message(message)
+        after
+          @queue.finish_processing(processing_id)
+        end
       end
     )
   end

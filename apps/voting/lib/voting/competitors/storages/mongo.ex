@@ -13,7 +13,8 @@ defmodule Voting.Competitors.Storages.Mongo do
 
   @spec child_spec :: tuple
   def child_spec do
-    options = [name: @process_name] ++ Application.get_env(:voting, :mongo_girls)
+    options = [name: @process_name, name: DBConnection.Poolboy] ++
+              Application.get_env(:voting, :mongo_girls)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :girls})
   end
 
@@ -28,14 +29,20 @@ defmodule Voting.Competitors.Storages.Mongo do
           rating: -1
         },
         limit: number,
-        skip: offset
+        skip: offset,
+        name: DBConnection.Poolboy
       )
     )
   end
 
   @spec get_girls_number(String.t) :: integer
   def get_girls_number(competition) do
-    Mongo.count!(@process_name, @collection, %{competition: competition})
+    Mongo.count!(
+      @process_name,
+      @collection,
+      %{competition: competition},
+      name: DBConnection.Poolboy
+    )
   end
 
   @spec get_girl(String.t, String.t) :: {:ok, Competitor.t} | {:error, String.t}
@@ -43,7 +50,8 @@ defmodule Voting.Competitors.Storages.Mongo do
     row = Mongo.find_one(
       @process_name,
       @collection,
-      %{competition: competition, username: username}
+      %{competition: competition, username: username},
+      name: DBConnection.Poolboy
     )
     if row do
       {:ok, transform_girl(row)}
@@ -63,7 +71,8 @@ defmodule Voting.Competitors.Storages.Mongo do
         rating: %{
           "$gt" => rating
         }
-      }
+      },
+      name: DBConnection.Poolboy
     )
     length(ratings)
   end
@@ -81,14 +90,15 @@ defmodule Voting.Competitors.Storages.Mongo do
           wins: girl.wins,
           loses: girl.loses,
         }
-      }
+      },
+      name: DBConnection.Poolboy
     )
     girl
   end
 
   @spec add_girl(Competitor.t) :: Competitor.t
   def add_girl(girl) do
-    insert_result = Mongo.insert_one(@process_name, @collection, girl)
+    insert_result = Mongo.insert_one(@process_name, @collection, girl, name: DBConnection.Poolboy)
     case insert_result do
       {:ok, _} -> girl
       {:error, error} -> raise error
@@ -121,7 +131,8 @@ defmodule Voting.Competitors.Storages.Mongo do
               size: 2
             }
           }
-        ]
+        ],
+        name: DBConnection.Poolboy
       )
     )
 

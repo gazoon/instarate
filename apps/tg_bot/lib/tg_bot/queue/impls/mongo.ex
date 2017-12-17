@@ -14,7 +14,7 @@ defmodule TGBot.Queue.Impls.Mongo do
     db_config = @config
                 |> Keyword.delete(:collection)
                 |> Keyword.delete(:max_processing_time)
-    options = [name: @process_name] ++ db_config
+    options = [name: @process_name, pool: DBConnection.Poolboy] ++ db_config
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :queue})
   end
 
@@ -43,7 +43,8 @@ defmodule TGBot.Queue.Impls.Mongo do
                msgs: message_envelope
              }
            },
-           upsert: true
+           upsert: true,
+           pool: DBConnection.Poolboy
          ) do
       {:error, error = %Mongo.Error{code: code}} when code != @duplication_code -> raise error
       _ -> nil
@@ -82,7 +83,8 @@ defmodule TGBot.Queue.Impls.Mongo do
                msgs: -1
              }
            },
-           sort: "msgs.0.created_at"
+           sort: "msgs.0.created_at",
+           pool: DBConnection.Poolboy
          ) do
       {:ok, nil} -> nil
       {:ok, %{"msgs" => []}} ->
@@ -99,7 +101,8 @@ defmodule TGBot.Queue.Impls.Mongo do
     result = Mongo.delete_one!(
       @process_name,
       @collection,
-      %{"msgs" => [], "processing.id" => processing_id}
+      %{"msgs" => [], "processing.id" => processing_id},
+      pool: DBConnection.Poolboy
     )
     if result.deleted_count == 0 do
       Mongo.update_one!(
@@ -110,7 +113,8 @@ defmodule TGBot.Queue.Impls.Mongo do
           "$unset" => %{
             processing: ""
           }
-        }
+        },
+        pool: DBConnection.Poolboy
       )
     end
   end
