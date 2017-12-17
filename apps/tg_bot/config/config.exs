@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :tg_bot,
-       bot_name: "Instatop",
-       bot_username: "InstaToppBot",
+       bot_name: "InstaRate",
+       bot_username: "InstaRateBot",
        mongo_chats: [
          database: "local",
          host: "localhost",

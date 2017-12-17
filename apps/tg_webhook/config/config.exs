@@ -28,7 +28,7 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
-config :nadia, token: "486613348:AAF04zCRRzKLr0fxSWG2ykKsmGlCQtXLWvU"
+config :nadia, token: "501332340:AAGMi61i2NEYAJR6-GnqwHAE5MYpBKwOjo0"
 
 config :tg_webhook, TGWebhook.Poller,
        queue: TGBot.Queue.Impls.Mongo

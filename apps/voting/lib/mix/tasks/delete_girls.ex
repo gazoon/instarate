@@ -24,7 +24,7 @@ defmodule Mix.Tasks.DeleteGirls do
         }
       }
     )
-    Logger.error("Deleted girls: #{inspect usernames}")
+    Logger.info("Deleted girls: #{inspect usernames}")
   end
 end
 

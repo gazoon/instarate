@@ -162,13 +162,12 @@ defmodule TGBot do
 
   @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
   defp handle_regular_message(message, chat) do
-    if !String.contains?(message.text, " ") do
-      photo_link = message.text
-      case Voting.add_girl(photo_link) do
-        {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
-        _ -> nil
-      end
+    photo_links = String.split(message.text, "\n")
+    functions = for photo_link <- photo_links do
+      fn -> Voting.add_girl(photo_link) end
     end
+    Utils.parallelize_tasks(functions)
+    @messenger.send_text(chat.chat_id, "All girls were processed")
     chat
   end
 
@@ -320,33 +319,33 @@ defmodule TGBot do
     Just select which of two girls looks better and vote by pressing a button below.
     I support following commands:
 
-    /start - Get the next girls pair to compare.
+    /start@InstaRateBot - Get the next girls pair to compare.
 
-    /showTop - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
+    /showTop@InstaRateBot - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
 
-    /celebritiesCompetition - You will vote and see only girls with 500k+ followers.
+    /celebritiesCompetition@InstaRateBot - You will vote and see only girls with 500k+ followers.
 
-    /normalCompetition - You will vote and see girls who have less than 500k followers
+    /normalCompetition@InstaRateBot - You will vote and see girls who have less than 500k followers
 
-    /globalCompetition - You will vote for all girls, it's a default option.
+    /globalCompetition@InstaRateBot - You will vote for all girls, it's a default option.
 
-    /enableActivation - Let me daily send you a new girls pair, just in case you forgot about me.
+    /enableActivation@InstaRateBot - Let me daily send you a new girls pair, just in case you forgot about me.
 
-    /disableActivation - Disable daily new match sending. By default it's enabled.
+    /disableActivation@InstaRateBot - Disable daily new match sending. By default it's enabled.
 
-    /help - Show this message.
+    /help@InstaRateBot - Show this message.
 
     And also another type of commands, with an additional input:
 
-    addGirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. For example:
-    addGirl https://www.instagram.com/p/BcPqz6sFMbb/
+    addGirl@InstaRateBot <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. For example:
+    addGirl@InstaRateBot https://www.instagram.com/p/BcPqz6sFMbb/
 
-    girlInfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
-    girlInfo https://www.instagram.com/svetabily/
-    girlInfo svetabily
+    girlInfo@InstaRateBot <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
+    girlInfo@InstaRateBot https://www.instagram.com/svetabily/
+    girlInfo@InstaRateBot svetabily
 
-    votingTimeout <timeout> - Set the time, I will wait before sendind a new girls pair. In seconds, minimum - 5 seconds.
-    votingTimeout 10
+    votingTimeout@InstaRateBot <timeout> - Set the time, I will wait before sendind a new girls pair. In seconds, minimum - 5 seconds.
+    votingTimeout@InstaRateBot 10
 
     Some notes:
     In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.

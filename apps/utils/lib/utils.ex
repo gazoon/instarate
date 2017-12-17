@@ -22,4 +22,10 @@ defmodule Utils do
     |> Enum.map(fn ({k, v}) -> {String.to_atom(k), v} end)
     |> Map.new()
   end
+
+  @spec parallelize_tasks([(() -> any)]) :: [any]
+  def parallelize_tasks(functions) do
+    tasks = Enum.map(functions, &Task.async/1)
+    Enum.map(tasks, &Task.await/1)
+  end
 end
