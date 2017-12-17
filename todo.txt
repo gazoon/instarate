@@ -1,4 +1,3 @@
-3. add pools
 4. replace polling by webhooks
 5. add request_id
 11. scale coefficient depending on number of matches or and current rating

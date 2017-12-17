@@ -63,20 +63,22 @@ defmodule TGBot do
 
   @spec process_message(Message.t, ((Message.t, Chat.t) -> Chat.t)) :: any
   def process_message(message, handler) do
-    chat = get_chat(message)
+    {chat, is_new} = get_chat(message)
     chat_after_processing = handler.(message, chat)
-    if chat_after_processing != chat do
+    if chat_after_processing != chat || is_new do
       Logger.info("Save updated chat info")
       @chats_storage.save(chat_after_processing)
     end
   end
 
-  @spec get_chat(Message.t) :: Chat.t
+  @spec get_chat(Message.t) :: {Chat.t, boolean}
   defp get_chat(message) do
     chat_id = Message.chat_id(message)
     case @chats_storage.get(chat_id) do
-      nil -> Chat.new(chat_id)
-      chat -> chat
+      nil ->
+        members_count = @messenger.get_chat_members_number(chat_id) - 1
+        {Chat.new(chat_id, members_count), true}
+      chat -> {chat, false}
     end
   end
 

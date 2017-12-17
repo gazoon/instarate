@@ -25,6 +25,14 @@ defmodule TGBot.Messengers.NadiaLib do
     )
   end
 
+  @spec get_chat_members_number(integer) :: integer
+  def get_chat_members_number(chat_id) do
+    case Nadia.get_chat_members_count(chat_id) do
+      {:ok, number} -> number
+      {:error, error} -> raise error
+    end
+  end
+
   @spec send_photo(integer, binary, Keyword.t) :: integer
   def send_photo(chat_id, photo, opts \\ []) do
     opts = transform_opts(opts)

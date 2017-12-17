@@ -23,6 +23,7 @@ defmodule TGBot.Chats.Chat do
 
   @type t :: %Chat{
                chat_id: integer,
+               members_number: integer,
                current_top_offset: integer,
                last_match: Match.t,
                created_at: integer,
@@ -31,6 +32,7 @@ defmodule TGBot.Chats.Chat do
                voting_timeout: integer,
              }
   defstruct chat_id: nil,
+            members_number: nil,
             current_top_offset: 0,
             last_match: nil,
             created_at: nil,
@@ -38,8 +40,13 @@ defmodule TGBot.Chats.Chat do
             self_activation_allowed: true,
             voting_timeout: 5
 
-  @spec new(integer) :: Chat.t
-  def new(chat_id) do
-    %Chat{chat_id: chat_id, created_at: Utils.timestamp(), competition: Voting.global_competition()}
+  @spec new(integer, integer) :: Chat.t
+  def new(chat_id, members_number) do
+    %Chat{
+      chat_id: chat_id,
+      members_number: members_number,
+      created_at: Utils.timestamp(),
+      competition: Voting.global_competition()
+    }
   end
 end
