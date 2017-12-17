@@ -8,7 +8,6 @@ defmodule TGBot do
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
   alias Voting.Girl
-  alias Voting.InstagramProfiles.Model, as: InstagramProfile
 
   @start_cmd "start"
   @add_girl_cmd "addGirl"
@@ -24,6 +23,8 @@ defmodule TGBot do
   @enable_daily_activation_cmd "enableActivation"
   @disable_daily_activation_cmd "disableActivation"
   @set_voting_timeout_cmd "votingTimeout"
+  @delete_girls_cmd "deleteGirls"
+
   @min_voting_timeout 5
 
   @vote_callback "vt"
@@ -41,6 +42,7 @@ defmodule TGBot do
   @chats_storage @config[:chats_storage]
   @messenger @config[:messenger]
   @scheduler @config[:scheduler]
+  @admins @config[:admins]
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
@@ -147,6 +149,7 @@ defmodule TGBot do
       {@enable_daily_activation_cmd, &handle_enable_activation_cmd/2},
       {@disable_daily_activation_cmd, &handle_disable_activation_cmd/2},
       {@set_voting_timeout_cmd, &handle_set_voting_timeout_cmd/2},
+      {@delete_girls_cmd, &handle_delete_girls_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -248,12 +251,28 @@ defmodule TGBot do
     end
   end
 
+  @spec handle_delete_girls_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_delete_girls_cmd(message, chat) do
+    girl_uris = TextMessage.get_command_args(message)
+    if Enum.member?(@admins, message.user.id) do
+      Voting.delete_girls(girl_uris)
+      @messenger.send_text(message.chat_id, "Girls were deleted")
+    else
+      Logger.warn("Non-admin user #{message.user.id} tried to delete girls")
+    end
+    chat
+  end
+
   @spec handle_add_girl_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
     if photo_link do
       case Voting.add_girl(photo_link) do
-        {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
+        {:ok, girl} ->
+          profile_url = Girl.get_profile_url(girl)
+          text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
+          @messenger.send_markdown(message.chat_id, text)
+
         {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
       end
     else
@@ -264,13 +283,6 @@ defmodule TGBot do
       )
     end
     chat
-  end
-
-  @spec send_girl_added_message(integer, InstagramProfile.t) :: any
-  defp send_girl_added_message(chat_id, girl) do
-    profile_url = Girl.get_profile_url(girl)
-    text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
-    @messenger.send_markdown(chat_id, text)
   end
 
   @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t

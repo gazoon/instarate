@@ -4,4 +4,5 @@ defmodule Voting.InstagramProfiles.Storage do
   @callback add(profile :: Profile) :: {:ok, Profile.t | :error, String.t}
   @callback get(username :: String.t) :: Profile.t
   @callback get_multiple(usernames :: [String.t]) :: [Profile.t]
+  @callback delete(usernames :: [String.t]) :: :ok
 end

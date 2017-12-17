@@ -68,6 +68,14 @@ defmodule Voting do
     end
   end
 
+  @spec delete_girls([String.t]) :: :ok
+  def delete_girls(girl_uris) do
+    usernames = Enum.map(girl_uris, &InstagramClient.parse_username/1)
+    @girls_storage.delete_girls(usernames)
+    @profiles_storage.delete(usernames)
+    :ok
+  end
+
   @spec get_top(String.t, integer, [offset: integer]) :: [Girl.t]
   def get_top(competition, number, opts \\ []) do
     offset = Keyword.get(opts, :offset, 0)

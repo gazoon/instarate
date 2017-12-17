@@ -24,8 +24,6 @@ config :voting,
        Voting.Girl,
        storage: Voting.Competitors.Storages.Mongo
 
-config :utils, Instagram.Client, Instagram.Clients.Http
-
 config :voting,
        mongo_girls: [
          database: "local",
@@ -58,4 +56,5 @@ config :voting,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
+
 import_config "#{Mix.env}.exs"

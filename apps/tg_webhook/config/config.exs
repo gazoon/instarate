@@ -32,3 +32,5 @@ config :nadia, token: "501332340:AAGMi61i2NEYAJR6-GnqwHAE5MYpBKwOjo0"
 
 config :tg_webhook, TGWebhook.Poller,
        queue: TGBot.Queue.Impls.Mongo
+
+import_config "#{Mix.env}.exs"

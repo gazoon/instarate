@@ -8,6 +8,7 @@ defmodule TGBot.Pictures do
 
   @spec concatenate(String.t, String.t) :: String.t
   def concatenate(left_picture, right_picture) do
+    Logger.info("Concatenate #{left_picture} and #{right_picture}")
     {left_picture, right_picture} = ensure_same_height(left_picture, right_picture)
     try do
       result_file_path = new_tmp_file_path()

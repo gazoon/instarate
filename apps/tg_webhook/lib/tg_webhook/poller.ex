@@ -62,7 +62,6 @@ defmodule TGWebhook.Poller do
   end
 
   defp process_update(update) do
-
     Logger.info("Receive update #{inspect update}")
     bot_message = cond do
       update.message != nil && update.message.text != nil ->

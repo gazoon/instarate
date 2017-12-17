@@ -9,7 +9,7 @@ defmodule Voting.Voters.Storages.Mongo do
 
   @spec child_spec :: tuple
   def child_spec do
-    options = [name: @process_name, name: DBConnection.Poolboy] ++
+    options = [name: @process_name, pool: DBConnection.Poolboy] ++
               Application.get_env(:voting, :mongo_voters)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :voters})
   end
@@ -26,7 +26,7 @@ defmodule Voting.Voters.Storages.Mongo do
         voter: voter_id,
         girls_id: girls_id
       },
-      name: DBConnection.Poolboy
+      pool: DBConnection.Poolboy
     )
     case insert_result do
       {:ok, _} -> :ok
@@ -47,7 +47,7 @@ defmodule Voting.Voters.Storages.Mongo do
       @process_name,
       @collection,
       %{competition: competition, voters_group: voters_group_id, girls_id: girls_id},
-      name: DBConnection.Poolboy
+      pool: DBConnection.Poolboy
     )
     !row
   end

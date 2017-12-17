@@ -12,4 +12,5 @@ defmodule Voting.Competitors.Storage do
   @callback get_higher_ratings_number(competition :: String.t, rating :: integer) :: integer
   @callback update_girl(girl :: Competitor.t) :: Competitor.t
   @callback add_girl(girl :: Competitor.t) :: Competitor.t
+  @callback delete_girls(usernames :: [String.t]) :: :ok
 end

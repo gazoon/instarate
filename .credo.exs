@@ -76,7 +76,7 @@
         {Credo.Check.Design.TagFIXME},
 
         {Credo.Check.Readability.FunctionNames},
-        {Credo.Check.Readability.LargeNumbers, only_greater_than: 50_000},
+        {Credo.Check.Readability.LargeNumbers, false},
         {Credo.Check.Readability.MaxLineLength, false},
         {Credo.Check.Readability.ModuleAttributeNames},
         {Credo.Check.Readability.ModuleDoc, false},

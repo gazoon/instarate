@@ -41,6 +41,21 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
     if row, do: transform_profile(row), else: raise "Profile #{username} not found"
   end
 
+  @spec delete([String.t]) :: :ok
+  def delete(usernames) do
+    row = Mongo.delete_many!(
+      @process_name,
+      @collection,
+      %{
+        username: %{
+          "$in" => usernames
+        }
+      },
+      pool: DBConnection.Poolboy
+    )
+    :ok
+  end
+
   @spec get_multiple([String.t]) :: [Profile.t]
   def get_multiple(usernames) do
     rows = Mongo.find(

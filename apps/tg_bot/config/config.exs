@@ -24,7 +24,8 @@ config :tg_bot,
 config :tg_bot, TGBot,
        chats_storage: TGBot.Chats.Storages.Mongo,
        messenger: TGBot.Messengers.NadiaLib,
-       scheduler: Scheduler.Impls.Mongo
+       scheduler: Scheduler.Impls.Mongo,
+       admins: [231193206, 309370324]
 
 config :tg_bot, Scheduler.Reader,
        tasks_storage: Scheduler.Impls.Mongo,
@@ -33,3 +34,7 @@ config :tg_bot, Scheduler.Reader,
 config :tg_bot, TGBot.Queue.Reader,
        queue: TGBot.Queue.Impls.Mongo,
        fetch_delay: 100
+
+config :nadia, token: "501332340:AAGMi61i2NEYAJR6-GnqwHAE5MYpBKwOjo0"
+
+import_config "#{Mix.env}.exs"
