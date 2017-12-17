@@ -367,19 +367,23 @@ defmodule TGBot do
 
   @spec handle_global_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_global_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see all girls")
+    @messenger.send_text(chat.chat_id, "Now you see all girls", static_keyboard: :remove)
     %Chat{chat | competition: Voting.global_competition()}
   end
 
   @spec handle_celebrities_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_celebrities_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see only celebrity-level girls")
+    @messenger.send_text(
+      chat.chat_id,
+      "Now you see only celebrity-level girls",
+      static_keyboard: :remove
+    )
     %Chat{chat | competition: Voting.celebrities_competition()}
   end
 
   @spec handle_normal_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_normal_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see only ordinary girls")
+    @messenger.send_text(chat.chat_id, "Now you see only ordinary girls", static_keyboard: :remove)
     %Chat{chat | competition: Voting.normal_competition()}
   end
 
