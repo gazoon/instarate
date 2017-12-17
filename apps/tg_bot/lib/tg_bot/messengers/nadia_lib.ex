@@ -7,13 +7,11 @@ defmodule TGBot.Messengers.NadiaLib do
 
   @spec send_text(integer, String.t, Keyword.t) :: integer
   def send_text(chat_id, text, opts \\ []) do
-    opts = transform_opts(opts)
     send_message(chat_id, text, opts)
   end
 
   @spec send_markdown(integer, String.t, Keyword.t) :: integer
   def send_markdown(chat_id, text, opts \\ []) do
-    opts = transform_opts(opts)
     send_message(
       chat_id,
       text,
@@ -131,7 +129,9 @@ defmodule TGBot.Messengers.NadiaLib do
   end
 
   @spec send_message(integer, String.t, Keyword.t) :: integer
-  defp send_message(chat_id, text, opts \\ []) do
+  defp send_message(chat_id, text, opts) do
+    opts = transform_opts(opts)
+
     case Nadia.send_message(chat_id, text, opts) do
       {:error, error} -> raise error
       {:ok, msg} -> msg.message_id

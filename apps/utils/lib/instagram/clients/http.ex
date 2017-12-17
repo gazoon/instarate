@@ -7,6 +7,7 @@ defmodule Instagram.Clients.Http do
   @api_url "https://www.instagram.com/"
   @media_path "p/"
   @magic_suffix "/?__a=1"
+  @http_pool_name :instagram_api
 
   @spec get_media_info(String.t) :: {:ok, Media.t} | {:error, String.t}
   def get_media_info(media_code) do
@@ -26,7 +27,13 @@ defmodule Instagram.Clients.Http do
   @spec get_followers_number(String.t) :: integer
   def get_followers_number(username) do
     profile_url = @api_url <> username <> @magic_suffix
-    resp = HTTPoison.get!(profile_url)
+    resp = HTTPoison.get!(
+      profile_url,
+      [],
+      hackney: [
+        pool: @http_pool_name
+      ]
+    )
     if resp.status_code == 404 do
       raise "Instagram profile #{username} not found"
     end
@@ -98,7 +105,13 @@ defmodule Instagram.Clients.Http do
   @spec request_media(String.t) :: {:ok, map()} | {:error, String.t}
   defp request_media(media_code) do
     media_url = @api_url <> @media_path <> media_code <> @magic_suffix
-    resp = HTTPoison.get!(media_url)
+    resp = HTTPoison.get!(
+      media_url,
+      [],
+      hackney: [
+        pool: @http_pool_name
+      ]
+    )
     if resp.status_code == 404 do
       {:error, "It's a private account or the media doesn't exist"}
     else
