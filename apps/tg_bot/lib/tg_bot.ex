@@ -56,6 +56,7 @@ defmodule TGBot do
       {message_cls, handler_func} ->
         message = message_cls.from_data(message_data)
         process_message(message, handler_func)
+        Logger.info("Finish message processing")
       nil -> Logger.error("Unsupported message type: #{message_type}")
     end
   end

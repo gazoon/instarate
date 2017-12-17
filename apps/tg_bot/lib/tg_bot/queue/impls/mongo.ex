@@ -8,6 +8,7 @@ defmodule TGBot.Queue.Impls.Mongo do
   @config Application.get_env(:tg_bot, :mongo_queue)
   @collection @config[:collection]
   @max_processing_time @config[:max_processing_time]
+  require Logger
 
   @spec child_spec :: tuple
   def child_spec do
@@ -87,11 +88,16 @@ defmodule TGBot.Queue.Impls.Mongo do
            pool: DBConnection.Poolboy
          ) do
       {:ok, nil} -> nil
-      {:ok, %{"msgs" => []}} ->
-        finish_processing(processing_id)
-        nil
       {:ok, doc} ->
-        {List.first(doc["msgs"])["payload"], processing_id}
+        if doc["processing"]["started_at"] < current_time - @max_processing_time do
+          Logger.warn("Processin for chat #{doc["chat_id"]} took to long")
+        end
+        if doc["msgs"] != [] do
+          {List.first(doc["msgs"])["payload"], processing_id}
+        else
+          finish_processing(processing_id)
+          nil
+        end
       {:error, error} -> raise error
     end
   end
