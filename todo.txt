@@ -1,11 +1,10 @@
 4. replace polling by webhooks
-5. add request_id
 11. scale coefficient depending on number of matches or and current rating
 20. think about webview based top page
 25. return callback top implementation
 26. choose callback or buttons depending on size of the chat
 27. add photo verification
-28. add ban mechanism
+28. enhance ban mechanism
 29. add cities categories
 30. protect System.call in pictures generation
 31. add photos cache

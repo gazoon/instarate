@@ -3,7 +3,7 @@ defmodule TGBot do
   require Logger
   alias TGBot.Messages.Text, as: TextMessage
   alias TGBot.Messages.Callback, as: Callback
-  alias TGBot.Messages.Task
+  alias TGBot.Messages.Task, as: TaskMessage
   alias TGBot.Messages.User, as: MessageUser
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
@@ -51,7 +51,7 @@ defmodule TGBot do
     message_info = case message_type do
       :text -> {TextMessage, &on_text_message/2}
       :callback -> {Callback, &on_callback/2}
-      :task -> {Task, &on_task/2}
+      :task -> {TaskMessage, &on_task/2}
       _ -> nil
     end
     case message_info do
@@ -63,8 +63,15 @@ defmodule TGBot do
     end
   end
 
+  @spec initialize_context(Message.t) :: any
+  defp initialize_context(message) do
+    request_id = UUID.uuid4()
+    Logger.metadata([request_id: request_id, chat_id: message.chat_id])
+  end
+
   @spec process_message(Message.t, ((Message.t, Chat.t) -> Chat.t)) :: any
-  def process_message(message, handler) do
+  defp process_message(message, handler) do
+    initialize_context(message)
     {chat, is_new} = get_chat(message)
     chat_after_processing = handler.(message, chat)
     if chat_after_processing != chat || is_new do
@@ -84,7 +91,7 @@ defmodule TGBot do
     end
   end
 
-  @spec on_task(Task.t, Chat.t) :: Chat.t
+  @spec on_task(TaskMessage.t, Chat.t) :: Chat.t
   defp on_task(task, chat)  do
     handler = case task.name do
       @next_pair_task -> &handle_next_pair_task/2
@@ -100,7 +107,7 @@ defmodule TGBot do
     end
   end
 
-  @spec handle_next_pair_task(Task.t, Chat.t) :: Chat.t
+  @spec handle_next_pair_task(TaskMessage.t, Chat.t) :: Chat.t
   defp handle_next_pair_task(task, chat) do
     task_match_message_id = task.args.last_match_message_id
     actual_match_message_id = chat.last_match.message_id
@@ -115,7 +122,7 @@ defmodule TGBot do
     end
   end
 
-  @spec handle_daily_activation_task(Task.t, Chat.t) :: Chat.t
+  @spec handle_daily_activation_task(TaskMessage.t, Chat.t) :: Chat.t
   defp handle_daily_activation_task(_task, chat) do
     send_next_girls_pair(chat, message_before: "Hi! don't you mind to vote?")
   end
@@ -243,7 +250,7 @@ defmodule TGBot do
   defp schedule_daily_activation(chat) do
     if chat.self_activation_allowed do
       time_to_activate = Utils.timestamp_milliseconds() + 24 * 60 * 60 * 1000 - @session_duration
-      task = Task.new(chat.chat_id, time_to_activate, @daily_activation_task)
+      task = TaskMessage.new(chat.chat_id, time_to_activate, @daily_activation_task)
       @scheduler.create_or_replace_task(task)
       Logger.info("Schedule next day activation")
     else
@@ -455,7 +462,7 @@ defmodule TGBot do
       time_to_show = 1000 * chat.voting_timeout + chat.last_match.shown_at
       if time_to_show > Utils.timestamp_milliseconds() do
         task_args = %{last_match_message_id: chat.last_match.message_id}
-        task = Task.new(
+        task = TaskMessage.new(
           chat.chat_id,
           time_to_show,
           @next_pair_task,
