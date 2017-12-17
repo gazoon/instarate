@@ -8,6 +8,9 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
 
   @process_name :mongo_profiles
 
+  def process_name, do: @process_name
+  def collection, do: @collection
+
   @spec child_spec :: tuple
   def child_spec do
     options = [name: @process_name] ++ Application.get_env(:voting, :mongo_profiles)
