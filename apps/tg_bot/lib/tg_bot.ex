@@ -8,6 +8,7 @@ defmodule TGBot do
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
   alias Voting.Girl
+  alias Voting.InstagramProfiles.Model, as: InstagramProfile
 
   @start_cmd "start"
   @add_girl_cmd "addGirl"
@@ -154,9 +155,21 @@ defmodule TGBot do
       {command_name, handler} -> Logger.info("Handle #{command_name} command")
                                  handler.(message, chat)
       nil ->
-        Logger.info("Message #{message_text} doesn't contain commands")
-        chat
+        Logger.info("Message #{message_text} doesn't contain commands, handle as regular message")
+        handle_regular_message(message, chat)
     end
+  end
+
+  @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_regular_message(message, chat) do
+    if !String.contains?(message.text, " ") do
+      photo_link = message.text
+      case Voting.add_girl(photo_link) do
+        {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
+        _ -> nil
+      end
+    end
+    chat
   end
 
   @spec build_voter_id(MessageUser.t) :: String.t
@@ -237,13 +250,17 @@ defmodule TGBot do
   defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
     case Voting.add_girl(photo_link) do
-      {:ok, girl} ->
-        profile_url = Girl.get_profile_url(girl)
-        text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
-        @messenger.send_markdown(message.chat_id, text)
+      {:ok, girl} -> send_girl_added_message(message.chat_id, girl)
       {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
     end
     chat
+  end
+
+  @spec send_girl_added_message(integer, InstagramProfile.t) :: any
+  defp send_girl_added_message(chat_id, girl) do
+    profile_url = Girl.get_profile_url(girl)
+    text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
+    @messenger.send_markdown(chat_id, text)
   end
 
   @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -321,7 +338,7 @@ defmodule TGBot do
 
     And also another type of commands, with an additional input:
 
-    addGirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link of her instagram photo. The girl must have a public account. For example:
+    addGirl <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. For example:
     addGirl https://www.instagram.com/p/BcPqz6sFMbb/
 
     girlInfo <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
