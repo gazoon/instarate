@@ -19,9 +19,10 @@ defmodule TGBot do
   @right_vote_cmd "right"
   @global_competition_cmd "globalCompetition"
   @celebrities_competition_cmd "celebritiesCompetition"
+  @models_competition_cmd "modelsCompetition"
   @normal_competition_cmd "normalCompetition"
-  @enable_daily_activation_cmd "enableActivation"
-  @disable_daily_activation_cmd "disableActivation"
+  @enable_daily_activation_cmd "enableNotification"
+  @disable_daily_activation_cmd "disableNotification"
   @set_voting_timeout_cmd "votingTimeout"
   @delete_girls_cmd "deleteGirls"
 
@@ -152,6 +153,7 @@ defmodule TGBot do
       {@right_vote_cmd, &handle_right_vote_cmd/2},
       {@global_competition_cmd, &handle_global_competition_cmd/2},
       {@celebrities_competition_cmd, &handle_celebrities_competition_cmd/2},
+      {@models_competition_cmd, &handle_models_competition_cmd/2},
       {@normal_competition_cmd, &handle_normal_competition_cmd/2},
       {@enable_daily_activation_cmd, &handle_enable_activation_cmd/2},
       {@disable_daily_activation_cmd, &handle_disable_activation_cmd/2},
@@ -176,11 +178,15 @@ defmodule TGBot do
   @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
   defp handle_regular_message(message, chat) do
     photo_links = String.split(message.text, "\n")
-    functions = for photo_link <- photo_links do
-      fn -> Voting.add_girl(photo_link) end
+    case photo_links do
+      [photo_link] -> add_single_girl(message.chat_id, photo_link)
+      _ ->
+        functions = for photo_link <- photo_links do
+          fn -> Voting.add_girl(photo_link) end
+        end
+        Utils.parallelize_tasks(functions)
+        @messenger.send_text(chat.chat_id, "All girls were processed")
     end
-    Utils.parallelize_tasks(functions)
-    @messenger.send_text(chat.chat_id, "All girls were processed")
     chat
   end
 
@@ -274,14 +280,7 @@ defmodule TGBot do
   defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
     if photo_link do
-      case Voting.add_girl(photo_link) do
-        {:ok, girl} ->
-          profile_url = Girl.get_profile_url(girl)
-          text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
-          @messenger.send_markdown(message.chat_id, text)
-
-        {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
-      end
+      add_single_girl(message.chat_id, photo_link)
     else
       @messenger.send_text(
         message.chat_id,
@@ -290,6 +289,18 @@ defmodule TGBot do
       )
     end
     chat
+  end
+
+  @spec add_single_girl(integer, String.t) :: any
+  defp add_single_girl(chat_id, photo_link) do
+    case Voting.add_girl(photo_link) do
+      {:ok, girl} ->
+        profile_url = Girl.get_profile_url(girl)
+        text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
+        @messenger.send_markdown(chat_id, text)
+
+      {:error, error_msg} -> @messenger.send_text(chat_id, error_msg)
+    end
   end
 
   @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -355,13 +366,15 @@ defmodule TGBot do
 
     /celebritiesCompetition@InstaRateBot - You will vote and see only girls with 500k+ followers.
 
-    /normalCompetition@InstaRateBot - You will vote and see girls who have less than 500k followers
+    /modelsCompetition@InstaRateBot - You will vote and see girls with 10k - 500k followers
+
+    /normalCompetition@InstaRateBot - You will vote and see girls who have less than 10k followers
 
     /globalCompetition@InstaRateBot - You will vote for all girls, it's a default option.
 
-    /enableActivation@InstaRateBot - Let me daily send you a new girls pair, just in case you forgot about me.
+    /enableNotification@InstaRateBot - Let me daily send you a new girls pair, just in case you forgot about me.
 
-    /disableActivation@InstaRateBot - Disable daily new match sending. By default it's enabled.
+    /disableNotification@InstaRateBot - Disable daily new match sending. By default it's enabled.
 
     /help@InstaRateBot - Show this message.
 
@@ -398,6 +411,12 @@ defmodule TGBot do
       static_keyboard: :remove
     )
     %Chat{chat | competition: Voting.celebrities_competition()}
+  end
+
+  @spec handle_models_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_models_competition_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Now you see only models", static_keyboard: :remove)
+    %Chat{chat | competition: Voting.models_competition()}
   end
 
   @spec handle_normal_competition_cmd(TextMessage.t, Chat.t) :: Chat.t

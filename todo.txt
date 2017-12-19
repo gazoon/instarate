@@ -8,5 +8,6 @@
 29. add cities categories
 30. protect System.call in pictures generation
 31. add photos cache
+32. add localization
 
 

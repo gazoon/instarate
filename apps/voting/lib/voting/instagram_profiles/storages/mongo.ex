@@ -43,7 +43,7 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
 
   @spec delete([String.t]) :: :ok
   def delete(usernames) do
-    row = Mongo.delete_many!(
+    Mongo.delete_many!(
       @process_name,
       @collection,
       %{

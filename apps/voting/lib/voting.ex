@@ -14,14 +14,17 @@ defmodule Voting do
   @voters_storage @config[:voters_storage]
 
   @celebrities_competition "celebrities"
+  @models_competition "models"
   @normal_competition "normal"
   @global_competition "global"
-  @followers_threshold 500_000
+  @celebrity_followers_threshold 500_000
+  @model_followers_threshold 10_000
 
   @max_random_attempt 10
 
   def global_competition, do: @global_competition
   def normal_competition, do: @normal_competition
+  def models_competition, do: @models_competition
   def celebrities_competition, do: @celebrities_competition
 
   @spec add_girl(String.t) :: {:ok, Profile.t} | {:error, String.t}
@@ -158,8 +161,11 @@ defmodule Voting do
 
   @spec choose_competitions(integer) :: [String.t]
   defp choose_competitions(followers_number) do
-    competition_by_followers = if followers_number < @followers_threshold,
-                                  do: @normal_competition, else: @celebrities_competition
+    competition_by_followers = cond do
+      followers_number < @model_followers_threshold -> @normal_competition
+      followers_number < @celebrity_followers_threshold -> @models_competition
+      true -> @celebrities_competition
+    end
     [@global_competition, competition_by_followers]
   end
 end
