@@ -7,6 +7,7 @@ defmodule TGBot do
   alias TGBot.Messages.User, as: MessageUser
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
+  alias TGBot.MatchPhotoCache
   alias Voting.Girl
 
   @start_cmd "start"
@@ -44,6 +45,7 @@ defmodule TGBot do
   @messenger @config[:messenger]
   @scheduler @config[:scheduler]
   @admins @config[:admins]
+  @photos_cache @config[:photos_cache]
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
@@ -73,11 +75,17 @@ defmodule TGBot do
   @spec process_message(Message.t, ((Message.t, Chat.t) -> Chat.t)) :: any
   defp process_message(message, handler) do
     initialize_context(message)
-    {chat, is_new} = get_chat(message)
-    chat_after_processing = handler.(message, chat)
-    if chat_after_processing != chat || is_new do
-      Logger.info("Save updated chat info")
-      @chats_storage.save(chat_after_processing)
+    try do
+      {chat, is_new} = get_chat(message)
+      chat_after_processing = handler.(message, chat)
+      if chat_after_processing != chat || is_new do
+        Logger.info("Save updated chat info")
+        @chats_storage.save(chat_after_processing)
+      end
+    rescue
+      error ->
+        Logger.error(Exception.format(:error, error))
+        raise error
     end
   end
 
@@ -209,46 +217,67 @@ defmodule TGBot do
   defp send_next_girls_pair(chat, opts \\ []) do
     voters_group_id = build_voters_group_id(chat.chat_id)
     {girl_one, girl_two} = Voting.get_next_pair(chat.competition, voters_group_id)
-    girl_one_url = Girl.get_profile_url(girl_one)
-    girl_two_url = Girl.get_profile_url(girl_two)
-
-    match_photo = Pictures.concatenate(girl_one.photo, girl_two.photo)
-
+    tg_file_id = MatchPhotoCache.get(girl_one.photo, girl_two.photo)
+    {left_girl, right_girl, tg_file_id} = if !tg_file_id do
+      tg_file_id = MatchPhotoCache.get(girl_two.photo, girl_one.photo)
+      {girl_two, girl_one, tg_file_id}
+    else
+      {girl_one, girl_two, tg_file_id}
+    end
+    left_girl_url = Girl.get_profile_url(left_girl)
+    right_girl_url = Girl.get_profile_url(right_girl)
+    keyboard = [["Left", "Right"]]
     #    keyboard = [
     #      [
     #        %{
     #          text: "Left",
     #          payload: Callback.build_payload(
     #            @vote_callback,
-    #            girl_one.username <> @usernames_separator <> girl_two.username
+    #            left_girl.username <> @usernames_separator <> right_girl.username
     #          )
     #        },
     #        %{
     #          text: "Right",
     #          payload: Callback.build_payload(
     #            @vote_callback,
-    #            girl_two.username <> @usernames_separator <> girl_one.username
+    #            right_girl.username <> @usernames_separator <> left_girl.username
     #          )
     #        },
     #      ]
     #    ]
-    keyboard = [["Left", "Right"]]
-    caption_text = "#{girl_one_url} vs #{girl_two_url}"
+    caption_text = "#{left_girl_url} vs #{right_girl_url}"
     message_before = Keyword.get(opts, :message_before)
     if message_before, do: @messenger.send_text(chat.chat_id, message_before)
-    message_id = try do
-      @messenger.send_photo(
+
+    message_id = if !tg_file_id do
+      match_photo = Pictures.concatenate(left_girl.photo, right_girl.photo)
+      {message_id, tg_file_id} = try do
+        @messenger.send_photo(
+          chat.chat_id,
+          match_photo,
+          caption: caption_text,
+          static_keyboard: keyboard,
+          one_time_keyboard: true,
+        )
+      after
+        File.rm!(match_photo)
+      end
+      MatchPhotoCache.set(left_girl.photo, right_girl.photo, tg_file_id)
+      message_id
+    else
+      Logger.info("Use cached match photo #{tg_file_id}")
+      {message_id, _} = @messenger.send_photo(
         chat.chat_id,
-        match_photo,
+        tg_file_id,
         caption: caption_text,
         static_keyboard: keyboard,
-        one_time_keyboard: true,
+        one_time_keyboard: true
       )
-    after
-      File.rm!(match_photo)
+      message_id
     end
+
     schedule_daily_activation(chat)
-    current_match = Chat.Match.new(message_id, girl_one.username, girl_two.username)
+    current_match = Chat.Match.new(message_id, left_girl.username, right_girl.username)
     %Chat{chat | last_match: current_match}
   end
 
@@ -305,7 +334,7 @@ defmodule TGBot do
 
   @spec handle_get_top_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_get_top_cmd(message, chat) do
-    optional_start_position = TextMessage.get_command_arg(message)
+    optional_start_position = TextMessage.get_command_arg(message) || ""
     offset = case Integer.parse(optional_start_position) do
       {start_position, ""} when start_position > 0 -> start_position - 1
       _ -> 0
@@ -334,7 +363,7 @@ defmodule TGBot do
 
   @spec handle_set_voting_timeout_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_set_voting_timeout_cmd(message, chat) do
-    arg = TextMessage.get_command_arg(message)
+    arg = TextMessage.get_command_arg(message) || ""
     case Integer.parse(arg) do
       {timeout, ""} when @min_voting_timeout <= timeout and timeout < @session_duration_seconds ->
         @messenger.send_text(chat.chat_id, "Now voting timeout is #{timeout} seconds")
@@ -380,8 +409,9 @@ defmodule TGBot do
 
     And also another type of commands, with an additional input:
 
-    addGirl@InstaRateBot <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. For example:
+    addGirl@InstaRateBot <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. In the private chat you can just send me a link, without the command. For example:
     addGirl@InstaRateBot <photo_link>
+    <photo_link>
 
     girlInfo@InstaRateBot <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
     girlInfo@InstaRateBot <username>
@@ -447,7 +477,7 @@ defmodule TGBot do
   defp display_girl_info(chat_id, girl) do
     profile_url = Girl.get_profile_url(girl)
     @messenger.send_markdown(chat_id, "[#{girl.username}](#{profile_url})")
-    @messenger.send_photo(chat_id, girl.photo)
+    send_single_photo(chat_id, girl.photo)
     girl_position = Girl.get_position(girl)
     text = """
     Position in the competition: #{girl_position}
@@ -455,6 +485,17 @@ defmodule TGBot do
     Number of loses: #{girl.loses}
     """
     @messenger.send_text(chat_id, text)
+  end
+
+  @spec send_single_photo(integer, String.t, Keyword.t) :: any
+  defp send_single_photo(chat_id, photo_url, opts \\ []) do
+    tg_file_id = @photos_cache.get(photo_url)
+    photo = if tg_file_id, do: tg_file_id, else: photo_url
+    {_, tg_file_id} = @messenger.send_photo(chat_id, photo, opts)
+    if tg_file_id != photo do
+      Logger.info("Save new tg file id for photo #{photo_url}")
+      @photos_cache.set(photo_url, tg_file_id)
+    end
   end
 
   @spec on_callback(Callback.t, Chat.t) :: Chat.t
@@ -600,7 +641,7 @@ defmodule TGBot do
         #        else
         #          nil
         #        end
-        @messenger.send_photo(
+        send_single_photo(
           chat.chat_id,
           current_girl.photo,
           caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),

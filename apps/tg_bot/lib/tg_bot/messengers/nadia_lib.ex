@@ -31,12 +31,12 @@ defmodule TGBot.Messengers.NadiaLib do
     end
   end
 
-  @spec send_photo(integer, binary, Keyword.t) :: integer
+  @spec send_photo(integer, binary, Keyword.t) :: {integer, String.t}
   def send_photo(chat_id, photo, opts \\ []) do
     opts = transform_opts(opts)
     case Nadia.send_photo(chat_id, photo, opts) do
       {:error, error} -> raise error
-      {:ok, msg} -> msg.message_id
+      {:ok, msg} -> {msg.message_id, List.last(msg.photo).file_id}
     end
   end
 

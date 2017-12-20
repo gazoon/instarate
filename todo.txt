@@ -9,5 +9,8 @@
 30. protect System.call in pictures generation
 31. add photos cache
 32. add localization
+33. also save instagram media code
+34. add unreachable mark
+35. proper exceptions logging
 
 

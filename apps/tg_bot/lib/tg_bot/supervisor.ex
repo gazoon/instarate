@@ -3,6 +3,7 @@ defmodule TGBot.Supervisor do
   alias TGBot.Chats.Storages.Mongo, as: ChatsMongoStorage
   alias Scheduler.Impls.Mongo, as: MongoScheduler
   alias TGBot.Queue.Impls.Mongo, as: MongoQueue
+  alias TGBot.Cache.Impls.Mongo, as: MongoCache
   use Supervisor
 
   def start_link(arg) do
@@ -14,6 +15,7 @@ defmodule TGBot.Supervisor do
                  ChatsMongoStorage.child_spec(),
                  MongoScheduler.child_spec(),
                  MongoQueue.child_spec(),
+                 MongoCache.child_spec(),
                  {Task.Supervisor, name: :message_workers_supervisor}
                ]
                |> Kernel.++(Scheduler.Reader.children_spec())

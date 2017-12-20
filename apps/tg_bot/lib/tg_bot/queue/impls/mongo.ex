@@ -90,7 +90,7 @@ defmodule TGBot.Queue.Impls.Mongo do
       {:ok, nil} -> nil
       {:ok, doc} ->
         if doc["processing"]["started_at"] < current_time - @max_processing_time do
-          Logger.warn("Processin for chat #{doc["chat_id"]} took to long")
+          Logger.warn("Processing for chat #{doc["chat_id"]} took to long")
         end
         if doc["msgs"] != [] do
           {List.first(doc["msgs"])["payload"], processing_id}

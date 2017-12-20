@@ -4,7 +4,10 @@ defmodule TGBot.Pictures do
   @tmp_dir Path.join(@resources_dir, "tmp_files")
   File.mkdir(@tmp_dir)
   @glue_image Path.join(@resources_dir, "glue_gap.jpg")
+  @version "v1"
   require Logger
+
+  def version, do: @version
 
   @spec concatenate(String.t, String.t) :: String.t
   def concatenate(left_picture, right_picture) do

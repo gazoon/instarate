@@ -19,12 +19,18 @@ config :tg_bot,
          port: 27017,
          collection: "insta_queue",
          max_processing_time: 10000
+       ],
+       mongo_cache: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
        ]
 
 config :tg_bot, TGBot,
        chats_storage: TGBot.Chats.Storages.Mongo,
        messenger: TGBot.Messengers.NadiaLib,
        scheduler: Scheduler.Impls.Mongo,
+       photos_cache: TGBot.Cache.Impls.Mongo,
        admins: [231193206, 309370324]
 
 config :tg_bot, Scheduler.Reader,
@@ -34,6 +40,9 @@ config :tg_bot, Scheduler.Reader,
 config :tg_bot, TGBot.Queue.Reader,
        queue: TGBot.Queue.Impls.Mongo,
        fetch_delay: 100
+
+config :tg_bot, TGBot.MatchPhotoCache,
+       cache: TGBot.Cache.Impls.Mongo
 
 config :nadia, token: "501332340:AAGMi61i2NEYAJR6-GnqwHAE5MYpBKwOjo0"
 
