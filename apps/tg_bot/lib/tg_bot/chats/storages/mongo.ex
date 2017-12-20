@@ -57,11 +57,12 @@ defmodule TGBot.Chats.Storages.Mongo do
     %Chat{
       chat_id: row["chat_id"],
       members_number: row["members_number"],
-      current_top_offset: row["current_top_offset"] || 0,
+      current_top_offset: row["current_top_offset"],
       last_match: last_match,
       competition: row["competition"],
       self_activation_allowed: row["self_activation_allowed"],
       voting_timeout: row["voting_timeout"],
+      language: row["language"],
     }
   end
 end

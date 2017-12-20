@@ -1,5 +1,6 @@
 defmodule TGBot.Chats.Chat do
   alias TGBot.Chats.Chat
+  alias TGBot.Localization
   defmodule Match do
     alias TGBot.Chats.Chat.Match
     @type t :: %Match{
@@ -30,6 +31,7 @@ defmodule TGBot.Chats.Chat do
                competition: String.t,
                self_activation_allowed: boolean,
                voting_timeout: integer,
+               language: String.t,
              }
   defstruct chat_id: nil,
             members_number: nil,
@@ -38,7 +40,8 @@ defmodule TGBot.Chats.Chat do
             created_at: nil,
             competition: nil,
             self_activation_allowed: true,
-            voting_timeout: 5
+            voting_timeout: 5,
+            language: nil
 
   @spec new(integer, integer) :: Chat.t
   def new(chat_id, members_number) do
@@ -46,7 +49,8 @@ defmodule TGBot.Chats.Chat do
       chat_id: chat_id,
       members_number: members_number,
       created_at: Utils.timestamp(),
-      competition: Voting.global_competition()
+      competition: Voting.global_competition(),
+      language: Localization.english_lang(),
     }
   end
 end

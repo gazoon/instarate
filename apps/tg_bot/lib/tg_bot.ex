@@ -7,7 +7,7 @@ defmodule TGBot do
   alias TGBot.Messages.User, as: MessageUser
   alias TGBot.{Message, Pictures}
   alias TGBot.Chats.Chat
-  alias TGBot.MatchPhotoCache
+  alias TGBot.{MatchPhotoCache, Localization}
   alias Voting.Girl
 
   @start_cmd "start"
@@ -26,6 +26,8 @@ defmodule TGBot do
   @disable_daily_activation_cmd "disableNotification"
   @set_voting_timeout_cmd "votingTimeout"
   @delete_girls_cmd "deleteGirls"
+  @set_russian_cmd "setRussian"
+  @set_english_cmd "setEnglish"
 
   @min_voting_timeout 5
 
@@ -167,6 +169,8 @@ defmodule TGBot do
       {@disable_daily_activation_cmd, &handle_disable_activation_cmd/2},
       {@set_voting_timeout_cmd, &handle_set_voting_timeout_cmd/2},
       {@delete_girls_cmd, &handle_delete_girls_cmd/2},
+      {@set_russian_cmd, &handle_set_russian_cmd/2},
+      {@set_english_cmd, &handle_set_english_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -389,6 +393,10 @@ defmodule TGBot do
     Just select which of two girls looks better and vote by pressing a button below.
     I support following commands:
 
+    /setRussian@InstaRateBot - If want to see my messages in Russian.
+
+    /setEnglish@InstaRateBot - If you prefer english texts, it's the default language.
+
     /start@InstaRateBot - Get the next girls pair to compare.
 
     /showTop@InstaRateBot - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
@@ -453,6 +461,18 @@ defmodule TGBot do
   defp handle_normal_competition_cmd(_message, chat) do
     @messenger.send_text(chat.chat_id, "Now you see only ordinary girls", static_keyboard: :remove)
     %Chat{chat | competition: Voting.normal_competition()}
+  end
+
+  @spec handle_set_russian_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_set_russian_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Теперь я буду писать на русском, ну почти...")
+    %Chat{chat | language: Localization.russian_lang()}
+  end
+
+  @spec handle_set_english_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_set_english_cmd(_message, chat) do
+    @messenger.send_text(chat.chat_id, "Ok. I will be sending messages in english.")
+    %Chat{chat | language: Localization.english_lang()}
   end
 
   @spec handle_get_girl_info_cmd(TextMessage.t, Chat.t) :: Chat.t
