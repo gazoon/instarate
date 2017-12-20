@@ -5,19 +5,27 @@ defmodule Voting.InstagramProfiles.Model do
   @type t :: %Profile{
                username: String.t,
                photo: String.t,
+               photo_code: String.t,
                added_at: integer,
                followers: integer
              }
 
   defstruct username: nil,
             photo: nil,
+            photo_code: nil,
             added_at: nil,
             followers: nil
 
-  @spec new(String.t, String.t, integer) :: Profile.t
-  def new(username, photo, followers) do
+  @spec new(String.t, String.t, String.t, integer) :: Profile.t
+  def new(username, photo, photo_code, followers) do
     current_time = Utils.timestamp()
-    %Profile{username: username, photo: photo, followers: followers, added_at: current_time}
+    %Profile{
+      username: username,
+      photo: photo,
+      photo_code: photo_code,
+      followers: followers,
+      added_at: current_time
+    }
   end
 
   @spec get_profile_url(Profile.t) :: String.t

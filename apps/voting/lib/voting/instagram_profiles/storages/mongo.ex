@@ -77,6 +77,7 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
       username: row["username"],
       added_at: row["added_at"],
       photo: row["photo"],
+      photo_code: row["photo_code"],
       followers: row["followers"],
     }
   end

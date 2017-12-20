@@ -34,7 +34,7 @@ defmodule Voting do
     with {:ok, media_info = %Media{is_photo: true}} <- InstagramClient.get_media_info(photo_code),
          followers_number <- InstagramClient.get_followers_number(media_info.owner),
          {:ok, profile} <- @profiles_storage.add(
-           Profile.new(media_info.owner, media_info.url, followers_number)
+           Profile.new(media_info.owner, photo_code, media_info.url, followers_number)
          ) do
       choose_competitions(followers_number)
       |> Enum.each(
