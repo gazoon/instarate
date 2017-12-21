@@ -143,6 +143,18 @@ defmodule Voting do
     end
   end
 
+  defp update_unreachable(girl) do
+
+  end
+
+  @spec file_available?(String.t) :: boolean
+  defp file_available?(photo_url) do
+    case HTTPoison.get!(photo_url) do
+      %HTTPoison.Response{status_code: 200} -> true
+      _ -> false
+    end
+  end
+
   @spec build_girls([Competitor.t]) :: [Girl.t]
   defp build_girls(competitors) do
     profiles = @profiles_storage.get_multiple(for c <- competitors, do: c.username)

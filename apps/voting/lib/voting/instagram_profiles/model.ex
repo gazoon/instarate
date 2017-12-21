@@ -14,7 +14,8 @@ defmodule Voting.InstagramProfiles.Model do
             photo: nil,
             photo_code: nil,
             added_at: nil,
-            followers: nil
+            followers: nil,
+            unreachable: nil
 
   @spec new(String.t, String.t, String.t, integer) :: Profile.t
   def new(username, photo, photo_code, followers) do
@@ -24,7 +25,8 @@ defmodule Voting.InstagramProfiles.Model do
       photo: photo,
       photo_code: photo_code,
       followers: followers,
-      added_at: current_time
+      added_at: current_time,
+      unreachable: false
     }
   end
 
