@@ -7,21 +7,25 @@ defmodule TGBot.Pictures do
   @version "v1"
   require Logger
 
+  use Utils.Meter
+
   def version, do: @version
 
   @spec concatenate(String.t, String.t) :: String.t
   def concatenate(left_picture, right_picture) do
     Logger.info("Concatenate #{left_picture} and #{right_picture}")
-    {left_picture, right_picture} = ensure_same_height(left_picture, right_picture)
-    try do
-      result_file_path = new_tmp_file_path()
-      execute_cmd(
-        "convert",
-        ["+append", left_picture, @glue_image, right_picture, result_file_path]
-      )
-      result_file_path
-    after
-      clean_tmp_files([left_picture, right_picture])
+    measure metric_name: "concatenate_photos" do
+      try do
+        {left_picture, right_picture} = ensure_same_height(left_picture, right_picture)
+        result_file_path = new_tmp_file_path()
+        execute_cmd(
+          "convert",
+          ["+append", left_picture, @glue_image, right_picture, result_file_path]
+        )
+        result_file_path
+      after
+        clean_tmp_files([left_picture, right_picture])
+      end
     end
   end
 

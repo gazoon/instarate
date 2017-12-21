@@ -1,4 +1,5 @@
 defmodule Utils do
+  require Logger
   @spec set_child_id(tuple, any) :: tuple
   def set_child_id(spec, child_id) do
     spec

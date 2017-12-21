@@ -87,7 +87,7 @@ defmodule TGBot do
     rescue
       error ->
         Logger.error(Exception.format(:error, error))
-        raise error
+        reraise error, System.stacktrace()
     end
   end
 
