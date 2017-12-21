@@ -18,12 +18,14 @@ defmodule TGBot.Pictures do
       current_dir = new_tmp_dir_path()
       try do
         File.mkdir!(current_dir)
-        [left_picture_path, right_picture_path] = Utils.parallelize_tasks(
-          [
-            fn -> download_file(left_picture_url, current_dir) end,
-            fn -> download_file(right_picture_url, current_dir) end
-          ]
-        )
+        [left_picture_path, right_picture_path] = measure metric_name: "download_photos" do
+          Utils.parallelize_tasks(
+            [
+              fn -> download_file(left_picture_url, current_dir) end,
+              fn -> download_file(right_picture_url, current_dir) end
+            ]
+          )
+        end
         {left_picture_path, right_picture_path} = ensure_same_height(
           left_picture_path,
           right_picture_path,

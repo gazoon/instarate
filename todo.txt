@@ -6,8 +6,8 @@
 27. add photo verification
 28. enhance ban mechanism
 29. add cities categories
-30. protect System.call in pictures generation
 32. add localization
 34. add unreachable mark
+35. add separate service for concatenation
 
 
