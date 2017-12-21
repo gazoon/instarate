@@ -26,7 +26,28 @@ defmodule Utils do
 
   @spec parallelize_tasks([(() -> any)]) :: [any]
   def parallelize_tasks(functions) do
-    tasks = Enum.map(functions, &Task.async/1)
-    Enum.map(tasks, &Task.await/1)
+    tasks = functions
+            |> Enum.map(&wrap_with_rescue/1)
+            |> Enum.map(&Task.async/1)
+    tasks
+    |> Enum.map(&Task.await/1)
+    |> Enum.map(&bagrify/1)
+  end
+
+  @spec bagrify(tuple) :: any
+  defp bagrify(result)
+
+  defp bagrify({:ok, result}), do: result
+  defp bagrify({:error, msg, stacktrace}), do: reraise(msg, stacktrace)
+
+  @spec wrap_with_rescue((() -> any)) :: (() -> any)
+  defp wrap_with_rescue(func) do
+    fn ->
+      try do
+        {:ok, func.()}
+      rescue
+        e -> {:error, e, System.stacktrace()}
+      end
+    end
   end
 end

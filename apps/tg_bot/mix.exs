@@ -31,7 +31,8 @@ defmodule TgBot.Mixfile do
       {:uuid, "~> 1.1"},
       {:nadia, git: "https://github.com/gazoon/nadia.git"},
       {:voting, in_umbrella: true},
-      {:utils, in_umbrella: true}
+      {:utils, in_umbrella: true},
+      {:httpoison, "~> 0.13"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
     ]

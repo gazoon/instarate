@@ -12,64 +12,72 @@ defmodule TGBot.Pictures do
   def version, do: @version
 
   @spec concatenate(String.t, String.t) :: String.t
-  def concatenate(left_picture, right_picture) do
-    Logger.info("Concatenate #{left_picture} and #{right_picture}")
+  def concatenate(left_picture_url, right_picture_url) do
+    Logger.info("Concatenate #{left_picture_url} and #{right_picture_url}")
     measure metric_name: "concatenate_photos" do
+      current_dir = new_tmp_dir_path()
       try do
-        {left_picture, right_picture} = ensure_same_height(left_picture, right_picture)
+        File.mkdir!(current_dir)
+        [left_picture_path, right_picture_path] = Utils.parallelize_tasks(
+          [
+            fn -> download_file(left_picture_url, current_dir) end,
+            fn -> download_file(right_picture_url, current_dir) end
+          ]
+        )
+        {left_picture_path, right_picture_path} = ensure_same_height(
+          left_picture_path,
+          right_picture_path,
+          current_dir
+        )
         result_file_path = new_tmp_file_path()
         execute_cmd(
           "convert",
-          ["+append", left_picture, @glue_image, right_picture, result_file_path]
+          ["+append", left_picture_path, @glue_image, right_picture_path, result_file_path]
         )
         result_file_path
       after
-        clean_tmp_files([left_picture, right_picture])
+        Logger.info("Delete current tmp dir: #{current_dir}")
+        File.rm_rf!(current_dir)
       end
     end
   end
 
-  @spec clean_tmp_files([String.t]) :: any
-  defp clean_tmp_files(files) do
-    Enum.each(files, &clean_tmp_file/1)
-  end
-
-  @spec clean_tmp_file(String.t) :: any
-  defp clean_tmp_file(file_path) do
-    if String.starts_with?(file_path, @tmp_dir)  do
-      case File.rm(file_path) do
-        {:error, details} -> Logger.warn("Can't delete tmp file #{file_path}: #{details}")
-        _ -> nil
-      end
-    end
-  end
-
-  @spec ensure_same_height(String.t, String.t) :: {String.t, String.t}
-  defp ensure_same_height(left_picture, right_picture) do
-    task = Task.async(fn -> get_height(left_picture) end)
-    right_picture_height = get_height(right_picture)
-    left_picture_height = Task.await(task)
+  @spec ensure_same_height(String.t, String.t, String.t) :: {String.t, String.t}
+  defp ensure_same_height(left_picture, right_picture, current_dir) do
+    [left_picture_height, right_picture_height] = Utils.parallelize_tasks(
+      [
+        fn -> get_height(left_picture) end,
+        fn -> get_height(right_picture) end
+      ]
+    )
     cond do
       left_picture_height == right_picture_height ->
+        Logger.info("Photos height is the same, no need to crop")
         {left_picture, right_picture}
       left_picture_height < right_picture_height ->
-        {left_picture, crop(right_picture, right_picture_height, left_picture_height)}
+        {left_picture, crop(right_picture, right_picture_height, left_picture_height, current_dir)}
       left_picture_height > right_picture_height ->
-        {crop(left_picture, left_picture_height, right_picture_height), right_picture}
+        {crop(left_picture, left_picture_height, right_picture_height, current_dir), right_picture}
     end
   end
 
-  @spec crop(String.t, integer, integer) :: String.t
-  defp crop(picture_uri, picture_height, result_height) do
+  @spec crop(String.t, integer, integer, String.t) :: String.t
+  defp crop(picture_uri, picture_height, result_height, current_dir) do
     crop_height = div(picture_height - result_height, 2)
-    out_path = new_tmp_file_path()
+    out_path = new_tmp_file_path(dir: current_dir)
     execute_cmd("convert", [picture_uri, "-crop", "x#{result_height}+0+#{crop_height}", out_path])
     out_path
   end
 
-  @spec new_tmp_file_path :: String.t
-  defp new_tmp_file_path do
-    Path.join(@tmp_dir, UUID.uuid4() <> ".jpg")
+  @spec new_tmp_file_path(Keyword.t) :: String.t
+  defp new_tmp_file_path(opts \\ []) do
+    dir = Keyword.get(opts, :dir, @tmp_dir)
+    Path.join(dir, UUID.uuid4() <> ".jpg")
+  end
+
+  @spec new_tmp_dir_path :: String.t
+  defp new_tmp_dir_path do
+    Path.join(@tmp_dir, UUID.uuid4())
   end
 
   @spec get_height(String.t) :: integer
@@ -78,6 +86,24 @@ defmodule TGBot.Pictures do
     case Integer.parse(result_data) do
       {height, ""} -> height
       _ -> raise "Get height command returned non-int result: #{result_data}"
+    end
+  end
+
+  @spec download_file(String.t, String.t) :: String.t
+  defp download_file(url, current_dir) do
+    case HTTPoison.get!(
+           url,
+           [],
+           hackney: [
+             pool: :pictures_downloading
+           ]
+         ) do
+      %HTTPoison.Response{body: body, status_code: 200} ->
+        new_file_path = new_tmp_file_path(dir: current_dir)
+        File.write!(new_file_path, body)
+        new_file_path
+      %HTTPoison.Response{status_code: status_code} ->
+        raise "Can't download file #{url} #{status_code}"
     end
   end
 
