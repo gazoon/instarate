@@ -5,10 +5,10 @@ defmodule TGBot do
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.Task, as: TaskMessage
   alias TGBot.Messages.User, as: MessageUser
-  alias TGBot.{Message, Pictures}
+  alias TGBot.{Message, Pictures, MatchPhotoCache, Localization}
   alias TGBot.Chats.Chat
-  alias TGBot.{MatchPhotoCache, Localization}
   alias Voting.Girl
+  import Localization, only: [get_translation: 3, get_translation: 2]
 
   @start_cmd "start"
   @add_girl_cmd "addGirl"
@@ -142,7 +142,7 @@ defmodule TGBot do
 
   @spec handle_daily_activation_task(TaskMessage.t, Chat.t) :: Chat.t
   defp handle_daily_activation_task(_task, chat) do
-    send_next_girls_pair(chat, message_before: "Hi! don't you mind to vote?")
+    send_next_girls_pair(chat, message_before: get_translation(chat, "propose_to_vote"))
   end
 
   @spec on_text_message(TextMessage.t, Chat.t) :: Chat.t
@@ -198,7 +198,7 @@ defmodule TGBot do
   defp handle_regular_message(message, chat) do
     photo_links = String.split(message.text, "\n")
     case photo_links do
-      [photo_link] -> add_single_girl(message.chat_id, photo_link)
+      [photo_link] -> add_single_girl(chat, photo_link)
       _ ->
         functions = for photo_link <- photo_links do
           fn ->
@@ -322,26 +322,27 @@ defmodule TGBot do
   defp handle_add_girl_cmd(message, chat) do
     photo_link = TextMessage.get_command_arg(message)
     if photo_link do
-      add_single_girl(message.chat_id, photo_link)
+      add_single_girl(chat, photo_link)
     else
-      @messenger.send_text(
-        message.chat_id,
-        "Please send me a link\naddGirl@InstaRateBot <photo_link>",
-        disable_web_page_preview: true
-      )
+      @messenger.send_text(message.chat_id, get_translation(chat, "add_girl_no_link"))
     end
     chat
   end
 
-  @spec add_single_girl(integer, String.t) :: any
-  defp add_single_girl(chat_id, photo_link) do
+  @spec add_single_girl(Chat.t, String.t) :: any
+  defp add_single_girl(chat, photo_link) do
     case Voting.add_girl(photo_link) do
       {:ok, girl} ->
         profile_url = Girl.get_profile_url(girl)
-        text = "Girl [#{girl.username}](#{profile_url}) has been successfully added!"
-        @messenger.send_markdown(chat_id, text)
+        text = get_translation(
+          chat,
+          "girl_added",
+          username: girl.username,
+          profile_url: profile_url
+        )
+        @messenger.send_markdown(chat.chat_id, text)
 
-      {:error, error_msg} -> @messenger.send_text(chat_id, error_msg)
+      {:error, error_msg} -> @messenger.send_text(chat.chat_id, error_msg)
     end
   end
 
@@ -357,13 +358,13 @@ defmodule TGBot do
 
   @spec handle_enable_activation_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_enable_activation_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Daily notifications enabled")
+    @messenger.send_text(chat.chat_id, get_translation(chat, "daily_notification_enabled"))
     %Chat{chat | self_activation_allowed: true}
   end
 
   @spec handle_disable_activation_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_disable_activation_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Daily notifications disabled")
+    @messenger.send_text(chat.chat_id, get_translation(chat, "daily_notification_disabled"))
     @scheduler.delete_task(chat.chat_id, @daily_activation_task)
     %Chat{chat | self_activation_allowed: false}
   end
@@ -379,18 +380,24 @@ defmodule TGBot do
     arg = TextMessage.get_command_arg(message) || ""
     case Integer.parse(arg) do
       {timeout, ""} when @min_voting_timeout <= timeout and timeout < @session_duration_seconds ->
-        @messenger.send_text(chat.chat_id, "Now voting timeout is #{timeout} seconds")
+        text = get_translation(chat, "voting_timeout_is_set", timeout: timeout)
+        @messenger.send_text(chat.chat_id, text)
         %Chat{chat | voting_timeout: timeout}
       {_, ""} ->
+        lower_bound = @min_voting_timeout - 1
+        upper_bound = div @session_duration_seconds, 60
         @messenger.send_text(
           chat.chat_id,
-          "Timeout must be more than #{@min_voting_timeout - 1} seconds and less than #{
-            div @session_duration_seconds, 60
-          } minutes"
+          get_translation(
+            chat,
+            "set_voting_timeout_out_of_range",
+            lower_bound: lower_bound,
+            upper_bound: upper_bound
+          )
         )
         chat
       _ ->
-        @messenger.send_text(chat.chat_id, "Please, enter valid number")
+        @messenger.send_text(chat.chat_id, get_translation(chat, "set_voting_timeout_no_number"))
         chat
     end
   end
@@ -446,7 +453,11 @@ defmodule TGBot do
 
   @spec handle_global_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_global_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see all girls", static_keyboard: :remove)
+    @messenger.send_text(
+      chat.chat_id,
+      get_translation(chat, "global_competition_enabled"),
+      static_keyboard: :remove
+    )
     %Chat{chat | competition: Voting.global_competition()}
   end
 
@@ -454,7 +465,7 @@ defmodule TGBot do
   defp handle_celebrities_competition_cmd(_message, chat) do
     @messenger.send_text(
       chat.chat_id,
-      "Now you see only celebrity-level girls",
+      get_translation(chat, "celebrities_competition_enabled"),
       static_keyboard: :remove
     )
     %Chat{chat | competition: Voting.celebrities_competition()}
@@ -462,26 +473,36 @@ defmodule TGBot do
 
   @spec handle_models_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_models_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see only models", static_keyboard: :remove)
+    @messenger.send_text(
+      chat.chat_id,
+      get_translation(chat, "models_competition_enabled"),
+      static_keyboard: :remove
+    )
     %Chat{chat | competition: Voting.models_competition()}
   end
 
   @spec handle_normal_competition_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_normal_competition_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Now you see only ordinary girls", static_keyboard: :remove)
+    @messenger.send_text(
+      chat.chat_id,
+      get_translation(chat, "normal_competition_enabled"),
+      static_keyboard: :remove
+    )
     %Chat{chat | competition: Voting.normal_competition()}
   end
 
   @spec handle_set_russian_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_set_russian_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Теперь я буду писать на русском, ну почти...")
-    %Chat{chat | language: Localization.russian_lang()}
+    chat = %Chat{chat | language: Localization.russian_lang()}
+    @messenger.send_text(chat.chat_id, get_translation(chat, "switch_to_language"))
+    chat
   end
 
   @spec handle_set_english_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_set_english_cmd(_message, chat) do
-    @messenger.send_text(chat.chat_id, "Ok. I will be sending messages in english.")
-    %Chat{chat | language: Localization.english_lang()}
+    chat = %Chat{chat | language: Localization.english_lang()}
+    @messenger.send_text(chat.chat_id, get_translation(chat, "switch_to_language"))
+    chat
   end
 
   @spec handle_get_girl_info_cmd(TextMessage.t, Chat.t) :: Chat.t
@@ -493,11 +514,7 @@ defmodule TGBot do
         {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
       end
     else
-      @messenger.send_text(
-        message.chat_id,
-        "Please send me a username\ngirlInfo@InstaRateBot <username>",
-        disable_web_page_preview: true
-      )
+      @messenger.send_text(message.chat_id, get_translation(chat, "get_girl_no_username"))
     end
     chat
   end
@@ -624,14 +641,17 @@ defmodule TGBot do
            loser_username
          ) do
       :ok ->
-        @messenger.send_notification(message.callback_id, "Vote for #{winner_username}")
+        @messenger.send_notification(
+          message.callback_id,
+          get_translation(chat, "success_vote", username: winner_username)
+        )
         if chat.last_match.message_id == message.parent_msg_id do
           try_to_send_pair(chat)
         else
           chat
         end
       {:error, error} ->
-        @messenger.send_notification(message.callback_id, "You already voted.")
+        @messenger.send_notification(message.callback_id, get_translation(chat, "already_voted"))
         Logger.warn("Can't vote by callback: #{error}")
         chat
     end
@@ -670,20 +690,25 @@ defmodule TGBot do
         #        else
         #          nil
         #        end
+        caption = get_translation(chat, "place_in_competition", place: girl_offset + 1) <>
+                  Girl.get_profile_url(current_girl)
         send_single_photo(
           chat.chat_id,
           current_girl.photo,
-          caption: "#{girl_offset + 1}th place: " <> Girl.get_profile_url(current_girl),
+          caption: caption,
           #          keyboard: keyboard,
           static_keyboard: keyboard,
         )
         %Chat{chat | current_top_offset: girl_offset}
       [] ->
-        Logger.warn("Girl offset #{girl_offset} more than number of girls in the competition")
         girls_number = Voting.get_girls_number(chat.competition)
+        Logger.warn(
+          "Girl offset #{girl_offset} more than number of girls in the competition: #{girls_number}"
+        )
         @messenger.send_text(
           chat.chat_id,
-          "Sorry, but there are only #{girls_number} girls in the competition"
+          get_translation(chat, "no_more_girls_in_top"),
+          static_keyboard: :remove
         )
         chat
     end

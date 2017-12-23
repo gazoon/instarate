@@ -10,5 +10,6 @@
 35. add separate service for concatenation
 36. save girls photos to google storage
 37. cover with unit tests
+38. handle end of the girls
 
 

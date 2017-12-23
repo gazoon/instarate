@@ -1,0 +1,53 @@
+msgid "propose_to_vote"
+msgstr "Hi! Don't you mind to vote?"
+
+msgid "add_girl_no_link"
+msgstr "Please send me a link to the photo, example:\naddGirl@InstaRateBot <photo_link>"
+
+msgid "girl_added"
+msgstr "Girl [%{username}](%{profile_url}) has been successfully added!"
+
+msgid "daily_notification_enabled"
+msgstr "You turned daily notification on."
+
+msgid "daily_notification_disabled"
+msgstr "You turned daily notification off. I will no longer propose to vote."
+
+msgid "voting_timeout_is_set"
+msgstr "Voting timeout is set to %{timeout} seconds."
+
+msgid "set_voting_timeout_no_number"
+msgstr "Please, enter a valid number."
+
+msgid "set_voting_timeout_out_of_range"
+msgstr "Timeout must be more than %{lower_bound} seconds and less than %{upper_bound} minutes."
+
+msgid "global_competition_enabled"
+msgstr "Now you will see all girls."
+
+msgid "celebrities_competition_enabled"
+msgstr "Now you will see only celebrity-level girls (500k+ followers)."
+
+msgid "models_competition_enabled"
+msgstr "Now you will see only models (10k - 500k followers)."
+
+msgid "normal_competition_enabled"
+msgstr "Now you will see only girls with less than 10k followers."
+
+msgid "switch_to_language"
+msgstr "OK. I will be writing messages in english."
+
+msgid "get_girl_no_username"
+msgstr "Please send me an Instagram username\ngirlInfo@InstaRateBot <username>"
+
+msgid "success_vote"
+msgstr "Vote for %{username}"
+
+msgid "already_voted"
+msgstr "You already voted."
+
+msgid "place_in_competition"
+msgstr "%{place}th place: "
+
+msgid "no_more_girls_in_top"
+msgstr "Send /showTop@InstaRateBot to watch from the beginning."

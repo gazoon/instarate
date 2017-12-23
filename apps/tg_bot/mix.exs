@@ -11,6 +11,7 @@ defmodule TgBot.Mixfile do
       lockfile: "../../mix.lock",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
+      compilers: [:gettext] ++ Mix.compilers,
       deps: deps()
     ]
   end
@@ -33,6 +34,7 @@ defmodule TgBot.Mixfile do
       {:voting, in_umbrella: true},
       {:utils, in_umbrella: true},
       {:httpoison, "~> 0.13"},
+      {:gettext, "~> 0.13"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
     ]

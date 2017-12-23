@@ -1,0 +1,53 @@
+msgid "propose_to_vote"
+msgstr "Привет! Не желаете продолжить голосовать?"
+
+msgid "add_girl_no_link"
+msgstr "Ты не отправил мне ссылку на фото, пример:\naddGirl@InstaRateBot <photo_link>"
+
+msgid "girl_added"
+msgstr "Девушка [%{username}](%{profile_url}) была успешно добавлена!"
+
+msgid "daily_notification_enabled"
+msgstr "Ежедневные уведомления включены."
+
+msgid "daily_notification_disabled"
+msgstr "Ежедневные уведомления отключены. Теперь я не буду сам предлагать начать голосовать."
+
+msgid "voting_timeout_is_set"
+msgstr "Время между голосованиями составляет %{timeout} секунд."
+
+msgid "set_voting_timeout_no_number"
+msgstr "Пожалуйста, введите число."
+
+msgid "set_voting_timeout_out_of_range"
+msgstr "Время-задержка должно быть больше чем %{lower_bound} секунд и меньше %{upper_bound} минут."
+
+msgid "global_competition_enabled"
+msgstr "Теперь вы будете видеть всех девушек."
+
+msgid "celebrities_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек-звезд (500к+ подписчиков)."
+
+msgid "models_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек-моделей (10к - 500к подписчиков)."
+
+msgid "normal_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек, у которых меньше 10к подписчиков."
+
+msgid "switch_to_language"
+msgstr "Хорошо. Я буду писать на русском, ну почти..."
+
+msgid "get_girl_no_username"
+msgstr "Пожалуйста, отправь мне username\ngirlInfo@InstaRateBot <username>"
+
+msgid "success_vote"
+msgstr "Голос за %{username}"
+
+msgid "already_voted"
+msgstr "Вы уже проголосовали."
+
+msgid "place_in_competition"
+msgstr "%{place}-е место: "
+
+msgid "no_more_girls_in_top"
+msgstr "Напиши /showTop@InstaRateBot чтобы начать смотреть с начала."
