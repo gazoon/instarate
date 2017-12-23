@@ -11,8 +11,7 @@ defmodule TGBot.Queue.Reader do
 
   @spec process({any, String.t}) :: any
   def process({message, processing_id}) do
-    Task.Supervisor.start_child(
-      :message_workers_supervisor,
+    Task.start(
       fn ->
         try do
           TGBot.on_message(message)

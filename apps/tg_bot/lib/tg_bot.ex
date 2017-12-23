@@ -88,6 +88,13 @@ defmodule TGBot do
       error ->
         Logger.error(Exception.format(:error, error))
         reraise error, System.stacktrace()
+    catch
+      :exit, {{error, stack}, _from} ->
+        Logger.error(Exception.format(:error, error, stack))
+        reraise error, stack
+      :exit, error ->
+        Logger.error(Exception.format(:error, "Exit signal #{inspect error}"))
+        reraise inspect(error), System.stacktrace()
     end
   end
 
@@ -194,7 +201,9 @@ defmodule TGBot do
       [photo_link] -> add_single_girl(message.chat_id, photo_link)
       _ ->
         functions = for photo_link <- photo_links do
-          fn -> Voting.add_girl(photo_link) end
+          fn ->
+            Voting.add_girl(photo_link)
+          end
         end
         Utils.parallelize_tasks(functions)
         @messenger.send_text(chat.chat_id, "All girls were processed")

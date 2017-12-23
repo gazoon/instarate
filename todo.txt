@@ -7,7 +7,8 @@
 28. enhance ban mechanism
 29. add cities categories
 32. add localization
-34. add unreachable mark
 35. add separate service for concatenation
+36. save girls photos to google storage
+37. cover with unit tests
 
 

@@ -16,7 +16,7 @@ defmodule TGBot.Supervisor do
                  MongoScheduler.child_spec(),
                  MongoQueue.child_spec(),
                  MongoCache.child_spec(),
-                 {Task.Supervisor, name: :message_workers_supervisor}
+                 Utils.tasks_supervisor_spec(),
                ]
                |> Kernel.++(Scheduler.Reader.children_spec())
                |> Kernel.++(TGBot.Queue.Reader.children_spec())
