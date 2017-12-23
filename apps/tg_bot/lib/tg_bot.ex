@@ -16,6 +16,7 @@ defmodule TGBot do
   @next_top_cmd "Next girl"
   @get_girl_info_cmd "girlInfo"
   @help_cmd "help"
+  @chat_settings_cmd "chatSettings"
   @left_vote_cmd "left"
   @right_vote_cmd "right"
   @global_competition_cmd "globalCompetition"
@@ -178,6 +179,7 @@ defmodule TGBot do
       {@delete_girls_cmd, &handle_delete_girls_cmd/2},
       {@set_russian_cmd, &handle_set_russian_cmd/2},
       {@set_english_cmd, &handle_set_english_cmd/2},
+      {@chat_settings_cmd, &handle_chat_settings_cmd/2},
     ]
     message_text = message.text_lowercase
     command = commands
@@ -196,17 +198,21 @@ defmodule TGBot do
 
   @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
   defp handle_regular_message(message, chat) do
-    photo_links = String.split(message.text, "\n")
-    case photo_links do
-      [photo_link] -> add_single_girl(chat, photo_link)
-      _ ->
-        functions = for photo_link <- photo_links do
-          fn ->
-            Voting.add_girl(photo_link)
+    if !TextMessage.appeal_to_bot?(message) do
+      photo_links = String.split(message.text, "\n")
+      case photo_links do
+        [photo_link] -> add_single_girl(chat, photo_link)
+        _ ->
+          functions = for photo_link <- photo_links do
+            fn ->
+              Voting.add_girl(photo_link)
+            end
           end
-        end
-        Utils.parallelize_tasks(functions)
-        @messenger.send_text(chat.chat_id, "All girls were processed")
+          Utils.parallelize_tasks(functions)
+          @messenger.send_text(chat.chat_id, "All girls were processed")
+      end
+    else
+      @messenger.send_text(chat.chat_id, get_translation(chat, "dont_get_you"))
     end
     chat
   end
@@ -404,50 +410,13 @@ defmodule TGBot do
 
   @spec handle_help_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_help_cmd(message, chat) do
-    text = """
-    Hi there! My mission is to find the most attractive girls on Instagram!
-    Just select which of two girls looks better and vote by pressing a button below.
-    I support following commands:
+    @messenger.send_text(message.chat_id, get_translation(chat, "help_message"))
+    chat
+  end
 
-    /setRussian@InstaRateBot - If want to see my messages in Russian.
-
-    /setEnglish@InstaRateBot - If you prefer english texts, it's the default language.
-
-    /start@InstaRateBot - Get the next girls pair to compare.
-
-    /showTop@InstaRateBot - Show the top girls in the competition. You can also pass a position to start showing from, i.e pass 10 to start from the 10th girl in the competition and skip the first 9.
-
-    /celebritiesCompetition@InstaRateBot - You will vote and see only girls with 500k+ followers.
-
-    /modelsCompetition@InstaRateBot - You will vote and see girls with 10k - 500k followers
-
-    /normalCompetition@InstaRateBot - You will vote and see girls who have less than 10k followers
-
-    /globalCompetition@InstaRateBot - You will vote for all girls, it's a default option.
-
-    /enableNotification@InstaRateBot - Let me daily send you a new girls pair, just in case you forgot about me.
-
-    /disableNotification@InstaRateBot - Disable daily new match sending. By default it's enabled.
-
-    /help@InstaRateBot - Show this message.
-
-    And also another type of commands, with an additional input:
-
-    addGirl@InstaRateBot <link to one of her photos on instagram> - Add girl to the competition, You can add any girl, just paste a link to her instagram photo. The girl must have a public account. In the private chat you can just send me a link, without the command. For example:
-    addGirl@InstaRateBot <photo_link>
-    <photo_link>
-
-    girlInfo@InstaRateBot <girl username or link to the profile> - Get info about particular girl statistic in the competition. For example:
-    girlInfo@InstaRateBot <username>
-    girlInfo@InstaRateBot <profile_link>
-
-    votingTimeout@InstaRateBot <timeout> - Set the time, I will wait before sendind a new girls pair. In seconds, minimum - 5 seconds.
-    votingTimeout@InstaRateBot 10
-
-    Some notes:
-    In group chats you have to mention me (with the '@' sign) in the message, if you want to command me. In the private chat no mention needed.
-    """
-    @messenger.send_text(message.chat_id, text, disable_web_page_preview: true)
+  @spec handle_chat_settings_cmd(TextMessage.t, Chat.t) :: Chat.t
+  defp handle_chat_settings_cmd(message, chat) do
+    @messenger.send_text(message.chat_id, get_translation(chat, "chat_settings_commands"))
     chat
   end
 
@@ -510,7 +479,7 @@ defmodule TGBot do
     girl_link = TextMessage.get_command_arg(message)
     if girl_link do
       case Voting.get_girl(chat.competition, girl_link) do
-        {:ok, girl} -> display_girl_info(message.chat_id, girl)
+        {:ok, girl} -> display_girl_info(chat, girl)
         {:error, error_msg} -> @messenger.send_text(message.chat_id, error_msg)
       end
     else
@@ -519,18 +488,21 @@ defmodule TGBot do
     chat
   end
 
-  @spec display_girl_info(integer, Girl.t) :: any
-  defp display_girl_info(chat_id, girl) do
+  @spec display_girl_info(Chat.t, Girl.t) :: any
+  defp display_girl_info(chat, girl) do
     profile_url = Girl.get_profile_url(girl)
-    @messenger.send_markdown(chat_id, "[#{girl.username}](#{profile_url})")
-    send_single_photo(chat_id, girl.photo)
-    girl_position = Girl.get_position(girl)
-    text = """
-    Position in the competition: #{girl_position}
-    Number of wins: #{girl.wins}
-    Number of loses: #{girl.loses}
-    """
-    @messenger.send_text(chat_id, text)
+    @messenger.send_markdown(chat.chat_id, "[#{girl.username}](#{profile_url})")
+    send_single_photo(chat.chat_id, girl.photo)
+    @messenger.send_text(
+      chat.chat_id,
+      get_translation(
+        chat,
+        "girl_statistics",
+        position: Girl.get_position(girl),
+        wins: girl.wins,
+        loses: girl.loses
+      )
+    )
   end
 
   @spec send_single_photo(integer, String.t, Keyword.t) :: any
