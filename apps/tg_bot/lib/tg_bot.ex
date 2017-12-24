@@ -5,7 +5,7 @@ defmodule TGBot do
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.Task, as: TaskMessage
   alias TGBot.Messages.User, as: MessageUser
-  alias TGBot.{Message, Pictures, MatchPhotoCache, Localization}
+  alias TGBot.{Message, MatchPhotoCache, Localization}
   alias TGBot.Chats.Chat
   alias Voting.Girl
   alias Voting.InstagramProfiles.Model, as: InstagramProfile
@@ -50,6 +50,7 @@ defmodule TGBot do
   @scheduler @config[:scheduler]
   @admins @config[:admins]
   @photos_cache @config[:photos_cache]
+  @pictures @config[:pictures_concatenator]
 
   @spec on_message(map()) :: any
   def on_message(message_container) do
@@ -285,7 +286,7 @@ defmodule TGBot do
     message_id = if !tg_file_id do
       left_girl_photo_url = Girl.get_photo_url(left_girl)
       right_girl_photo_url = Girl.get_photo_url(right_girl)
-      match_photo = Pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
+      match_photo = @pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
       {message_id, tg_file_id} = try do
         @messenger.send_photo(
           chat.chat_id,

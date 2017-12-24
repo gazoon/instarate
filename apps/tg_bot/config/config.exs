@@ -31,6 +31,7 @@ config :tg_bot, TGBot,
        messenger: TGBot.Messengers.NadiaLib,
        scheduler: Scheduler.Impls.Mongo,
        photos_cache: TGBot.Cache.Impls.Mongo,
+       pictures_concatenator: TGBot.Pictures.Concatenators.ImageMagick,
        admins: [231193206, 309370324]
 
 config :tg_bot, Scheduler.Reader,
