@@ -6,10 +6,9 @@
 27. add photo verification
 28. enhance ban mechanism
 29. add cities categories
-32. add localization
 35. add separate service for concatenation
-36. save girls photos to google storage
 37. cover with unit tests
 38. handle end of the girls
+39. stub pictures generation
 
 

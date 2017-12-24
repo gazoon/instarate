@@ -44,7 +44,7 @@ config :tg_bot, TGBot.Queue.Reader,
 config :tg_bot, TGBot.MatchPhotoCache,
        cache: TGBot.Cache.Impls.Mongo
 
-config :nadia, token: "501332340:AAGMi61i2NEYAJR6-GnqwHAE5MYpBKwOjo0"
+config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"
 
 config :logger, :console,
        metadata: [:request_id, :chat_id]

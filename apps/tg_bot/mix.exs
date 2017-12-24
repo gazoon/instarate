@@ -33,6 +33,7 @@ defmodule TgBot.Mixfile do
       {:nadia, git: "https://github.com/gazoon/nadia.git"},
       {:voting, in_umbrella: true},
       {:utils, in_umbrella: true},
+      {:mongodb, ">= 0.0.0"},
       {:httpoison, "~> 0.13"},
       {:gettext, "~> 0.13"},
       # {:dep_from_hexpm, "~> 0.3.0"},

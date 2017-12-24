@@ -93,20 +93,10 @@ defmodule TGBot.Pictures do
 
   @spec download_file(String.t, String.t) :: String.t
   defp download_file(url, current_dir) do
-    case HTTPoison.get!(
-           url,
-           [],
-           hackney: [
-             pool: :pictures_downloading
-           ]
-         ) do
-      %HTTPoison.Response{body: body, status_code: 200} ->
-        new_file_path = new_tmp_file_path(dir: current_dir)
-        File.write!(new_file_path, body)
-        new_file_path
-      %HTTPoison.Response{status_code: status_code} ->
-        raise "Can't download file #{url} #{status_code}"
-    end
+    {body, _} = Utils.download_file(url, http_pool: :pictures_downloading)
+    new_file_path = new_tmp_file_path(dir: current_dir)
+    File.write!(new_file_path, body)
+    new_file_path
   end
 
   @spec execute_cmd(String.t, [String.t]) :: String.t

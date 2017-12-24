@@ -35,6 +35,8 @@ defmodule Voting.Mixfile do
       {:poolboy, ">= 0.0.0"},
       {:httpoison, "~> 0.13"},
       {:poison, "~> 3.1"},
+      {:goth, "~> 0.7.1"},
+      {:uuid, "~> 1.1"},
       {:utils, in_umbrella: true}
     ]
   end

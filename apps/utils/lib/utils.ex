@@ -31,4 +31,22 @@ defmodule Utils do
   end
 
   def tasks_supervisor_spec, do: {Task.Supervisor, name: :dynamic_tasks_supervisor}
+
+
+  @spec download_file(String.t, Keyword.t) :: {binary, String.t}
+  def download_file(url, opts \\ []) do
+    pool_name = Keyword.get(opts, :http_pool, :file_downloading)
+    case HTTPoison.get!(
+           url,
+           [],
+           hackney: [
+             pool: pool_name
+           ]
+         ) do
+      %HTTPoison.Response{body: body, headers: headers, status_code: 200} ->
+        {body, Map.get(Map.new(headers), "Content-Type", "")}
+      %HTTPoison.Response{status_code: status_code} ->
+        raise "Can't download file #{url} #{status_code}"
+    end
+  end
 end

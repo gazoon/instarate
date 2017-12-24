@@ -8,6 +8,7 @@ defmodule TGBot do
   alias TGBot.{Message, Pictures, MatchPhotoCache, Localization}
   alias TGBot.Chats.Chat
   alias Voting.Girl
+  alias Voting.InstagramProfiles.Model, as: InstagramProfile
   import Localization, only: [get_translation: 3, get_translation: 2]
 
   @start_cmd "start"
@@ -269,7 +270,9 @@ defmodule TGBot do
     if message_before, do: @messenger.send_text(chat.chat_id, message_before)
 
     message_id = if !tg_file_id do
-      match_photo = Pictures.concatenate(left_girl.photo, right_girl.photo)
+      left_girl_photo_url = Girl.get_photo_url(left_girl)
+      right_girl_photo_url = Girl.get_photo_url(right_girl)
+      match_photo = Pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
       {message_id, tg_file_id} = try do
         @messenger.send_photo(
           chat.chat_id,
@@ -339,7 +342,7 @@ defmodule TGBot do
   defp add_single_girl(chat, photo_link) do
     case Voting.add_girl(photo_link) do
       {:ok, girl} ->
-        profile_url = Girl.get_profile_url(girl)
+        profile_url = InstagramProfile.get_profile_url(girl)
         text = get_translation(
           chat,
           "girl_added",
@@ -492,7 +495,7 @@ defmodule TGBot do
   defp display_girl_info(chat, girl) do
     profile_url = Girl.get_profile_url(girl)
     @messenger.send_markdown(chat.chat_id, "[#{girl.username}](#{profile_url})")
-    send_single_photo(chat.chat_id, girl.photo)
+    send_single_girl_photo(chat.chat_id, girl)
     @messenger.send_text(
       chat.chat_id,
       get_translation(
@@ -505,14 +508,14 @@ defmodule TGBot do
     )
   end
 
-  @spec send_single_photo(integer, String.t, Keyword.t) :: any
-  defp send_single_photo(chat_id, photo_url, opts \\ []) do
-    tg_file_id = @photos_cache.get(photo_url)
-    photo = if tg_file_id, do: tg_file_id, else: photo_url
+  @spec send_single_girl_photo(integer, Girl.t, Keyword.t) :: any
+  defp send_single_girl_photo(chat_id, girl, opts \\ []) do
+    tg_file_id = @photos_cache.get(girl.photo)
+    {photo, is_new} = if tg_file_id, do: {tg_file_id, false}, else: {Girl.get_photo_url(girl), true}
     {_, tg_file_id} = @messenger.send_photo(chat_id, photo, opts)
-    if tg_file_id != photo do
-      Logger.info("Save new tg file id for photo #{photo_url}")
-      @photos_cache.set(photo_url, tg_file_id)
+    if is_new do
+      Logger.info("Save new tg file id for photo #{girl.photo}")
+      @photos_cache.set(girl.photo, tg_file_id)
     end
   end
 
@@ -664,9 +667,9 @@ defmodule TGBot do
         #        end
         caption = get_translation(chat, "place_in_competition", place: girl_offset + 1) <>
                   Girl.get_profile_url(current_girl)
-        send_single_photo(
+        send_single_girl_photo(
           chat.chat_id,
-          current_girl.photo,
+          current_girl,
           caption: caption,
           #          keyboard: keyboard,
           static_keyboard: keyboard,

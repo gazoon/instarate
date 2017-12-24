@@ -79,7 +79,6 @@ defmodule Voting.InstagramProfiles.Storages.Mongo do
       photo: row["photo"],
       photo_code: row["photo_code"],
       followers: row["followers"],
-      unreachable: row["unreachable"],
     }
   end
 end

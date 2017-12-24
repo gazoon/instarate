@@ -30,12 +30,13 @@ defmodule Voting do
   @spec add_girl(String.t) :: {:ok, Profile.t} | {:error, String.t}
   def add_girl(photo_uri) do
     photo_code = InstagramClient.parse_media_code(photo_uri)
-
     with {:ok, media_info = %Media{is_photo: true}} <- InstagramClient.get_media_info(photo_code),
          followers_number <- InstagramClient.get_followers_number(media_info.owner),
+         photo_path <- build_photo_path(media_info.owner),
          {:ok, profile} <- @profiles_storage.add(
-           Profile.new(media_info.owner, media_info.url, photo_code, followers_number)
+           Profile.new(media_info.owner, photo_path, photo_code, followers_number)
          ) do
+      Profile.upload_photo(profile, media_info.url)
       choose_competitions(followers_number)
       |> Enum.each(
            fn
@@ -143,18 +144,6 @@ defmodule Voting do
     end
   end
 
-  defp update_unreachable(girl) do
-
-  end
-
-  @spec file_available?(String.t) :: boolean
-  defp file_available?(photo_url) do
-    case HTTPoison.get!(photo_url) do
-      %HTTPoison.Response{status_code: 200} -> true
-      _ -> false
-    end
-  end
-
   @spec build_girls([Competitor.t]) :: [Girl.t]
   defp build_girls(competitors) do
     profiles = @profiles_storage.get_multiple(for c <- competitors, do: c.username)
@@ -170,6 +159,9 @@ defmodule Voting do
       end
     )
   end
+
+  @spec build_photo_path(String.t) :: String.t
+  defp build_photo_path(username), do: username <> "-" <> UUID.uuid4()
 
   @spec choose_competitions(integer) :: [String.t]
   defp choose_competitions(followers_number) do

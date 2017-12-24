@@ -1,14 +1,15 @@
 defmodule Voting.Girl do
 
   alias Voting.Girl
-  alias Instagram.Client, as: InstagramClient
   alias Voting.Competitors.Model, as: Competitor
   alias Voting.InstagramProfiles.Model, as: Profile
-  @storage Application.get_env(:voting, __MODULE__)[:storage]
 
   @type t :: %Girl{
                username: String.t,
                photo: String.t,
+               photo_code: String.t,
+               added_at: integer,
+               followers: integer,
                competition: String.t,
                rating: integer,
                matches: integer,
@@ -16,7 +17,16 @@ defmodule Voting.Girl do
                loses: integer
              }
 
-  defstruct username: nil, photo: nil, competition: nil, rating: nil, matches: 0, wins: 0, loses: 0
+  defstruct username: nil,
+            photo: nil,
+            photo_code: nil,
+            added_at: nil,
+            followers: nil,
+            competition: nil,
+            rating: nil,
+            matches: 0,
+            wins: 0,
+            loses: 0
 
 
   @spec combine(Competitor.t, Profile.t) :: Girl.t
@@ -24,6 +34,9 @@ defmodule Voting.Girl do
     %Girl{
       username: profile.username,
       photo: profile.photo,
+      photo_code: profile.photo_code,
+      followers: profile.followers,
+      added_at: profile.added_at,
       competition: competitor.competition,
       rating: competitor.rating,
       matches: competitor.matches,
@@ -32,14 +45,48 @@ defmodule Voting.Girl do
     }
   end
 
-  @spec get_profile_url(Girl.t | Profile.t) :: String.t
+  @spec get_profile_url(Girl.t) :: String.t
   def get_profile_url(girl) do
-    InstagramClient.build_profile_url(girl.username)
+    girl
+    |> to_profile
+    |> Profile.get_profile_url()
   end
 
   @spec get_position(Girl.t) :: integer
   def get_position(girl) do
-    @storage.get_higher_ratings_number(girl.competition, girl.rating) + 1
+    girl
+    |> to_competitor
+    |> Profile.get_profile_url()
+    Competitor.get_position(girl)
   end
 
+  @spec get_profile_url(Girl.t) :: String.t
+  def get_photo_url(girl) do
+    girl
+    |> to_profile
+    |> Profile.get_photo_url()
+  end
+
+  @spec to_profile(Girl.t) :: Profile.t
+  def to_profile(girl) do
+    %Profile{
+      username: girl.username,
+      photo: girl.photo,
+      photo_code: girl.photo_code,
+      followers: girl.followers,
+      added_at: girl.added_at
+    }
+  end
+
+  @spec to_competitor(Girl.t) :: Competitor.t
+  def to_competitor(girl) do
+    %Competitor{
+      username: girl.username,
+      competition: girl.competition,
+      rating: girl.rating,
+      matches: girl.matches,
+      wins: girl.wins,
+      loses: girl.loses
+    }
+  end
 end
