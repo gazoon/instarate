@@ -40,7 +40,7 @@ defmodule Scheduler.Impls.Mongo do
     task
   end
 
-  @spec delete_task(integer, String.t) :: :ok
+  @spec delete_task(integer, atom) :: :ok
   def delete_task(chat_id, name) do
     Mongo.delete_one!(
       @process_name,
@@ -72,8 +72,11 @@ defmodule Scheduler.Impls.Mongo do
     end
   end
 
-  defp transform_task(nil), do: nil
   @spec transform_task(map()) :: Task.t
+  defp transform_task(row)
+
+  defp transform_task(nil), do: nil
+
   defp transform_task(row) do
     Task.from_data(row)
   end

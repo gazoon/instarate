@@ -10,8 +10,8 @@ defmodule TGBot.Localization do
   alias TGBot.Chats.Chat
 
 
-  @spec  get_translation(Chat.t, String.t, map()) :: String.t
-  def get_translation(chat, msgid, bindings \\ %{}) do
+  @spec  get_translation(Chat.t, String.t, Keyword.t) :: String.t
+  def get_translation(chat, msgid, bindings \\ []) do
     if @disable_translation? do
       msgid
     else

@@ -40,7 +40,7 @@ defmodule Voting.InstagramProfiles.Model do
     InstagramClient.build_profile_url(girl.username)
   end
 
-  @spec get_profile_url(Profile.t) :: String.t
+  @spec get_photo_url(Profile.t) :: String.t
   def get_photo_url(girl) do
     @photos_storage.build_url(girl.photo)
   end

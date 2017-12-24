@@ -6,7 +6,7 @@ defmodule TGBot.Messages.Task do
   alias TGBot.Messages.Task
   @type t :: %Task{
                chat_id: integer,
-               name: String.t,
+               name: atom,
                args: map(),
                do_at: integer,
              }

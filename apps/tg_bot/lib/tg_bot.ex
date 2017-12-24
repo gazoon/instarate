@@ -200,7 +200,9 @@ defmodule TGBot do
 
   @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
   defp handle_regular_message(message, chat) do
-    if !TextMessage.appeal_to_bot?(message) do
+    if TextMessage.appeal_to_bot?(message) do
+      @messenger.send_text(chat.chat_id, get_translation(chat, "dont_get_you"))
+    else
       photo_links = String.split(message.text, "\n")
       case photo_links do
         [photo_link] -> add_single_girl(chat, photo_link)
@@ -213,8 +215,6 @@ defmodule TGBot do
           Utils.parallelize_tasks(functions)
           @messenger.send_text(chat.chat_id, "All girls were processed")
       end
-    else
-      @messenger.send_text(chat.chat_id, get_translation(chat, "dont_get_you"))
     end
     chat
   end
@@ -252,11 +252,11 @@ defmodule TGBot do
   @spec send_girls_pair(Chat.t, Girl.t, Girl.t, Keyword.t) :: Chat.t
   defp send_girls_pair(chat, girl_one, girl_two, opts) do
     tg_file_id = MatchPhotoCache.get(girl_one.photo, girl_two.photo)
-    {left_girl, right_girl, tg_file_id} = if !tg_file_id do
+    {left_girl, right_girl, tg_file_id} = if tg_file_id do
+      {girl_one, girl_two, tg_file_id}
+    else
       tg_file_id = MatchPhotoCache.get(girl_two.photo, girl_one.photo)
       {girl_two, girl_one, tg_file_id}
-    else
-      {girl_one, girl_two, tg_file_id}
     end
     left_girl_url = Girl.get_profile_url(left_girl)
     right_girl_url = Girl.get_profile_url(right_girl)
@@ -283,7 +283,17 @@ defmodule TGBot do
     message_before = Keyword.get(opts, :message_before)
     if message_before, do: @messenger.send_text(chat.chat_id, message_before)
 
-    message_id = if !tg_file_id do
+    message_id = if tg_file_id do
+      Logger.info("Use cached match photo #{tg_file_id}")
+      {message_id, _} = @messenger.send_photo(
+        chat.chat_id,
+        tg_file_id,
+        caption: caption_text,
+        static_keyboard: keyboard,
+        one_time_keyboard: true
+      )
+      message_id
+    else
       left_girl_photo_url = Girl.get_photo_url(left_girl)
       right_girl_photo_url = Girl.get_photo_url(right_girl)
       match_photo = @pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
@@ -299,16 +309,6 @@ defmodule TGBot do
         File.rm!(match_photo)
       end
       MatchPhotoCache.set(left_girl.photo, right_girl.photo, tg_file_id)
-      message_id
-    else
-      Logger.info("Use cached match photo #{tg_file_id}")
-      {message_id, _} = @messenger.send_photo(
-        chat.chat_id,
-        tg_file_id,
-        caption: caption_text,
-        static_keyboard: keyboard,
-        one_time_keyboard: true
-      )
       message_id
     end
 

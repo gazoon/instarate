@@ -52,19 +52,18 @@ defmodule Voting.Girl do
     |> Profile.get_profile_url()
   end
 
-  @spec get_position(Girl.t) :: integer
-  def get_position(girl) do
-    girl
-    |> to_competitor
-    |> Profile.get_profile_url()
-    Competitor.get_position(girl)
-  end
-
-  @spec get_profile_url(Girl.t) :: String.t
+  @spec get_photo_url(Girl.t) :: String.t
   def get_photo_url(girl) do
     girl
     |> to_profile
     |> Profile.get_photo_url()
+  end
+
+  @spec get_position(Girl.t) :: integer
+  def get_position(girl) do
+    girl
+    |> to_competitor
+    |> Competitor.get_position()
   end
 
   @spec to_profile(Girl.t) :: Profile.t
