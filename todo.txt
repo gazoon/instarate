@@ -1,4 +1,4 @@
-4. replace polling by webhooks
+4. replace polling by webhook
 11. scale coefficient depending on number of matches or and current rating
 20. think about webview based top page
 25. return callback top implementation
@@ -8,7 +8,7 @@
 29. add cities categories
 35. add separate service for concatenation
 37. cover with unit tests
-38. handle end of the girls
 39. stub pictures generation
+40. display current chat settings
 
 

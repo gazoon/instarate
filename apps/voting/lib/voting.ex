@@ -55,7 +55,7 @@ defmodule Voting do
     @girls_storage.get_girls_number(competition)
   end
 
-  @spec get_next_pair(String.t, String.t) :: {Girl.t, Girl.t}
+  @spec get_next_pair(String.t, String.t) :: {Girl.t, Girl.t} | :error
   def get_next_pair(competition, voters_group_id) do
     attempt = 0
     get_next_pair(competition, voters_group_id, attempt)
@@ -125,10 +125,14 @@ defmodule Voting do
     @girls_storage.update_girl(loser)
   end
 
-  defp get_next_pair(_competition, _voters_group_id, _attempt = @max_random_attempt) do
-    raise "Can't get girl to vote to, it seems you've voted for a lot of girls"
+  @spec get_next_pair(String.t, String.t, integer) :: {Girl.t, Girl.t} | :error
+  defp get_next_pair(competition, voters_group_id, attempt)
+
+  defp get_next_pair(competition, voters_group_id, _attempt = @max_random_attempt) do
+    Logger.warn("Can't get girls for #{voters_group_id} in competition #{competition}")
+    :error
   end
-  @spec get_next_pair(String.t, String.t, integer) :: {Girl.t, Girl.t}
+
   defp get_next_pair(competition, voters_group_id, attempt) do
     {competitor_one, competitor_two} = @girls_storage.get_random_pair(competition)
     if @voters_storage.new_pair?(

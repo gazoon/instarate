@@ -236,7 +236,20 @@ defmodule TGBot do
   @spec send_next_girls_pair(Chat.t, Keyword.t) :: Chat.t
   defp send_next_girls_pair(chat, opts \\ []) do
     voters_group_id = build_voters_group_id(chat.chat_id)
-    {girl_one, girl_two} = Voting.get_next_pair(chat.competition, voters_group_id)
+    case Voting.get_next_pair(chat.competition, voters_group_id) do
+      {girl_one, girl_two} -> send_girls_pair(chat, girl_one, girl_two, opts)
+      :error ->
+        @messenger.send_text(
+          chat.chat_id,
+          get_translation(chat, "no_more_girls_in_competition"),
+          static_keyboard: :remove
+        )
+        chat
+    end
+  end
+
+  @spec send_girls_pair(Chat.t, Girl.t, Girl.t, Keyword.t) :: Chat.t
+  defp send_girls_pair(chat, girl_one, girl_two, opts) do
     tg_file_id = MatchPhotoCache.get(girl_one.photo, girl_two.photo)
     {left_girl, right_girl, tg_file_id} = if !tg_file_id do
       tg_file_id = MatchPhotoCache.get(girl_two.photo, girl_one.photo)

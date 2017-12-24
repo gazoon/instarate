@@ -91,3 +91,6 @@ msgstr ""
 "/disableNotification@InstaRateBot - Отключить ежедневные уведомления. По умолчанию они включены.\n\n"
 "votingTimeout@InstaRateBot <timeout> - Установить время, которое я буду ждать перед тем как послать новую пару девушек. В секундах, минимум - 5 секунд. Пример:\n"
 "votingTimeout@InstaRateBot 10"
+
+msgid "no_more_girls_in_competition"
+msgstr "Простите, но у меня больше нет девушек для вас. Вы можете выбрать другое соревнование /chatSettings@InstaRateBot"
