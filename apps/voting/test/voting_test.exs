@@ -1,39 +1,13 @@
 defmodule VotingTest do
-
   use ExUnit.Case
 
-  #  test "winner has higher rating" do
-  #    assert {
-  #             :ok,
-  #             %Girl{username: "svetabily", photo: "https://www.instagram.com/p/BbRv15lltW7/"}
-  #           } = Voting.add_girl("BbRv15lltW7")
-  #
-  #  end
+  import Voting
+  alias Voting.InstagramProfiles.Model, as: Profile
+  alias Voting.Girl
 
-  #  test "photo doesn't exist" do
-  #    assert {
-  #             :error,
-  #             "Media BbRv15lltW7228 not found"
-  #           } = Voting.add_girl("BbRv15lltW7228")
-  #  end
-  #
-  #  test "it's not a photo" do
-  #    assert {
-  #             :error,
-  #             "BbJ6VOLFOAT is not a photo"
-  #           } = Voting.add_girl("BbJ6VOLFOAT")
-  #  end
-  #
-  #  test "girl already exists" do
-  #    assert {
-  #             :ok,
-  #             %Girl{username: "svetabily", photo: "https://www.instagram.com/p/BbRv15lltW7/"}
-  #           } = Voting.add_girl("BbRv15lltW7")
-  #
-  #    assert {
-  #             :error,
-  #             "Girl svetabily already added"
-  #           } = Voting.add_girl("BbRv15lltW7")
-  #  end
+  test "simple add" do
+    assert {:ok, %Profile{username: "media_code_owner"}} = add_girl("media_code")
+  end
+
 
 end

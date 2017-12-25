@@ -1,4 +1,4 @@
-defmodule TgBot.Mixfile do
+defmodule TGBot.Mixfile do
   use Mix.Project
 
   def project do
