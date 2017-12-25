@@ -10,6 +10,7 @@ defmodule TGBot.Pictures.Concatenators.ImageMagick do
 
   use Utils.Meter
 
+  @spec version :: String.t
   def version, do: @version
 
   @spec concatenate(String.t, String.t) :: String.t

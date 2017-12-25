@@ -2,6 +2,14 @@
 Script to parse saved photos: <br>
 https://gist.github.com/attemka/43de9779a80a2f2fb99a50e78adc6eb1
 
+Google PAAS notes: <br>
+1. Mongodb node
+2. App engine
+3. Logging
+4. Cloud storage
+5. Load balancing
+6. DNS ?
+
 ## License
 
 MIT License

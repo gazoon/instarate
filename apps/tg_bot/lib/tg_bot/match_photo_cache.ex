@@ -1,8 +1,8 @@
 defmodule TGBot.MatchPhotoCache do
-  alias TGBot.Pictures
   @config Application.get_env(:tg_bot, __MODULE__)
   alias TGBot.Cache.Behaviour, as: Cache
   @cache @config[:cache]
+  @pictures @config[:pictures_concatenator]
 
   @spec get(String.t, String.t) :: Cache.value | nil
   def get(left_photo, right_photo) do
@@ -18,6 +18,6 @@ defmodule TGBot.MatchPhotoCache do
 
   @spec build_key(String.t, String.t) :: String.t
   defp build_key(left_photo, right_photo) do
-    left_photo <> " | " <> right_photo <> Pictures.version()
+    left_photo <> " | " <> right_photo <> @pictures.version()
   end
 end

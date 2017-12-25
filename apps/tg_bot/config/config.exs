@@ -43,7 +43,8 @@ config :tg_bot, TGBot.Queue.Reader,
        fetch_delay: 100
 
 config :tg_bot, TGBot.MatchPhotoCache,
-       cache: TGBot.Cache.Impls.Mongo
+       cache: TGBot.Cache.Impls.Mongo,
+       pictures_concatenator: TGBot.Pictures.Concatenators.ImageMagick
 
 config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"
 
