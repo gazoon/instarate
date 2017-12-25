@@ -9,7 +9,7 @@ defmodule TGBot do
   alias TGBot.Chats.Chat
   alias Voting.Girl
   alias Voting.InstagramProfiles.Model, as: InstagramProfile
-  import Localization, only: [get_translation: 3, get_translation: 2]
+  import Localization, only: [get_translation: 3, get_translation: 2, get_default_translation: 1]
 
   @start_cmd "start"
   @add_girl_cmd "addGirl"
@@ -71,17 +71,18 @@ defmodule TGBot do
     end
   end
 
-  @spec initialize_context(Message.t) :: any
-  defp initialize_context(message) do
+  @spec initialize_context(integer) :: any
+  defp initialize_context(chat_id) do
     request_id = UUID.uuid4()
-    Logger.metadata([request_id: request_id, chat_id: message.chat_id])
+    Logger.metadata([request_id: request_id, chat_id: chat_id])
   end
 
   @spec process_message(Message.t, ((Message.t, Chat.t) -> Chat.t)) :: any
   defp process_message(message, handler) do
-    initialize_context(message)
+    chat_id = Message.chat_id(message)
+    initialize_context(chat_id)
     try do
-      {chat, is_new} = get_chat(message)
+      {chat, is_new} = get_chat(chat_id)
       chat_after_processing = handler.(message, chat)
       if chat_after_processing != chat || is_new do
         Logger.info("Save updated chat info")
@@ -90,20 +91,31 @@ defmodule TGBot do
     rescue
       error ->
         Logger.error(Exception.format(:error, error))
+        send_error_msg(chat_id)
         reraise error, System.stacktrace()
     catch
       :exit, {{error, stack}, _from} ->
         Logger.error(Exception.format(:error, error, stack))
+        send_error_msg(chat_id)
         reraise error, stack
       :exit, error ->
         Logger.error(Exception.format(:error, "Exit signal #{inspect error}"))
+        send_error_msg(chat_id)
         reraise inspect(error), System.stacktrace()
     end
   end
 
-  @spec get_chat(Message.t) :: {Chat.t, boolean}
-  defp get_chat(message) do
-    chat_id = Message.chat_id(message)
+  @spec send_error_msg(integer) :: any
+  defp send_error_msg(chat_id) do
+    @messenger.send_text(
+      chat_id,
+      get_default_translation("unknown_error"),
+      static_keyboard: :remove
+    )
+  end
+
+  @spec get_chat(integer) :: {Chat.t, boolean}
+  defp get_chat(chat_id) do
     case @chats_storage.get(chat_id) do
       nil ->
         members_count = @messenger.get_chat_members_number(chat_id) - 1
