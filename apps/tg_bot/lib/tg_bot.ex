@@ -5,7 +5,7 @@ defmodule TGBot do
   alias TGBot.Messages.Callback, as: Callback
   alias TGBot.Messages.Task, as: TaskMessage
   alias TGBot.Messages.User, as: MessageUser
-  alias TGBot.{Message, MatchPhotoCache, Localization}
+  alias TGBot.{Message, MatchPhotoCache, Localization, UserMessage}
   alias TGBot.Chats.Chat
   alias Voting.Girl
   alias Voting.InstagramProfiles.Model, as: InstagramProfile
@@ -82,7 +82,7 @@ defmodule TGBot do
     chat_id = Message.chat_id(message)
     initialize_context(chat_id)
     try do
-      {chat, is_new} = get_chat(chat_id)
+      {chat, is_new} = get_or_create_chat(message)
       chat_after_processing = handler.(message, chat)
       if chat_after_processing != chat || is_new do
         Logger.info("Save updated chat info")
@@ -114,12 +114,16 @@ defmodule TGBot do
     )
   end
 
-  @spec get_chat(integer) :: {Chat.t, boolean}
-  defp get_chat(chat_id) do
+  @spec get_or_create_chat(Message.t) :: {Chat.t, boolean}
+  defp get_or_create_chat(message) do
+    chat_id = Message.chat_id(message)
     case @chats_storage.get(chat_id) do
       nil ->
+        unless UserMessage.impl_for(message) do
+          raise "Chat #{chat_id} not found, and it's not a user message #{inspect message}"
+        end
         members_count = @messenger.get_chat_members_number(chat_id) - 1
-        {Chat.new(chat_id, members_count), true}
+        {Chat.new(chat_id, UserMessage.is_group_chat(message), members_count), true}
       chat -> {chat, false}
     end
   end

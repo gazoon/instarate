@@ -62,6 +62,7 @@ defmodule TGBot.Chats.Storages.Mongo do
       competition: row["competition"],
       self_activation_allowed: row["self_activation_allowed"],
       voting_timeout: row["voting_timeout"],
+      is_group_chat: row["is_group_chat"],
       language: row["language"],
     }
   end

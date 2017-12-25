@@ -8,5 +8,4 @@
 29. add cities categories
 35. add separate service for concatenation
 37. cover with unit tests
-39. add is_private chat info
 

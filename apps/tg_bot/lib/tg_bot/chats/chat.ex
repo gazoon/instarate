@@ -28,6 +28,7 @@ defmodule TGBot.Chats.Chat do
                current_top_offset: integer,
                last_match: Match.t,
                created_at: integer,
+               is_group_chat: boolean,
                competition: String.t,
                self_activation_allowed: boolean,
                voting_timeout: integer,
@@ -38,16 +39,18 @@ defmodule TGBot.Chats.Chat do
             current_top_offset: 0,
             last_match: nil,
             created_at: nil,
+            is_group_chat: nil,
             competition: nil,
             self_activation_allowed: true,
             voting_timeout: 5,
             language: nil
 
-  @spec new(integer, integer) :: Chat.t
-  def new(chat_id, members_number) do
+  @spec new(integer, boolean, integer) :: Chat.t
+  def new(chat_id, is_group_chat, members_number) do
     %Chat{
       chat_id: chat_id,
       members_number: members_number,
+      is_group_chat: is_group_chat,
       created_at: Utils.timestamp(),
       competition: Voting.global_competition(),
       language: Localization.english_lang(),
