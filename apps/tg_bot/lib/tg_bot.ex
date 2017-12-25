@@ -231,7 +231,7 @@ defmodule TGBot do
 
   @spec handle_start_cmd(TextMessage.t, Chat.t) :: Chat.t
   defp handle_start_cmd(_message, chat) do
-    try_to_send_pair(chat)
+    try_to_send_next_pair(chat)
   end
 
   @spec send_next_girls_pair(Chat.t, Keyword.t) :: Chat.t
@@ -551,8 +551,8 @@ defmodule TGBot do
     end
   end
 
-  @spec try_to_send_pair(Chat.t) :: Chat.t
-  defp try_to_send_pair(chat) do
+  @spec try_to_send_next_pair(Chat.t) :: Chat.t
+  defp try_to_send_next_pair(chat) do
     if chat.last_match do
       time_to_show = 1000 * chat.voting_timeout + chat.last_match.shown_at
       if time_to_show > Utils.timestamp_milliseconds() do
@@ -609,7 +609,7 @@ defmodule TGBot do
            winner_username,
            loser_username
          ) do
-      :ok -> try_to_send_pair(chat)
+      {:ok, _} -> try_to_send_next_pair(chat)
       {:error, error} ->
         Logger.warn("Can't vote by message: #{error}")
         chat
@@ -635,7 +635,7 @@ defmodule TGBot do
           get_translation(chat, "success_vote", username: winner_username)
         )
         if chat.last_match.message_id == message.parent_msg_id do
-          try_to_send_pair(chat)
+          try_to_send_next_pair(chat)
         else
           chat
         end

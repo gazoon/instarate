@@ -88,7 +88,8 @@ defmodule Voting do
     build_girls(competitors)
   end
 
-  @spec vote(String.t, String.t, String.t, String.t, String.t) :: :ok | {:error, String.t}
+  @spec vote(String.t, String.t, String.t, String.t, String.t)
+        :: {:ok, {Girl.t, Girl.t}} | {:error, String.t}
   def vote(competition, voters_group_id, voter_id, winner_username, loser_username) do
     with :ok <- @voters_storage.try_vote(
       competition,
@@ -99,14 +100,16 @@ defmodule Voting do
     ),
          {:ok, winner} <- @girls_storage.get_girl(competition, winner_username),
          {:ok, loser} <- @girls_storage.get_girl(competition, loser_username) do
-      process_vote(winner, loser)
-      :ok
+      {winner, loser} = process_vote(winner, loser)
+      @girls_storage.update_girl(winner)
+      @girls_storage.update_girl(loser)
+      {:ok, build_girls_tuple([winner, loser])}
     else
       error -> error
     end
   end
 
-  @spec process_vote(Competitor.t, Competitor.t) :: any
+  @spec process_vote(Competitor.t, Competitor.t) :: {Competitor.t, Competitor.t}
   defp process_vote(winner, loser) do
     {new_winner_rating, new_loser_rating} = EloRating.recalculate(winner.rating, loser.rating)
     winner = %Competitor{
@@ -121,8 +124,7 @@ defmodule Voting do
       matches: loser.matches + 1,
       loses: loser.loses + 1
     }
-    @girls_storage.update_girl(winner)
-    @girls_storage.update_girl(loser)
+    {winner, loser}
   end
 
   @spec get_next_pair(String.t, String.t, integer) :: {Girl.t, Girl.t} | :error
@@ -141,11 +143,17 @@ defmodule Voting do
          competitor_one.username,
          competitor_two.username
        ) do
-      build_girls([competitor_one, competitor_two])
-      |> List.to_tuple()
+      build_girls_tuple([competitor_one, competitor_two])
     else
       get_next_pair(competition, voters_group_id, attempt + 1)
     end
+  end
+
+  @spec build_girls_tuple([Competitor.t]) :: {Girl.t, Girl.t}
+  defp build_girls_tuple(competitors) do
+    girls = build_girls(competitors)
+    if  length(girls) == 2,
+        do: List.to_tuple(girls), else: raise "It only makes sence to use 2 elems tuple"
   end
 
   @spec build_girls([Competitor.t]) :: [Girl.t]
