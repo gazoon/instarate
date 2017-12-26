@@ -7,6 +7,5 @@
 28. enhance ban mechanism
 29. add cities categories
 35. add separate service for concatenation
-37. cover with unit tests
-38. split tg_bot module
 39. don't return errors as text, use constant atoms
+
