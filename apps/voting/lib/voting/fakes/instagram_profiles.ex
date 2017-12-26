@@ -5,7 +5,7 @@ defmodule Voting.Fakes.InstagramProfiles do
 
   @spec add(Profile.t) :: {:ok, Profile.t} | {:error, String.t}
   def add(girl) do
-    if girl.username == "existent_girl" do
+    if String.starts_with?(girl.username, "existent_girl") do
       {:error, "already added"}
     else
       {:ok, girl}

@@ -20,6 +20,12 @@ defmodule Voting.Fakes.Competitors do
   end
 
   # not used
+  @spec get_girl(String.t, String.t) :: {:ok, Competitor.t} | {:error, String.t}
+  def get_girl(competition, username) do
+    {:ok, %Competitor{username: username, competition: competition, rating: 1500}}
+  end
+
+  # not used
   @spec get_top(String.t, integer, integer) :: [Competitor.t]
   def get_top(_competition, _number, _offset), do: []
 
@@ -30,10 +36,6 @@ defmodule Voting.Fakes.Competitors do
   # not used
   @spec get_girls_number(String.t) :: integer
   def get_girls_number(_competition), do: :ok
-
-  # not used
-  @spec get_girl(String.t, String.t) :: {:ok, Competitor.t} | {:error, String.t}
-  def get_girl(_competition, _username), do: {:ok, %Competitor{}}
 
   # not used
   @spec get_higher_ratings_number(String.t, integer) :: integer
