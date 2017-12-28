@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :tg_bot,
-       bot_name: "InstaRate",
-       bot_username: "InstaRateBot",
+       bot_name: "InstaRateLocal",
+       bot_username: "InstaRateLocalBot",
        mongo_chats: [
          database: "local",
          host: "localhost",
@@ -59,7 +59,7 @@ config :tg_bot, TGBot.MatchPhotoCache,
        cache: TGBot.Cache.Impls.Mongo,
        pictures_concatenator: TGBot.Pictures.Concatenators.ImageMagick
 
-config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"
+config :nadia, token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 
 config :logger, :console,
        metadata: [:request_id, :chat_id]
