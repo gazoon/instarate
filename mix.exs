@@ -1,4 +1,4 @@
-defmodule Instmash.Mixfile do
+defmodule InstaRate.Mixfile do
   use Mix.Project
 
   def project do
@@ -18,6 +18,7 @@ defmodule Instmash.Mixfile do
     [
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:distillery, "~> 1.5", runtime: false}
     ]
   end
 end
