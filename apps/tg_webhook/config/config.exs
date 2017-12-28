@@ -31,6 +31,15 @@ use Mix.Config
 config :nadia, token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 
 config :tg_webhook, TGWebhook.Poller,
-       queue: TGBot.Queue.Impls.Mongo
+       queue: Utils.Queue.Impls.Mongo
+
+config :utils,
+       mongo_queue: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
+         collection: "insta_queue",
+         max_processing_time: 10000
+       ]
 
 import_config "#{Mix.env}.exs"

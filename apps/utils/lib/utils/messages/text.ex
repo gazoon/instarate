@@ -1,8 +1,8 @@
-defmodule TGBot.Messages.Text do
-  @behaviour TGBot.MessageBuilder
+defmodule Utils.Messages.Text do
+  @behaviour Utils.Messages.Builder
 
-  alias TGBot.Messages.Text, as: TextMessage
-  alias TGBot.Messages.User, as: MessageUser
+  alias Utils.Messages.Text, as: TextMessage
+  alias Utils.Messages.User, as: MessageUser
   @type t :: %TextMessage{
                text: String.t,
                text_lowercase: String.t,
@@ -38,15 +38,15 @@ defmodule TGBot.Messages.Text do
     }
   end
 
-  @spec reply_to_bot?(TextMessage.t) :: boolean
-  def reply_to_bot?(message) do
+  @spec reply_to_bot?(TextMessage.t, String.t) :: boolean
+  def reply_to_bot?(message, bot_username) do
     reply_to = message.reply_to
-    if reply_to, do: MessageUser.is_bot?(reply_to.user), else: false
+    if reply_to, do: MessageUser.is_bot?(reply_to.user, bot_username), else: false
   end
 
-  @spec appeal_to_bot?(TextMessage.t) :: boolean
-  def appeal_to_bot?(message) do
-    bot_name = String.downcase(Application.get_env(:tg_bot, :bot_name))
+  @spec appeal_to_bot?(TextMessage.t, String.t) :: boolean
+  def appeal_to_bot?(message, bot_name) do
+    bot_name = String.downcase(bot_name)
     String.contains?(message.text_lowercase, bot_name)
   end
 

@@ -1,4 +1,4 @@
-defmodule TGBot.Queue.Reader do
+defmodule TGBot.QueueReader do
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @queue @config[:queue]

@@ -1,5 +1,5 @@
 defmodule Scheduler.Reader do
-  alias TGBot.Messages.Task
+  alias Utils.Messages.Task
 
   @config Application.get_env(:tg_bot, __MODULE__)
   @storage @config[:tasks_storage]

@@ -1,10 +1,11 @@
 defmodule TGBot do
 
   require Logger
-  alias TGBot.Messages.Text, as: TextMessage
-  alias TGBot.Messages.Callback, as: Callback
-  alias TGBot.Messages.Task, as: TaskMessage
-  alias TGBot.{Message, Localization, UserMessage}
+  alias Utils.Messages.Text, as: TextMessage
+  alias Utils.Messages.Callback, as: Callback
+  alias Utils.Messages.Task, as: TaskMessage
+  alias Utils.Messages.Message
+  alias TGBot.{Localization, UserMessage}
   alias TGBot.Chats.Chat
   import TGBot.Processing.{Callbacks, Tasks, Text}
   import Localization, only: [get_default_translation: 1]

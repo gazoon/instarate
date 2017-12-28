@@ -2,7 +2,7 @@ defmodule TGBot.Processing.Tasks do
   import TGBot.Processing.Common
 
   require Logger
-  alias TGBot.Messages.Task, as: TaskMessage
+  alias Utils.Messages.Task, as: TaskMessage
   alias TGBot.Localization
   alias TGBot.Chats.Chat
   import Localization, only: [get_translation: 2]

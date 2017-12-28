@@ -5,7 +5,7 @@ defmodule Scheduler.Impls.Mongo do
   @process_name :mongo_scheduler
   @duplication_code 11_000
   @collection "tasks"
-  alias TGBot.Messages.Task
+  alias Utils.Messages.Task
 
   @spec child_spec :: tuple
   def child_spec do

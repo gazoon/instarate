@@ -1,6 +1,6 @@
-defmodule TGBot.Messages.User do
+defmodule Utils.Messages.User do
 
-  alias TGBot.Messages.User
+  alias Utils.Messages.User
   @type t :: %User{id: integer, name: String.t, username: String.t}
   defstruct id: nil, name: nil, username: ""
 
@@ -10,8 +10,8 @@ defmodule TGBot.Messages.User do
     struct(User, user_data)
   end
 
-  @spec is_bot?(User.t) :: boolean
-  def is_bot?(user) do
-    user.username == Application.get_env(:tg_bot, :bot_username)
+  @spec is_bot?(User.t, String.t) :: boolean
+  def is_bot?(user, bot_username) do
+    user.username == bot_username
   end
 end

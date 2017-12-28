@@ -28,10 +28,11 @@ defmodule TgWebhook.Mixfile do
     [
       {:cowboy, "~> 1.1.2"},
       {:plug, "~> 1.4.3"},
-      #      {:nadia, "~> 0.4.2"},
+      {:distillery, "~> 1.5", runtime: false},
       {:poison, "~> 3.1"},
       {:nadia, git: "https://github.com/gazoon/nadia.git"},
-      {:tg_bot, in_umbrella: true},
+      {:mongodb, ">= 0.0.0"},
+      {:utils, in_umbrella: true},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
     ]

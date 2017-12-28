@@ -5,8 +5,8 @@ defprotocol TGBot.UserMessage do
 end
 
 alias  TGBot.UserMessage
-alias  TGBot.Messages.Text, as: TextMessage
-alias  TGBot.Messages.Callback, as: CallbackMessage
+alias  Utils.Messages.Text, as: TextMessage
+alias  Utils.Messages.Callback, as: CallbackMessage
 
 defimpl UserMessage, for: TextMessage do
   def user(message), do: message.user

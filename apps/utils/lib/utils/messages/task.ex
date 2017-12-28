@@ -1,9 +1,9 @@
-defmodule TGBot.Messages.Task do
+defmodule Utils.Messages.Task do
 
 
-  @behaviour TGBot.MessageBuilder
+  @behaviour Utils.Messages.Builder
 
-  alias TGBot.Messages.Task
+  alias Utils.Messages.Task
   @type t :: %Task{
                chat_id: integer,
                name: atom,

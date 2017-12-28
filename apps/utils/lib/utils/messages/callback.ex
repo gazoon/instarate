@@ -1,8 +1,8 @@
-defmodule TGBot.Messages.Callback do
-  @behaviour TGBot.MessageBuilder
+defmodule Utils.Messages.Callback do
+  @behaviour Utils.Messages.Builder
 
-  alias TGBot.Messages.Callback
-  alias TGBot.Messages.User, as: MessageUser
+  alias Utils.Messages.Callback
+  alias Utils.Messages.User, as: MessageUser
   @type t :: %Callback{
                callback_id: String.t,
                chat_id: integer,

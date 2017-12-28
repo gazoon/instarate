@@ -2,7 +2,7 @@ defmodule TGBot.Supervisor do
 
   alias TGBot.Chats.Storages.Mongo, as: ChatsMongoStorage
   alias Scheduler.Impls.Mongo, as: MongoScheduler
-  alias TGBot.Queue.Impls.Mongo, as: MongoQueue
+  alias Utils.Queue.Impls.Mongo, as: MongoQueue
   alias TGBot.Cache.Impls.Mongo, as: MongoCache
   use Supervisor
 
@@ -19,7 +19,7 @@ defmodule TGBot.Supervisor do
                  Utils.tasks_supervisor_spec(),
                ]
                |> Kernel.++(Scheduler.Reader.children_spec())
-               |> Kernel.++(TGBot.Queue.Reader.children_spec())
+               |> Kernel.++(TGBot.QueueReader.children_spec())
 
     Supervisor.init(children, strategy: :one_for_one)
 

@@ -13,17 +13,19 @@ config :tg_bot,
          host: "localhost",
          port: 27017,
        ],
+       mongo_cache: [
+         database: "local",
+         host: "localhost",
+         port: 27017,
+       ]
+
+config :utils,
        mongo_queue: [
          database: "local",
          host: "localhost",
          port: 27017,
          collection: "insta_queue",
          max_processing_time: 10000
-       ],
-       mongo_cache: [
-         database: "local",
-         host: "localhost",
-         port: 27017,
        ]
 
 config :tg_bot, TGBot,
@@ -49,10 +51,11 @@ config :tg_bot,
 
 config :tg_bot, Scheduler.Reader,
        tasks_storage: Scheduler.Impls.Mongo,
-       queue: TGBot.Queue.Impls.Mongo
+       queue: Utils.Queue.Impls.Mongo
 
-config :tg_bot, TGBot.Queue.Reader,
-       queue: TGBot.Queue.Impls.Mongo,
+config :tg_bot,
+       TGBot.QueueReader,
+       queue: Utils.Queue.Impls.Mongo,
        fetch_delay: 100
 
 config :tg_bot, TGBot.MatchPhotoCache,

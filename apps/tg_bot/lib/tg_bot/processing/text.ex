@@ -1,7 +1,7 @@
 defmodule TGBot.Processing.Text do
   import TGBot.Processing.Common
   require Logger
-  alias TGBot.Messages.Text, as: TextMessage
+  alias Utils.Messages.Text, as: TextMessage
   alias TGBot.Localization
   alias TGBot.Chats.Chat
   import Localization, only: [get_translation: 3, get_translation: 2]
@@ -29,6 +29,9 @@ defmodule TGBot.Processing.Text do
   @min_voting_timeout 5
   @session_duration_seconds 1200
 
+  @bot_name Application.get_env(:tg_bot, :bot_name)
+  @bot_username Application.get_env(:tg_bot, :bot_username)
+
   @config Application.get_env(:tg_bot, __MODULE__)
   @scheduler @config[:scheduler]
   @messenger @config[:messenger]
@@ -36,7 +39,8 @@ defmodule TGBot.Processing.Text do
 
   @spec on_text_message(TextMessage.t, Chat.t) :: Chat.t
   def on_text_message(message, chat) do
-    if TextMessage.appeal_to_bot?(message) || TextMessage.reply_to_bot?(message)
+    if TextMessage.appeal_to_bot?(message, @bot_name)
+       || TextMessage.reply_to_bot?(message, @bot_username)
        || !message.is_group_chat do
       process_text_message(message, chat)
     else
@@ -86,7 +90,7 @@ defmodule TGBot.Processing.Text do
 
   @spec handle_regular_message(TextMessage.t, Chat.t) :: Chat.t
   defp handle_regular_message(message, chat) do
-    if TextMessage.appeal_to_bot?(message) do
+    if TextMessage.appeal_to_bot?(message, @bot_name) do
       @messenger.send_text(chat.chat_id, get_translation(chat, "dont_get_you"))
     else
       photo_links = String.split(message.text, "\n")

@@ -1,8 +1,8 @@
 defmodule TGBot.Processing.Common do
 
   require Logger
-  alias TGBot.Messages.Task, as: TaskMessage
-  alias TGBot.Messages.User, as: MessageUser
+  alias Utils.Messages.Task, as: TaskMessage
+  alias Utils.Messages.User, as: MessageUser
   alias TGBot.{MatchPhotoCache, Localization}
   alias Voting.Girl
   alias TGBot.Chats.Chat

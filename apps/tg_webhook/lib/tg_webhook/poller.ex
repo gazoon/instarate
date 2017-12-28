@@ -2,8 +2,8 @@ defmodule TGWebhook.Poller do
 
   use GenServer
   require Logger
-  alias TGBot.Messages.Text, as: TextMessage
-  alias TGBot.Messages.Callback, as: CallbackMessage
+  alias Utils.Messages.Text, as: TextMessage
+  alias Utils.Messages.Callback, as: CallbackMessage
 
   @config Application.get_env(:tg_webhook, __MODULE__)
   @queue @config[:queue]

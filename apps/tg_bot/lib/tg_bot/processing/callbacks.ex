@@ -2,7 +2,7 @@ defmodule TGBot.Processing.Callbacks do
   import TGBot.Processing.Common
 
   require Logger
-  alias TGBot.Messages.Callback, as: Callback
+  alias Utils.Messages.Callback, as: Callback
   alias TGBot.Localization
   alias TGBot.Chats.Chat
   import Localization, only: [get_translation: 3, get_translation: 2]

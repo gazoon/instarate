@@ -1,11 +1,11 @@
-defmodule TGBot.Queue.Impls.Mongo do
-  alias TGBot.Queue.{Consumer, Producer}
+defmodule Utils.Queue.Impls.Mongo do
+  alias Utils.Queue.{Consumer, Producer}
   @behaviour Consumer
   @behaviour Producer
   @duplication_code 11_000
   @process_name :mongo_queue
 
-  @config Application.get_env(:tg_bot, :mongo_queue)
+  @config Application.get_env(:utils, :mongo_queue)
   @collection @config[:collection]
   @max_processing_time @config[:max_processing_time]
   require Logger
