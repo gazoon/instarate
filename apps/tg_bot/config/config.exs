@@ -5,25 +5,21 @@ config :tg_bot,
        bot_username: "InstaRateLocalBot",
        mongo_chats: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ],
        mongo_scheduler: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ],
        mongo_cache: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ]
 
 config :utils,
        mongo_queue: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
          collection: "insta_queue",
          max_processing_time: 10000
        ]

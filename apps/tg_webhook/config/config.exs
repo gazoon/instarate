@@ -36,8 +36,7 @@ config :tg_webhook, TGWebhook.Poller,
 config :utils,
        mongo_queue: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
          collection: "insta_queue",
          max_processing_time: 10000
        ]

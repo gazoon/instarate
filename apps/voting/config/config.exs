@@ -34,18 +34,15 @@ config :goth,
 config :voting,
        mongo_girls: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ],
        mongo_voters: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ],
        mongo_profiles: [
          database: "local",
-         host: "localhost",
-         port: 27017,
+         seeds: ["localhost:27017"],
        ]
 #
 # and access this configuration in your application as:

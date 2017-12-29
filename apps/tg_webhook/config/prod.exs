@@ -3,8 +3,7 @@ use Mix.Config
 config :utils,
        mongo_queue: [
          database: "local",
-         host: "35.189.124.60",
-         port: 27017,
+         seeds: ["35.189.124.60:27017"],
          collection: "insta_queue",
          max_processing_time: 10000
        ]
