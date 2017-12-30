@@ -12,17 +12,6 @@ defmodule TGBot.Pictures.Concatenators.ImageMagick do
   @spec version :: String.t
   def version, do: @version
 
-  def create_tmp_dir do
-    case File.mkdir(@tmp_dir) do
-      {:error, reason} when reason != :eexist ->
-        raise File.Error,
-              reason: reason,
-              action: "create tmp dir",
-              path: IO.chardata_to_string(@tmp_dir)
-      _ -> nil
-    end
-  end
-
   @spec concatenate(String.t, String.t) :: String.t
   def concatenate(left_picture_url, right_picture_url) do
     Logger.info("Concatenate #{left_picture_url} and #{right_picture_url}")

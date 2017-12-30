@@ -6,7 +6,6 @@ defmodule TGBot.Application do
 
   def start(_type, _args) do
     Logger.info "Started application tg_bot"
-    Concatenator.create_tmp_dir()
     TGBot.Supervisor.start_link([])
     #    stuff()
   end
