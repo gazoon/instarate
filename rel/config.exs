@@ -30,13 +30,13 @@ environment :dev do
   # dev mode.
   set dev_mode: true
   set include_erts: true
-  set cookie: :"x6w},Ilzaq}Hz1?Sq*uTX5X!s~9pmr{`8M{e4gd/wp6d@&f=1C7{pBq.guI2{?^l"
+  set cookie: :"fc!YmXr)`=(|RMWGQc]Rb3Okq<)T?y*bJQUMEb1T5)^XGz2zjeMUqtu_zXLL)fCL"
 end
 
 environment :prod do
   set include_erts: true
   set include_src: false
-  set cookie: :"Heq$b[(*`q$|*OQTPuiQ.&Ut@SC;<Z~2yG?X]vVvz*8zen5?:o]PH28ej>BY6`8u"
+  set cookie: :"D^],I8^%G.]:pl9T>aEdL%qiDRQk2R51fNKQ~2j_ss|O!J`Ur{410Wg*%pFtHYw4"
 end
 
 # You may define one or more releases in this file.
@@ -46,6 +46,27 @@ end
 
 release :tg_bot do
   set version: current_version(:tg_bot)
+  set applications: [
+        :runtime_tools
+      ]
+end
+
+release :tg_webhook do
+  set version: current_version(:tg_webhook)
+  set applications: [
+        :runtime_tools
+      ]
+end
+
+release :utils do
+  set version: current_version(:utils)
+  set applications: [
+        :runtime_tools
+      ]
+end
+
+release :voting do
+  set version: current_version(:voting)
   set applications: [
         :runtime_tools
       ]

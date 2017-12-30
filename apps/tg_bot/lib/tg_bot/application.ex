@@ -1,11 +1,12 @@
 defmodule TGBot.Application do
 
   use Application
-
+  alias TGBot.Pictures.Concatenators.ImageMagick, as: Concatenator
   require Logger
 
   def start(_type, _args) do
     Logger.info "Started application tg_bot"
+    Concatenator.create_tmp_dir()
     TGBot.Supervisor.start_link([])
     #    stuff()
   end

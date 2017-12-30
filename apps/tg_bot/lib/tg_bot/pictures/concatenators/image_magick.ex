@@ -1,7 +1,6 @@
 defmodule TGBot.Pictures.Concatenators.ImageMagick do
   @resources_dir :code.priv_dir(:tg_bot)
   @tmp_dir Path.join(@resources_dir, "tmp_files")
-  File.mkdir(@tmp_dir)
   @glue_image Path.join(@resources_dir, "glue_gap.jpg")
   @version "v1"
   require Logger
@@ -13,12 +12,24 @@ defmodule TGBot.Pictures.Concatenators.ImageMagick do
   @spec version :: String.t
   def version, do: @version
 
+  def create_tmp_dir do
+    case File.mkdir(@tmp_dir) do
+      {:error, reason} when reason != :eexist ->
+        raise File.Error,
+              reason: reason,
+              action: "create tmp dir",
+              path: IO.chardata_to_string(@tmp_dir)
+      _ -> nil
+    end
+  end
+
   @spec concatenate(String.t, String.t) :: String.t
   def concatenate(left_picture_url, right_picture_url) do
     Logger.info("Concatenate #{left_picture_url} and #{right_picture_url}")
     measure metric_name: "concatenate_photos" do
       current_dir = new_tmp_dir_path()
       try do
+        Logger.info("Create tmp dir for the concatenation: #{current_dir}")
         File.mkdir!(current_dir)
         [left_picture_path, right_picture_path] = measure metric_name: "download_photos" do
           Utils.parallelize_tasks(

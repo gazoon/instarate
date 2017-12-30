@@ -43,6 +43,7 @@ defmodule TGBot do
   defp process_message(message, handler) do
     chat_id = Message.chat_id(message)
     initialize_context(chat_id)
+
     try do
       {chat, is_new} = get_or_create_chat(message)
       chat_after_processing = handler.(message, chat)

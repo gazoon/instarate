@@ -31,6 +31,7 @@ defmodule Utils.Mixfile do
       {:poolboy, ">= 0.0.0"},
       {:httpoison, "~> 0.13"},
       {:uuid, "~> 1.1"},
+      {:mongodb, ">= 0.0.0"},
       {:poison, "~> 3.1"},
     ]
   end

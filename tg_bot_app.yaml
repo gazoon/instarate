@@ -1,4 +1,5 @@
 env: flex
 runtime: gs://elixir-runtime/elixir.yaml
 runtime_config:
-  release_app: appengine_example
+  release_app: tg_bot
+service: tg-bot
