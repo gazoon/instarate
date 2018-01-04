@@ -6,7 +6,6 @@
 27. add photo verification
 28. enhance ban mechanism
 29. add cities categories
-35. add separate service for concatenation
 39. don't return errors as text, use constant atoms
 41. handle sigterm signal
 42. add vpn
