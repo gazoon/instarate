@@ -158,10 +158,11 @@ defmodule Voting do
 
   @spec build_girls([Competitor.t]) :: [Girl.t]
   defp build_girls(competitors) do
-    profiles = @profiles_storage.get_multiple(for c <- competitors, do: c.username)
+    competitor_usernames = for c <- competitors, do: c.username
+    profiles = @profiles_storage.get_multiple(competitor_usernames)
     profiles_mapping = for p <- profiles, into: %{}, do: {p.username, p}
     if Enum.count(competitors) != Enum.count(profiles_mapping) do
-      raise "Number of profiles is not equal to competitiors"
+      raise "Number of profiles is not equal to competitiors #{inspect competitor_usernames}"
     end
     Enum.map(
       competitors,

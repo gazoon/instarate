@@ -5,7 +5,6 @@ defmodule TGBot.Pictures.Concatenators.ImageMagick do
   @version "v1"
   require Logger
   alias TGBot.Pictures.Concatenator
-  @behaviour Concatenator
 
   use Utils.Meter
 

@@ -8,5 +8,5 @@
 29. add cities categories
 35. add separate service for concatenation
 39. don't return errors as text, use constant atoms
-40. logging format
-
+41. handle sigterm signal
+42. add vpn

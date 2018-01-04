@@ -1,6 +1,9 @@
 defmodule TGBot.Messengers.NadiaLib do
   @behaviour TGBot.Messenger
 
+  @base_url "https://api.telegram.org/bot"
+  @token Application.get_env(:nadia, :token)
+
   alias Nadia.Model.{InlineKeyboardButton, ReplyKeyboardHide, InlineKeyboardMarkup}
   alias Nadia.Model.ReplyKeyboardMarkup
   alias Nadia.Model.KeyboardButton, as: ReplyKeyboardButton
@@ -34,9 +37,32 @@ defmodule TGBot.Messengers.NadiaLib do
   @spec send_photo(integer, binary, Keyword.t) :: {integer, String.t}
   def send_photo(chat_id, photo, opts \\ []) do
     opts = transform_opts(opts)
-    case Nadia.send_photo(chat_id, photo, opts) do
-      {:error, error} -> raise error
-      {:ok, msg} -> {msg.message_id, List.last(msg.photo).file_id}
+    if Keyword.pop(opts, :binary_data) do
+      params = opts
+               |> Keyword.update(:reply_markup, nil, &(Poison.encode!(&1)))
+               |> Enum.map(fn {k, v} -> {to_string(k), to_string(v)} end)
+      msg = request(
+        "sendPhoto",
+        {
+          :multipart,
+          params ++
+          [
+            {"chat_id", to_string(chat_id)},
+            {
+              "file",
+              photo,
+              {"form-data", [{"name", "photo"}, {"filename", UUID.uuid4()}]},
+              []
+            },
+          ]
+        }
+      )
+      {msg["message_id"], List.last(msg["photo"])["file_id"]}
+    else
+      case Nadia.send_photo(chat_id, photo, opts) do
+        {:error, error} -> raise error
+        {:ok, msg} -> {msg.message_id, List.last(msg.photo).file_id}
+      end
     end
   end
 
@@ -137,5 +163,20 @@ defmodule TGBot.Messengers.NadiaLib do
       {:ok, msg} -> msg.message_id
     end
   end
+
+  @spec request(String.t, any) :: map()
+  defp request(method, data) do
+    case HTTPoison.post!(build_url(method), data) do
+      %HTTPoison.Response{body: body, status_code: 200} ->
+        case Poison.decode!(body, as: %{}) do
+          %{"ok" => true, "result" => msg} -> msg
+          resp -> raise "Invalid json response #{inspect resp}"
+        end
+      %HTTPoison.Response{body: body, status_code: code} ->
+        raise "Tg api error response #{code}: #{body}"
+    end
+  end
+
+  defp build_url(method), do: @base_url <> @token <> "/" <> method
 end
 

@@ -8,6 +8,7 @@ defmodule TGBot.Processing.Common do
   alias TGBot.Chats.Chat
   alias Voting.InstagramProfiles.Model, as: InstagramProfile
   import Localization, only: [get_translation: 3, get_translation: 2]
+  use Utils.Meter
   @session_duration 1_200_000 # 20 minutes in milliseconds
 
   @next_pair_task :send_next_pair
@@ -189,18 +190,18 @@ defmodule TGBot.Processing.Common do
     else
       left_girl_photo_url = Girl.get_photo_url(left_girl)
       right_girl_photo_url = Girl.get_photo_url(right_girl)
-      match_photo = @pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
-      {message_id, tg_file_id} = try do
-        @messenger.send_photo(
+      Logger.info("Concatenate #{left_girl_photo_url} and #{right_girl_photo_url}")
+      match_photo = measure metric_name: "concatenate_photos" do
+        @pictures.concatenate(left_girl_photo_url, right_girl_photo_url)
+      end
+      {message_id, tg_file_id} = @messenger.send_photo(
           chat.chat_id,
           match_photo,
           caption: caption_text,
           static_keyboard: keyboard,
           one_time_keyboard: true,
-        )
-      after
-        File.rm!(match_photo)
-      end
+        binary_data: true
+      )
       MatchPhotoCache.set(left_girl.photo, right_girl.photo, tg_file_id)
       message_id
     end
