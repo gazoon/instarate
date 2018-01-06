@@ -1,5 +1,12 @@
 use Mix.Config
 
+config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"
+
+config :tg_webhook,
+       serviced_bots: %{
+         "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4" => "insta_queue"
+       }
+
 config :utils,
        mongo_queue: [
          database: "local",
@@ -8,4 +15,3 @@ config :utils,
          max_processing_time: 10000
        ]
 
-config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"

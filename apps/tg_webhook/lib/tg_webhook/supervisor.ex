@@ -12,7 +12,14 @@ defmodule TGWebhook.Supervisor do
   def init(_) do
     children = [
       MongoQueue.child_spec(),
-
+      {
+        Plug.Adapters.Cowboy,
+        scheme: :http,
+        plug: TGWebhook.Router,
+        options: [
+          port: 8080
+        ]
+      },
       Poller,
     ]
 

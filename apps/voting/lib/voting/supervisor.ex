@@ -12,14 +12,6 @@ defmodule Voting.Supervisor do
 
   def init(_) do
     children = [
-      #      {
-      #        Plug.Adapters.Cowboy,
-      #        scheme: :http,
-      #        plug: Voting.Router,
-      #        options: [
-      #          port: 8080
-      #        ]
-      #      },
       CompetitorsMongoStorage.child_spec(),
       ProfilesMongoStorage.child_spec(),
       VotersMongoStorage.child_spec(),

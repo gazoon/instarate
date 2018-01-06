@@ -33,6 +33,10 @@ config :nadia, token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 config :tg_webhook, TGWebhook.Update,
        queue: Utils.Queue.Impls.Mongo
 
+config :tg_webhook,
+       serviced_bots: %{},
+       use_poller: true
+
 config :utils,
        mongo_queue: [
          database: "local",
