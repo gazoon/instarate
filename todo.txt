@@ -9,3 +9,4 @@
 39. don't return errors as text, use constant atoms
 41. handle sigterm signal
 42. add vpn
+43. add list of protected girls

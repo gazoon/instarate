@@ -30,7 +30,7 @@ use Mix.Config
 #     import_config "#{Mix.env}.exs"
 config :nadia, token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 
-config :tg_webhook, TGWebhook.Poller,
+config :tg_webhook, TGWebhook.Update,
        queue: Utils.Queue.Impls.Mongo
 
 config :utils,
