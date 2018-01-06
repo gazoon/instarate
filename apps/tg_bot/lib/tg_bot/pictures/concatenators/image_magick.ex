@@ -4,7 +4,6 @@ defmodule TGBot.Pictures.Concatenators.ImageMagick do
   @glue_image Path.join(@resources_dir, "glue_gap.jpg")
   @version "v1"
   require Logger
-  alias TGBot.Pictures.Concatenator
 
   use Utils.Meter
 

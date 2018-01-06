@@ -28,19 +28,14 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
-config :nadia, token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 
 config :tg_webhook, TGWebhook.Update,
        queue: Utils.Queue.Impls.Mongo
 
-config :tg_webhook,
-       serviced_bots: %{},
-       use_poller: true
-
 config :utils,
        mongo_queue: [
          database: "local",
-         seeds: ["localhost:27017"],
+         seeds: ["35.198.77.219:27017"],
          collection: "insta_queue",
          max_processing_time: 10000
        ]

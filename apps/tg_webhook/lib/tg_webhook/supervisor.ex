@@ -2,7 +2,6 @@ defmodule TGWebhook.Supervisor do
 
   use Supervisor
 
-  alias TGWebhook.Poller
   alias Utils.Queue.Impls.Mongo, as: MongoQueue
 
   def start_link(arg) do
@@ -20,7 +19,6 @@ defmodule TGWebhook.Supervisor do
           port: 8080
         ]
       },
-      Poller,
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

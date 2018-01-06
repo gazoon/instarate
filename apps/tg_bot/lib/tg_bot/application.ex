@@ -1,7 +1,6 @@
 defmodule TGBot.Application do
 
   use Application
-  alias TGBot.Pictures.Concatenators.ImageMagick, as: Concatenator
   require Logger
 
   def start(_type, _args) do

@@ -30,7 +30,6 @@ defmodule TgWebhook.Mixfile do
       {:plug, "~> 1.4.3"},
       {:distillery, "~> 1.5", runtime: false},
       {:poison, "~> 3.1"},
-      {:nadia, git: "https://github.com/gazoon/nadia.git"},
       {:utils, in_umbrella: true},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},

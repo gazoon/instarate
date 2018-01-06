@@ -19,8 +19,9 @@ defmodule Utils.Queue.Impls.Mongo do
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :queue})
   end
 
-  @spec put(integer, any) :: any
-  def put(chat_id, message) do
+  @spec put(integer, any, Keyword.t) :: any
+  def put(chat_id, message, opts \\ []) do
+    collection = Keyword.get(opts, :queue_name, @collection)
     message_id = UUID.uuid4()
     message_envelope = %{
       created_at: Utils.timestamp_milliseconds(),
@@ -29,7 +30,7 @@ defmodule Utils.Queue.Impls.Mongo do
     }
     case Mongo.update_one(
            @process_name,
-           @collection,
+           collection,
            %{
              "chat_id" => chat_id,
              "msgs.message_id" => %{
