@@ -36,7 +36,7 @@ defmodule Voting.Mixfile do
       {:poison, "~> 3.1"},
       {:goth, "~> 0.7.1"},
       {:uuid, "~> 1.1"},
-      {:utils, path: "../utils"}
+      {:utils, path: "utils"}
     ]
   end
 end
