@@ -1,9 +1,9 @@
-defmodule TGBot.Mixfile do
+defmodule Voting.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :tg_bot,
+      app: :voting,
       version: "0.1.0",
       build_path: "_build",
       config_path: "config/config.exs",
@@ -11,7 +11,6 @@ defmodule TGBot.Mixfile do
       lockfile: "mix.lock",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
-      compilers: [:gettext] ++ Mix.compilers,
       deps: deps()
     ]
   end
@@ -20,26 +19,24 @@ defmodule TGBot.Mixfile do
   def application do
     [
       extra_applications: [:logger],
-      mod: {TGBot.Application, []}
+      mod: {Voting.Application, []}
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:poolboy, ">= 0.0.0"},
-      {:poison, "~> 3.1"},
-      {:uuid, "~> 1.1"},
-      {:nadia, git: "https://github.com/gazoon/nadia.git"},
-      {:voting, in_umbrella: true},
-      {:utils, in_umbrella: true},
-      {:distillery, "~> 1.5", runtime: false},
-      {:db_connection, ">= 0.0.0"},
-      {:mongodb, ">= 0.0.0"},
-      {:httpoison, "~> 0.13"},
-      {:gettext, "~> 0.13"},
       # {:dep_from_hexpm, "~> 0.3.0"},
+      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
+      {:mongodb, ">= 0.0.0"},
+      {:poolboy, ">= 0.0.0"},
+      {:db_connection, ">= 0.0.0"},
+      {:httpoison, "~> 0.13"},
+      {:poison, "~> 3.1"},
+      {:goth, "~> 0.7.1"},
+      {:uuid, "~> 1.1"},
+      {:utils, path: "../utils"}
     ]
   end
 end

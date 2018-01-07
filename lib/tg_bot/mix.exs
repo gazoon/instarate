@@ -1,9 +1,9 @@
-defmodule TgWebhook.Mixfile do
+defmodule TGBot.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :tg_webhook,
+      app: :tg_bot,
       version: "0.1.0",
       build_path: "_build",
       config_path: "config/config.exs",
@@ -11,6 +11,7 @@ defmodule TgWebhook.Mixfile do
       lockfile: "mix.lock",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
+      compilers: [:gettext] ++ Mix.compilers,
       deps: deps()
     ]
   end
@@ -19,18 +20,24 @@ defmodule TgWebhook.Mixfile do
   def application do
     [
       extra_applications: [:logger],
-      mod: {TGWebhook.Application, []}
+      mod: {TGBot.Application, []}
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cowboy, "~> 1.1.2"},
-      {:plug, "~> 1.4.3"},
-      {:distillery, "~> 1.5", runtime: false},
+      {:poolboy, ">= 0.0.0"},
       {:poison, "~> 3.1"},
-      {:utils, in_umbrella: true},
+      {:uuid, "~> 1.1"},
+      {:nadia, git: "https://github.com/gazoon/nadia.git"},
+      {:voting, path: "../voting"},
+      {:utils, path: "../utils"},
+      {:distillery, "~> 1.5", runtime: false},
+      {:db_connection, ">= 0.0.0"},
+      {:mongodb, ">= 0.0.0"},
+      {:httpoison, "~> 0.13"},
+      {:gettext, "~> 0.13"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},
     ]
