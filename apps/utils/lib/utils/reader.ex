@@ -18,6 +18,7 @@ defmodule Utils.Reader do
 
       def init(state) do
         Process.flag(:trap_exit, true)
+        Process.sleep(100)
         next_fetch()
         Logger.info("#{__MODULE__} server started")
         {:ok, state}

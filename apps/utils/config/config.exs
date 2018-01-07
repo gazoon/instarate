@@ -30,5 +30,3 @@ use Mix.Config
 #     import_config "#{Mix.env}.exs"
 
 config :utils, Instagram.Client, Instagram.Clients.Http
-
-import_config "#{Mix.env}.exs"

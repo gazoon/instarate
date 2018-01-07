@@ -33,7 +33,7 @@ func main() {
 	r := httprouter.New()
 	r.POST("/concatenate", concatenateHandler)
 	log.Info("start listening")
-	err := http.ListenAndServe(fmt.Sprintf(":%d", 8989), r)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", 8080), r)
 	if err != nil {
 		panic(errors.Errorf("Cannot run server: %s", err))
 	}

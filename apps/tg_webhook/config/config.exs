@@ -32,6 +32,9 @@ use Mix.Config
 config :tg_webhook, TGWebhook.Update,
        queue: Utils.Queue.Impls.Mongo
 
+config :tg_webhook,
+       port: 8088
+
 config :utils,
        mongo_queue: [
          database: "local",

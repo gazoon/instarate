@@ -3,7 +3,7 @@ defmodule Instagram.Client do
   alias Instagram.Media
 
   @type t :: module
-  @client Application.get_env(:utils, __MODULE__)
+  @client Application.get_env(:utils, __MODULE__, Instagram.Clients.Http)
 
   @callback parse_username(profile_uri :: String.t) :: String.t
   @callback get_followers_number(username :: String.t) :: integer

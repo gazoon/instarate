@@ -20,9 +20,9 @@ config :tg_bot,
 config :utils,
        mongo_queue: [
          database: "local",
-         seeds: ["localhost:27017"],
-         collection: "insta_queue",
-         max_processing_time: 10000
+         seeds: ["35.198.77.219:27017"],
+         collection: "insta_queue_gazon",
+         max_processing_time: 10000,
        ]
 
 config :tg_bot, TGBot,

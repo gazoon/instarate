@@ -16,6 +16,7 @@ defmodule Utils.Queue.Impls.Mongo do
                 |> Keyword.delete(:collection)
                 |> Keyword.delete(:max_processing_time)
     options = [name: @process_name, pool: DBConnection.Poolboy] ++ db_config
+    IO.inspect(@config)
     Utils.set_child_id(Mongo.child_spec(options), {Mongo, :queue})
   end
 
