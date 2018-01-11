@@ -3,7 +3,7 @@ use Mix.Config
 config :tg_bot,
        bot_name: "InstaRateLocal",
        bot_username: "InstaRateLocalBot",
-       concatenation_service: "http://concatenation-dot-instarate-190012.appspot.com",
+       concatenation_service: "http://concatenation-prod-dot-instarate-190012.appspot.com",
        mongo_chats: [
          database: "local",
          seeds: ["localhost:27017"],

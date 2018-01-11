@@ -37,7 +37,8 @@ defmodule TGBot.Messengers.NadiaLib do
   @spec send_photo(integer, binary, Keyword.t) :: {integer, String.t}
   def send_photo(chat_id, photo, opts \\ []) do
     opts = transform_opts(opts)
-    if Keyword.pop(opts, :binary_data) do
+    {binary_data?, opts}= Keyword.pop(opts, :binary_data)
+    if binary_data? do
       params = opts
                |> Keyword.update(:reply_markup, nil, &(Poison.encode!(&1)))
                |> Enum.map(fn {k, v} -> {to_string(k), to_string(v)} end)

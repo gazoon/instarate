@@ -10,3 +10,4 @@
 41. handle sigterm signal
 42. add vpn
 43. add list of protected girls
+44. separate prod and local buckets

@@ -30,6 +30,7 @@ defmodule TgWebhook.Mixfile do
       {:plug, "~> 1.4.3"},
       {:distillery, "~> 1.5", runtime: false},
       {:poison, "~> 3.1"},
+      {:httpoison, "~> 0.13"},
       {:utils, path: "../utils"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true},

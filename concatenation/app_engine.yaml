@@ -1,6 +1,0 @@
-env: flex
-runtime: go
-service: concatenation
-network:
-  forwarded_ports:
-    - 8989

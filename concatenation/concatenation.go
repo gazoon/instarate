@@ -18,6 +18,7 @@ var separatorColor = color.White
 
 func paralyzeTasks(funcs ...paralyze.Paralyzable) ([]interface{}, error) {
 	results, errs := paralyze.Paralyze(funcs...)
+
 	var errorMsgs []string
 	for _, e := range errs {
 		if e == nil {

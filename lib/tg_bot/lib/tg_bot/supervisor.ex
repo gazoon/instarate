@@ -5,6 +5,7 @@ defmodule TGBot.Supervisor do
   alias Utils.Queue.Impls.Mongo, as: MongoQueue
   alias TGBot.Cache.Impls.Mongo, as: MongoCache
   use Supervisor
+  require Logger
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg)
@@ -17,6 +18,14 @@ defmodule TGBot.Supervisor do
                  MongoQueue.child_spec(),
                  MongoCache.child_spec(),
                  Utils.tasks_supervisor_spec(),
+                 #                 {
+                 #                   Plug.Adapters.Cowboy,
+                 #                   scheme: :http,
+                 #                   plug: TGWebhook.Router,
+                 #                   options: [
+                 #                     port: port
+                 #                   ]
+                 #                 },
                ]
                |> Kernel.++(Scheduler.Reader.children_spec())
                |> Kernel.++(TGBot.QueueReader.children_spec())

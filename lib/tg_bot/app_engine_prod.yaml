@@ -1,0 +1,7 @@
+env: flex
+runtime: gs://elixir-runtime/elixir.yaml
+service: prod
+env_variables:
+  MIX_ENV: prod
+entrypoint: mix run --no-halt
+
