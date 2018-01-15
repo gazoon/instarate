@@ -58,6 +58,7 @@ defmodule Utils.Messages.Text do
   @spec get_command_args(TextMessage.t) :: [String.t]
   def get_command_args(message) do
     tokens = String.split(message.text, " ")
+             |> Enum.filter(fn v -> v != "" end)
     [_ | args] = tokens
     args
   end

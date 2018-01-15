@@ -24,6 +24,9 @@ config :utils,
          max_processing_time: 10000
        ]
 
+config :voting, Voting.Files.Storages.Google,
+       bucket_name: "insta-rate-prod"
+
 config :nadia, token: "501332340:AAFqDbDgOx6K4GqfuV0dMlOMW5RzoEObtl4"
 
 config :voting,

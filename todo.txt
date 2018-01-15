@@ -1,4 +1,3 @@
-4. replace polling by webhook
 11. scale coefficient depending on number of matches or and current rating
 20. think about webview based top page
 25. return callback top implementation
@@ -10,4 +9,3 @@
 41. handle sigterm signal
 42. add vpn
 43. add list of protected girls
-44. separate prod and local buckets
