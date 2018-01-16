@@ -3,4 +3,8 @@ runtime: gs://elixir-runtime/elixir.yaml
 service: dev
 env_variables:
   MIX_ENV: dev
+
+automatic_scaling:
+  min_num_instances: 1
+
 entrypoint: mix run --no-halt

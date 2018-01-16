@@ -9,3 +9,6 @@
 41. handle sigterm signal
 42. add vpn
 43. add list of protected girls
+44. fix translations
+45. enhance fetch delay logic for queue and tasks readers
+46. don't crop images

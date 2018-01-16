@@ -24,6 +24,17 @@ config :utils,
          max_processing_time: 10000
        ]
 
+config :tg_bot,
+       Scheduler.Reader,
+       tasks_storage: Scheduler.Impls.Mongo,
+       queue: Utils.Queue.Impls.Mongo,
+       fetch_delay: 2000
+
+config :tg_bot,
+       TGBot.QueueReader,
+       queue: Utils.Queue.Impls.Mongo,
+       fetch_delay: 2000
+
 config :voting, Voting.Files.Storages.Google,
        bucket_name: "insta-rate-prod"
 
