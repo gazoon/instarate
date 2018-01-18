@@ -25,8 +25,18 @@ defmodule TGBot.Localization do
     if @disable_translation? do
       msgid
     else
-      Gettext.with_locale __MODULE__, language, fn ->
-        Gettext.dgettext(__MODULE__, "messages", msgid, bindings)
+      if language == "en" && msgid == "place_in_competition" do
+        place = Keyword.get(bindings, :place)
+        case rem(place, 10) do
+          1 -> "#{place}st place: "
+          2 -> "#{place}nd place: "
+          3 -> "#{place}rd place: "
+          _ -> "#{place}th place: "
+        end
+      else
+        Gettext.with_locale __MODULE__, language, fn ->
+          Gettext.dgettext(__MODULE__, "messages", msgid, bindings)
+        end
       end
     end
   end

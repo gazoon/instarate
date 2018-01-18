@@ -47,7 +47,7 @@ msgid "already_voted"
 msgstr "You already voted."
 
 msgid "place_in_competition"
-msgstr "%{place}th place: "
+msgstr "%{place} place: "
 
 msgid "no_more_girls_in_top"
 msgstr "Send /showTop@InstaRateBot to watch from the beginning."
