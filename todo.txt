@@ -2,13 +2,12 @@
 20. think about webview based top page
 25. return callback top implementation
 26. choose callback or buttons depending on size of the chat
-27. add photo verification
-28. enhance ban mechanism
-29. add cities categories
-39. don't return errors as text, use constant atoms
-41. handle sigterm signal
-42. add vpn
-43. add list of protected girls
+27. add photo verification, when someone adds a girl
+28. enhance ban mechanism, let users do ban reports, mark reported girls
+39. don't return errors as text, use constant atoms, to be able to map the error
+41. handle sigterm signal, run elixir inside the .sh script
+42. add vpn, to protect internal services and db
+43. add list of protected girls, they can't be added
 44. fix translations
-45. enhance fetch delay logic for queue and tasks readers
-46. don't crop images
+45. enhance fetch delay logic for queue and tasks readers, use small delays when the queue is hot
+46. don't crop images, use black background instead
