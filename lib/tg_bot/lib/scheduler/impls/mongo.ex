@@ -7,6 +7,8 @@ defmodule Scheduler.Impls.Mongo do
   @collection "tasks"
   alias Utils.Messages.Task
 
+  require Logger
+
   @spec child_spec :: tuple
   def child_spec do
     options = [name: @process_name, pool: DBConnection.Poolboy] ++
@@ -51,7 +53,7 @@ defmodule Scheduler.Impls.Mongo do
     :ok
   end
 
-  @spec get_available_task :: Task.t
+  @spec get_available_task :: Task.t | nil
   def get_available_task do
     current_time = Utils.timestamp_milliseconds()
     case Mongo.find_one_and_delete(
@@ -68,7 +70,9 @@ defmodule Scheduler.Impls.Mongo do
            pool: DBConnection.Poolboy
          ) do
       {:ok, row} -> transform_task(row)
-      {:error, error} -> raise  error
+      error ->
+        Logger.warn("Cant fetch document: #{inspect error}")
+        nil
     end
   end
 

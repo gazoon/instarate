@@ -99,7 +99,9 @@ defmodule Utils.Queue.Impls.Mongo do
           finish_processing(processing_id)
           nil
         end
-      {:error, error} -> raise error
+      error ->
+        Logger.warn("Cant fetch document: #{inspect error}")
+        nil
     end
   end
 

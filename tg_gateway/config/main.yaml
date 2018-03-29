@@ -1,0 +1,11 @@
+port: 8080
+service_name: "tg_webhook"
+
+mongo_queue:
+  host: "localhost"
+  port: 27017
+#  user: foo
+#  password: bar
+  database: "local"
+  timeout: 5
+  pool_size: 10
