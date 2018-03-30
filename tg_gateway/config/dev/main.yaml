@@ -2,3 +2,4 @@ known_bots:
  "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20": "insta_queue_gazon"
 
 public_url: "https://dev-dot-instarate-tg-webhook.appspot.com"
+log_level: debug

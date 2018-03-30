@@ -2,25 +2,32 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/gazoon/go-utils"
+	"github.com/gazoon/go-utils/logging"
 	"github.com/julienschmidt/httprouter"
+	"github.com/satori/go.uuid"
+	"gopkg.in/telegram-bot-api.v4"
 	"instarate/tg_gateway/worker"
 	"net/http"
 	"time"
 )
 
 type Webhook struct {
+	*logging.LoggerMixin
 	httpServer      *http.Server
 	botTokenToQueue map[string]string
 	worker          *worker.Worker
 }
 
 func New(port int, botTokenToQueue map[string]string, worker *worker.Worker) *Webhook {
-	webhook := &Webhook{worker: worker, botTokenToQueue: botTokenToQueue}
+	logger := logging.NewLoggerMixin("webhook", nil)
+	webhook := &Webhook{worker: worker, botTokenToQueue: botTokenToQueue, LoggerMixin: logger}
 	r := httprouter.New()
 	r.POST("/update/:bot_token", webhook.updateHandler)
-	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: r}
+	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: utils.RecoveryHandler(r)}
 	return webhook
 }
 
@@ -39,5 +46,26 @@ func (self *Webhook) Stop() error {
 }
 
 func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Info(ps)
+	botToken := ps.ByName("bot_token")
+	queueName, ok := self.botTokenToQueue[botToken]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	requestId := uuid.NewV4().String()
+	ctx := utils.PrepareContext(requestId)
+	logger := self.GetLogger(ctx)
+	update := &tgbotapi.Update{}
+	err := json.NewDecoder(r.Body).Decode(update)
+	if err != nil {
+		logger.Errorf("Cannot parse http request into Update: %s", err)
+		http.Error(w, "Bad request data", http.StatusBadRequest)
+		return
+	}
+	err = self.worker.ProcessUpdate(ctx, queueName, update)
+	if err != nil {
+		logger.Errorf("Process update: %s", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
 }

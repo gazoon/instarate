@@ -1,5 +1,6 @@
 port: 8080
 service_name: "tg_webhook"
+log_level: info
 
 mongo_queue:
   host: "localhost"
