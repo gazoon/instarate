@@ -5,8 +5,6 @@ log_level: info
 mongo_queue:
   host: "localhost"
   port: 27017
-#  user: foo
-#  password: bar
   database: "local"
   timeout: 5
   pool_size: 10

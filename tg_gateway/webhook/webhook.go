@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"instarate/tg_gateway/worker"
+	"net/http"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/logging"
 	"github.com/julienschmidt/httprouter"
-	"github.com/satori/go.uuid"
 	"gopkg.in/telegram-bot-api.v4"
-	"instarate/tg_gateway/worker"
-	"net/http"
-	"time"
 )
 
 type Webhook struct {
@@ -52,8 +52,7 @@ func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps ht
 		http.NotFound(w, r)
 		return
 	}
-	requestId := uuid.NewV4().String()
-	ctx := utils.PrepareContext(requestId)
+	ctx := utils.CreateContext()
 	logger := self.GetLogger(ctx)
 	update := &tgbotapi.Update{}
 	err := json.NewDecoder(r.Body).Decode(update)

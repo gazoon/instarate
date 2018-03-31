@@ -1,0 +1,16 @@
+mongo_queue:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_queue
+
+mongo_tasks:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: tasks
+

@@ -1,0 +1,6 @@
+service_name: "scheduler"
+log_level: info
+
+tasks_consumer:
+ fetch_delay: 100
+
