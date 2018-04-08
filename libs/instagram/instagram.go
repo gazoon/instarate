@@ -16,6 +16,7 @@ const (
 	apiUrl      = "https://www.instagram.com/"
 	mediaPath   = "p/"
 	magicSuffix = "/?__a=1"
+	httpTimeout = time.Second * 3
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 )
 
 var (
-	httpClient = http.Client{Timeout: time.Second * 3}
+	httpClient = http.Client{Timeout: httpTimeout}
 )
 
 type Media struct {

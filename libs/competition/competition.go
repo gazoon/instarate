@@ -1,14 +1,21 @@
 package competition
 
 import (
+	"context"
 	"fmt"
 	"github.com/gazoon/go-utils"
 	"instarate/libs/competition/config"
 	"path"
+	"time"
+)
+
+const (
+	httpTimeout = time.Second * 3
 )
 
 type Competition struct {
-	competitors *competitorsStorage
+	competitors   *competitorsStorage
+	photosStorage *googleStorage
 }
 
 func New() (*Competition, error) {
@@ -23,36 +30,17 @@ func New() (*Competition, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Competition{competitors: competitors}, nil
+	photosStorage, err := newGoogleStorage(conf.GoogleStorage.BucketName)
+	if err != nil {
+		return nil, err
+	}
+	return &Competition{competitors: competitors, photosStorage: photosStorage}, nil
 }
 
 func (self *Competition) Test() {
-	x, err := self.competitors.getTop("global", 2, 2)
+	s, err := self.photosStorage.upload(context.Background(), "test22.png", "https://scontent-frt3-1.cdninstagram.com/vp/663e956f9bfe4beff327b8283723e205/5B54901A/t51.2885-15/e35/29739290_160601121289134_5239513480079343616_n.jpg")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(x[0], x[1])
-	n, err := self.competitors.getCompetitorsNumber("global")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("number %d\n", n)
-	m, err := self.competitors.get("global", "mirgaeva_galinka")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(m)
-	higherRating, err := self.competitors.getNumberWithHigherRating("global", 1490)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("With higher rating: %d\n", higherRating)
-	m.Wins = 228
-	err = self.competitors.update(m)
-	if err != nil {
-		panic(err)
-	}
-	one, two, err := self.competitors.getRandomPair("global")
-	fmt.Printf("one %v\n", one)
-	fmt.Printf("two %v\n", two)
+	fmt.Println(s)
 }
