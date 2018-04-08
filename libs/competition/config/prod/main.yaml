@@ -1,0 +1,26 @@
+mongo_competitors:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_competitors
+
+mongo_profiles:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_profiles
+
+mongo_voters:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_voters
+
+google_storage:
+   bucket_name: "insta-rate-prod"

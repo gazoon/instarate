@@ -14,4 +14,4 @@ mongo_tasks:
   database: "local"
   timeout: 5
   pool_size: 10
-  collection: tasks
+  collection: insta_tasks
