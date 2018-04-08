@@ -1,7 +1,6 @@
 package competition
 
 import (
-	"context"
 	"fmt"
 	"github.com/gazoon/go-utils"
 	"instarate/libs/competition/config"
@@ -16,6 +15,7 @@ const (
 type Competition struct {
 	competitors   *competitorsStorage
 	photosStorage *googleStorage
+	profiles      *profilesStorage
 }
 
 func New() (*Competition, error) {
@@ -30,17 +30,32 @@ func New() (*Competition, error) {
 	if err != nil {
 		return nil, err
 	}
+	profiles, err := newProfilesStorage(conf.MongoProfiles)
+	if err != nil {
+		return nil, err
+	}
 	photosStorage, err := newGoogleStorage(conf.GoogleStorage.BucketName)
 	if err != nil {
 		return nil, err
 	}
-	return &Competition{competitors: competitors, photosStorage: photosStorage}, nil
+	return &Competition{competitors: competitors, profiles: profiles, photosStorage: photosStorage}, nil
 }
 
 func (self *Competition) Test() {
-	s, err := self.photosStorage.upload(context.Background(), "test22.png", "https://scontent-frt3-1.cdninstagram.com/vp/663e956f9bfe4beff327b8283723e205/5B54901A/t51.2885-15/e35/29739290_160601121289134_5239513480079343616_n.jpg")
+	p, err := self.profiles.get("deleks_lina")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(s)
+	fmt.Printf("%+v\n", p)
+	ps, err := self.profiles.getMultiple([]string{"anyuta_rai", "galina_dub"})
+	if err != nil {
+		panic(err)
+	}
+	for _, p := range ps {
+		fmt.Printf("%+v\n", p)
+	}
+	err = self.profiles.delete([]string{"anyuta_rai"})
+	if err != nil {
+		panic(err)
+	}
 }

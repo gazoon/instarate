@@ -27,6 +27,10 @@ type competitor struct {
 	Loses           int
 }
 
+func createCompetitor(username, competitionCode string) *competitor {
+	return &competitor{Username: username, CompetitionCode: competitionCode, Rating: initialRating}
+}
+
 type competitorsStorage struct {
 	client *mgo.Collection
 }
