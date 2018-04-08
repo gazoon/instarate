@@ -14,8 +14,9 @@ const (
 
 type Competition struct {
 	competitors   *competitorsStorage
-	photosStorage *googleStorage
 	profiles      *profilesStorage
+	voters        *votersStorage
+	photosStorage *googleStorage
 }
 
 func New() (*Competition, error) {
@@ -38,24 +39,22 @@ func New() (*Competition, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Competition{competitors: competitors, profiles: profiles, photosStorage: photosStorage}, nil
+	voters, err := newVotersStorage(conf.MongoVoters)
+	if err != nil {
+		return nil, err
+	}
+	return &Competition{competitors: competitors, profiles: profiles, photosStorage: photosStorage, voters: voters}, nil
 }
 
 func (self *Competition) Test() {
-	p, err := self.profiles.get("deleks_lina")
+	ok, err := self.voters.tryVote("global", "tt", "22", "1", "2")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", p)
-	ps, err := self.profiles.getMultiple([]string{"anyuta_rai", "galina_dub"})
+	fmt.Println(ok)
+	seen, err := self.voters.haveSeenPair("global", "tt", "2", "1")
 	if err != nil {
 		panic(err)
 	}
-	for _, p := range ps {
-		fmt.Printf("%+v\n", p)
-	}
-	err = self.profiles.delete([]string{"anyuta_rai"})
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println(seen)
 }
