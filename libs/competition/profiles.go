@@ -14,20 +14,25 @@ var (
 	profileExistsErr = errors.New("profile already exists")
 )
 
-type profile struct {
-	Username         string
-	PhotoStoragePath string `bson:"photo"`
-	PhotoInstCode    string `bson:"photo_code"`
-	Followers        int
-	AddedAt          int `bson:"added_at"`
+type InstProfile struct {
+	Username      string
+	ProfileLink   string `bson:"-"`
+	PhotoPath     string `bson:"photo"`
+	PhotoUrl      string `bson:"-"`
+	PhotoInstCode string `bson:"photo_code"`
+	Followers     int
+	AddedAt       int `bson:"added_at"`
 }
 
-func createProfile(username, photoStoragePath, photoInstCode string, followers int) *profile {
+func createProfile(username, photoStoragePath, photoInstCode string, followers int) *InstProfile {
 	addedAt := utils.TimestampSeconds()
-	return &profile{username, photoStoragePath, photoInstCode, followers, addedAt}
+	return &InstProfile{
+		Username: username, PhotoPath: photoStoragePath,
+		PhotoInstCode: photoInstCode, Followers: followers, AddedAt: addedAt,
+	}
 }
 
-func (self *profile) getProfileUrl() string {
+func (self *InstProfile) getProfileUrl() string {
 	return instagram.BuildProfileUrl(self.Username)
 }
 
@@ -44,7 +49,7 @@ func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*profilesStorage,
 	return &profilesStorage{collection}, nil
 }
 
-func (self *profilesStorage) create(model *profile) error {
+func (self *profilesStorage) create(model *InstProfile) error {
 	err := self.client.Insert(model)
 	if mgo.IsDup(err) {
 		return profileExistsErr
@@ -52,8 +57,8 @@ func (self *profilesStorage) create(model *profile) error {
 	return err
 }
 
-func (self *profilesStorage) get(username string) (*profile, error) {
-	result := &profile{}
+func (self *profilesStorage) get(username string) (*InstProfile, error) {
+	result := &InstProfile{}
 	err := self.client.Find(bson.M{"username": username}).One(result)
 	if err != nil {
 		return nil, err
@@ -61,8 +66,8 @@ func (self *profilesStorage) get(username string) (*profile, error) {
 	return result, nil
 }
 
-func (self *profilesStorage) getMultiple(usernames []string) ([]*profile, error) {
-	var result []*profile
+func (self *profilesStorage) getMultiple(usernames []string) ([]*InstProfile, error) {
+	var result []*InstProfile
 	err := self.client.Find(bson.M{"username": bson.M{"$in": usernames}}).All(&result)
 	if err != nil {
 		return nil, err

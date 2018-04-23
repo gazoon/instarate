@@ -12,6 +12,11 @@ const (
 	httpTimeout = time.Second * 3
 )
 
+type InstCompetitor struct {
+	InstProfile
+	competitor
+}
+
 type Competition struct {
 	competitors   *competitorsStorage
 	profiles      *profilesStorage
@@ -46,6 +51,9 @@ func New() (*Competition, error) {
 	return &Competition{competitors: competitors, profiles: profiles, photosStorage: photosStorage, voters: voters}, nil
 }
 
+func (self *Competition) Add(photoUrl string) {
+
+}
 func (self *Competition) Test() {
 	ok, err := self.voters.tryVote("global", "tt", "22", "1", "2")
 	if err != nil {
