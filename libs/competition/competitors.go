@@ -1,6 +1,7 @@
 package competition
 
 import (
+	"context"
 	"fmt"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
@@ -10,8 +11,8 @@ import (
 )
 
 const (
-	initialRating        = 1500
-	maxRandomGetAttempts = 5
+	initialRating         = 1500
+	randomPairGetAttempts = 5
 )
 
 var (
@@ -44,23 +45,23 @@ func newCompetitorsStorage(mongoSettings *utils.MongoDBSettings) (*competitorsSt
 	return &competitorsStorage{collection}, nil
 }
 
-func (self *competitorsStorage) getTop(competitionCode string, number, offset int) ([]*competitor, error) {
+func (self *competitorsStorage) getTop(ctx context.Context, competitionCode string, number, offset int) ([]*competitor, error) {
 	var result []*competitor
 	err := self.client.Find(bson.M{"competition": competitionCode}).
 		Sort("-rating").Skip(offset).Limit(number).All(&result)
 	return result, err
 }
 
-func (self *competitorsStorage) delete(usernames []string) error {
+func (self *competitorsStorage) delete(ctx context.Context, usernames []string) error {
 	_, err := self.client.RemoveAll(bson.M{"username": bson.M{"$in": usernames}})
 	return err
 }
 
-func (self *competitorsStorage) getCompetitorsNumber(competitionCode string) (int, error) {
+func (self *competitorsStorage) getCompetitorsNumber(ctx context.Context, competitionCode string) (int, error) {
 	return self.client.Find(bson.M{"competition": competitionCode}).Count()
 }
 
-func (self *competitorsStorage) get(competitionCode, username string) (*competitor, error) {
+func (self *competitorsStorage) get(ctx context.Context, competitionCode, username string) (*competitor, error) {
 	result := &competitor{}
 	err := self.client.Find(bson.M{"competition": competitionCode, "username": username}).One(result)
 	if err != nil {
@@ -72,7 +73,7 @@ func (self *competitorsStorage) get(competitionCode, username string) (*competit
 	return result, nil
 }
 
-func (self *competitorsStorage) getNumberWithHigherRating(competitionCode string, rating int) (int, error) {
+func (self *competitorsStorage) getNumberWithHigherRating(ctx context.Context, competitionCode string, rating int) (int, error) {
 	var result []*competitor
 	fmt.Println(competitionCode, rating)
 	err := self.client.Find(bson.M{
@@ -88,7 +89,7 @@ func (self *competitorsStorage) getNumberWithHigherRating(competitionCode string
 	return len(ratings), nil
 }
 
-func (self *competitorsStorage) update(model *competitor) error {
+func (self *competitorsStorage) update(ctx context.Context, model *competitor) error {
 	err := self.client.Update(
 		bson.M{"competition": model.CompetitionCode, "username": model.Username},
 		bson.M{"$set": bson.M{
@@ -101,13 +102,13 @@ func (self *competitorsStorage) update(model *competitor) error {
 	return err
 }
 
-func (self *competitorsStorage) create(model *competitor) error {
+func (self *competitorsStorage) create(ctx context.Context, model *competitor) error {
 	err := self.client.Insert(model)
 	return err
 }
 
-func (self *competitorsStorage) getRandomPair(competitionCode string) (*competitor, *competitor, error) {
-	for i := 0; i < maxRandomGetAttempts; i++ {
+func (self *competitorsStorage) getRandomPair(ctx context.Context, competitionCode string) (*competitor, *competitor, error) {
+	for i := 0; i < randomPairGetAttempts; i++ {
 		var result []*competitor
 		err := self.client.Pipe([]bson.M{
 			{"$match": bson.M{"competition": competitionCode}},

@@ -1,6 +1,7 @@
 package competition
 
 import (
+	"context"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
@@ -22,7 +23,7 @@ func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*votersStorage, err
 	return &votersStorage{collection}, nil
 }
 
-func (self *votersStorage) tryVote(competitionCode, votersGroup, voter,
+func (self *votersStorage) tryVote(ctx context.Context, competitionCode, votersGroup, voter,
 	competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	err := self.client.Insert(bson.M{
@@ -40,7 +41,7 @@ func (self *votersStorage) tryVote(competitionCode, votersGroup, voter,
 	return true, nil
 }
 
-func (self *votersStorage) haveSeenPair(competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
+func (self *votersStorage) haveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	rows, err := self.client.Find(bson.M{
 		"competition":    competitionCode,

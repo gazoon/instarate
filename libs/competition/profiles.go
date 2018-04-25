@@ -5,9 +5,11 @@ import (
 	"github.com/gazoon/go-utils/mongo"
 	"instarate/libs/instagram"
 
+	"context"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
+	"github.com/satori/go.uuid"
 )
 
 var (
@@ -16,23 +18,22 @@ var (
 
 type InstProfile struct {
 	Username      string
-	ProfileLink   string `bson:"-"`
 	PhotoPath     string `bson:"photo"`
-	PhotoUrl      string `bson:"-"`
 	PhotoInstCode string `bson:"photo_code"`
 	Followers     int
 	AddedAt       int `bson:"added_at"`
 }
 
-func createProfile(username, photoStoragePath, photoInstCode string, followers int) *InstProfile {
+func createProfile(username, photoInstCode string, followers int) *InstProfile {
 	addedAt := utils.TimestampSeconds()
+	photoStoragePath := username + "-" + uuid.NewV4().String()
 	return &InstProfile{
 		Username: username, PhotoPath: photoStoragePath,
 		PhotoInstCode: photoInstCode, Followers: followers, AddedAt: addedAt,
 	}
 }
 
-func (self *InstProfile) getProfileUrl() string {
+func (self *InstProfile) getProfileLink() string {
 	return instagram.BuildProfileUrl(self.Username)
 }
 
@@ -49,7 +50,7 @@ func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*profilesStorage,
 	return &profilesStorage{collection}, nil
 }
 
-func (self *profilesStorage) create(model *InstProfile) error {
+func (self *profilesStorage) save(ctx context.Context, model *InstProfile) error {
 	err := self.client.Insert(model)
 	if mgo.IsDup(err) {
 		return profileExistsErr
@@ -57,7 +58,7 @@ func (self *profilesStorage) create(model *InstProfile) error {
 	return err
 }
 
-func (self *profilesStorage) get(username string) (*InstProfile, error) {
+func (self *profilesStorage) get(ctx context.Context, username string) (*InstProfile, error) {
 	result := &InstProfile{}
 	err := self.client.Find(bson.M{"username": username}).One(result)
 	if err != nil {
@@ -66,7 +67,7 @@ func (self *profilesStorage) get(username string) (*InstProfile, error) {
 	return result, nil
 }
 
-func (self *profilesStorage) getMultiple(usernames []string) ([]*InstProfile, error) {
+func (self *profilesStorage) getMultiple(ctx context.Context, usernames []string) ([]*InstProfile, error) {
 	var result []*InstProfile
 	err := self.client.Find(bson.M{"username": bson.M{"$in": usernames}}).All(&result)
 	if err != nil {
@@ -75,7 +76,7 @@ func (self *profilesStorage) getMultiple(usernames []string) ([]*InstProfile, er
 	return result, nil
 }
 
-func (self *profilesStorage) delete(usernames []string) error {
+func (self *profilesStorage) delete(ctx context.Context, usernames []string) error {
 	_, err := self.client.RemoveAll(bson.M{"username": bson.M{"$in": usernames}})
 	return err
 }
