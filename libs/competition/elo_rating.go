@@ -6,7 +6,7 @@ const (
 	significanceCoeff = 16
 )
 
-func recalculate(winnerRating, loserRating int) (int, int) {
+func recalculateEloRating(winnerRating, loserRating int) (int, int) {
 	newWinnerRating := calculateNewRating(winnerRating, loserRating, true)
 	newLoserRating := calculateNewRating(loserRating, winnerRating, false)
 	return newWinnerRating, newLoserRating

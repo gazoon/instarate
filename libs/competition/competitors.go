@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	competitorNotFoundErr = errors.New("competitor doesn't exist")
+	CompetitorNotFoundErr = errors.New("competitor doesn't exist")
 )
 
 type competitor struct {
@@ -66,7 +66,7 @@ func (self *competitorsStorage) get(ctx context.Context, competitionCode, userna
 	err := self.client.Find(bson.M{"competition": competitionCode, "username": username}).One(result)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, competitorNotFoundErr
+			return nil, CompetitorNotFoundErr
 		}
 		return nil, err
 	}

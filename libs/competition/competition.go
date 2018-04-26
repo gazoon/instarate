@@ -28,6 +28,10 @@ const (
 	nextPairGetAttempts = 10
 )
 
+var (
+	AlreadyVotedErr = errors.New("already voted")
+)
+
 type InstCompetitor struct {
 	*InstProfile
 	*competitor
@@ -124,6 +128,85 @@ func (self *Competition) GetNextPair(ctx context.Context, competitionCode, voter
 	return nil, nil, errors.Errorf("out of attempts to get next pair in %s for %s", competitionCode, votersGroupId)
 }
 
+func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, username string) (*InstCompetitor, error) {
+	username, err := instagram.ExtractUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	compttr, err := self.competitors.get(ctx, competitionCode, username)
+	if err != nil {
+		return nil, err
+	}
+	profile, err := self.profiles.get(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	return combineProfileAndCompetitor(profile, compttr), nil
+}
+
+func (self *Competition) Remove(ctx context.Context, usernames []string) error {
+	var err error
+	for i := range usernames {
+		usernames[i], err = instagram.ExtractUsername(usernames[i])
+		if err != nil {
+			return err
+		}
+	}
+	err = self.competitors.delete(ctx, usernames)
+	if err != nil {
+		return err
+	}
+	err = self.profiles.delete(ctx, usernames)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (self *Competition) GetTop(ctx context.Context, competitionCode string, number, offset int) ([]*InstCompetitor, error) {
+	competitors, err := self.competitors.getTop(ctx, competitionCode, number, offset)
+	if err != nil {
+		return nil, err
+	}
+	return self.convertToInstCompetitors(ctx, competitors...)
+}
+
+func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername string) (*InstCompetitor, *InstCompetitor, error) {
+	ok, err := self.voters.tryVote(ctx, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !ok {
+		return nil, nil, AlreadyVotedErr
+	}
+
+	winner, err := self.competitors.get(ctx, competitionCode, winnerUsername)
+	if err != nil {
+		return nil, nil, err
+	}
+	loser, err := self.competitors.get(ctx, competitionCode, loserUsername)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	winner.Rating, loser.Rating = recalculateEloRating(winner.Rating, loser.Rating)
+	winner.Wins += 1
+	winner.Matches += 1
+	loser.Loses += 1
+	loser.Matches += 1
+
+	self.competitors.update(ctx, winner)
+	if err != nil {
+		return nil, nil, err
+	}
+	self.competitors.update(ctx, loser)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return self.convertPairToInstCompetitors(ctx, winner, loser)
+}
+
 func (self *Competition) convertPairToInstCompetitors(ctx context.Context, competitor1, competitor2 *competitor) (*InstCompetitor, *InstCompetitor, error) {
 	competitorsPair, err := self.convertToInstCompetitors(ctx, competitor1, competitor2)
 	if err != nil {
@@ -166,6 +249,18 @@ func combineProfileAndCompetitor(profile *InstProfile, competitor *competitor) *
 	return &InstCompetitor{InstProfile: profile, competitor: competitor}
 }
 
+func choseCompetition(followersNumber int) []string {
+	var competitionByFollowers string
+	if followersNumber < modelFollowersThreshold {
+		competitionByFollowers = NormalCompetition
+	} else if followersNumber < celebrityFollowersThreshold {
+		competitionByFollowers = ModelsCompetition
+	} else {
+		competitionByFollowers = CelebritiesCompetition
+	}
+	return []string{GlobalCompetition, competitionByFollowers}
+}
+
 func (self *Competition) Test() {
 	ok, err := self.voters.tryVote(nil, "global", "tt", "22", "1", "2")
 	if err != nil {
@@ -177,16 +272,4 @@ func (self *Competition) Test() {
 		panic(err)
 	}
 	fmt.Println(seen)
-}
-
-func choseCompetition(followersNumber int) []string {
-	var competitionByFollowers string
-	if followersNumber < modelFollowersThreshold {
-		competitionByFollowers = NormalCompetition
-	} else if followersNumber < celebrityFollowersThreshold {
-		competitionByFollowers = ModelsCompetition
-	} else {
-		competitionByFollowers = CelebritiesCompetition
-	}
-	return []string{GlobalCompetition, competitionByFollowers}
 }
