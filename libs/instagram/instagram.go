@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"io/ioutil"
+
 	"github.com/pkg/errors"
 )
 
 const (
 	apiUrl      = "https://www.instagram.com/"
 	mediaPath   = "p/"
-	magicSuffix = "/?__a=1"
 	httpTimeout = time.Second * 3
 )
 
@@ -34,28 +35,32 @@ type Media struct {
 }
 
 type mediaResponse struct {
-	GraphQL struct {
-		Media struct {
-			Owner struct {
-				Username string
-			}
-			DisplayResources []struct {
-				Src string
-			} `json:"display_resources"`
-			IsVideo *bool `json:"is_video"`
-			Sidecar struct {
-				Edges []struct {
-					Node struct {
-						IsVideo *bool `json:"is_video"`
+	EntryData struct {
+		PostPage []struct {
+			GraphQL struct {
+				Media struct {
+					Owner struct {
+						Username string
 					}
-				}
-			} `json:"edge_sidecar_to_children"`
-		} `json:"shortcode_media"`
-	} `json:"graphql"`
+					DisplayResources []struct {
+						Src string
+					} `json:"display_resources"`
+					IsVideo *bool `json:"is_video"`
+					Sidecar struct {
+						Edges []struct {
+							Node struct {
+								IsVideo *bool `json:"is_video"`
+							}
+						}
+					} `json:"edge_sidecar_to_children"`
+				} `json:"shortcode_media"`
+			} `json:"graphql"`
+		}
+	} `json:"entry_data"`
 }
 
 func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
-	mediaUrl := apiUrl + mediaPath + mediaCode + magicSuffix
+	mediaUrl := apiUrl + mediaPath + mediaCode
 	resp, err := httpClient.Get(mediaUrl)
 	if err != nil {
 		return nil, err
@@ -64,8 +69,11 @@ func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, MediaForbidden
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("media info response unexpected status: %d", resp.StatusCode)
+	}
 	responseData := &mediaResponse{}
-	err = json.NewDecoder(resp.Body).Decode(responseData)
+	err = extractData(resp, responseData)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't parse media response")
 	}
@@ -73,7 +81,7 @@ func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid media response")
 	}
-	mediaData := responseData.GraphQL.Media
+	mediaData := responseData.EntryData.PostPage[0].GraphQL.Media
 	username := mediaData.Owner.Username
 	displayUrl := mediaData.DisplayResources[0].Src
 	isPhoto := true
@@ -92,7 +100,10 @@ func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
 }
 
 func validateMediaResponse(data *mediaResponse) error {
-	media := data.GraphQL.Media
+	if len(data.EntryData.PostPage) != 1 {
+		return errors.Errorf("expected only one post, got: %d", len(data.EntryData.PostPage))
+	}
+	media := data.EntryData.PostPage[0].GraphQL.Media
 	if media.Owner.Username == "" {
 		return errors.New("no username")
 	}
@@ -112,29 +123,63 @@ func validateMediaResponse(data *mediaResponse) error {
 }
 
 type userResponse struct {
-	User struct {
-		FollowedBy struct {
-			Count *int
-		} `json:"followed_by"`
-	}
+	EntryData struct {
+		ProfilePage []struct {
+			GraphQL struct {
+				User struct {
+					FollowedBy struct {
+						Count *int
+					} `json:"edge_followed_by"`
+				}
+			} `json:"graphql"`
+		}
+	} `json:"entry_data"`
 }
 
 func GetFollowersNumber(ctx context.Context, username string) (int, error) {
-	profileUrl := apiUrl + username + magicSuffix
+	profileUrl := apiUrl + username
 	resp, err := httpClient.Get(profileUrl)
 	if err != nil {
 		return 0, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return 0, errors.Errorf("user response unexpected status: %d", resp.StatusCode)
+	}
 	defer resp.Body.Close()
 	responseData := &userResponse{}
-	err = json.NewDecoder(resp.Body).Decode(responseData)
+	err = extractData(resp, responseData)
 	if err != nil {
 		return 0, errors.Wrap(err, "can't parse user response")
 	}
-	if responseData.User.FollowedBy.Count == nil {
-		return 0, errors.New("invalid user response: no followers info")
+	err = validateUserResponse(responseData)
+	if err != nil {
+		return 0, errors.Wrap(err, "invalid user response")
 	}
-	return *responseData.User.FollowedBy.Count, nil
+	return *responseData.EntryData.ProfilePage[0].GraphQL.User.FollowedBy.Count, nil
+}
+
+func validateUserResponse(data *userResponse) error {
+	if len(data.EntryData.ProfilePage) != 1 {
+		return errors.Errorf("expected only one profile, got: %d", len(data.EntryData.ProfilePage))
+	}
+	if data.EntryData.ProfilePage[0].GraphQL.User.FollowedBy.Count == nil {
+		return errors.New("no followers info")
+	}
+	return nil
+}
+
+func extractData(resp *http.Response, destination interface{}) error {
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	text := string(b)
+	firstMarker := "window._sharedData = "
+	secondMarker := ";</script>"
+	dataStart := strings.Index(text, firstMarker) + len(firstMarker)
+	dataEnd := strings.Index(text, secondMarker)
+	data := text[dataStart:dataEnd]
+	return json.Unmarshal([]byte(data), destination)
 }
 
 func BuildProfileUrl(username string) string {

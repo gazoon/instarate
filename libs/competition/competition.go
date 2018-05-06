@@ -2,12 +2,12 @@ package competition
 
 import (
 	"context"
-	"fmt"
 	"instarate/libs/competition/config"
 	"instarate/libs/instagram"
 	"path"
 	"time"
 
+	"fmt"
 	"github.com/gazoon/go-utils"
 	"github.com/pkg/errors"
 )
@@ -33,8 +33,13 @@ var (
 )
 
 type InstCompetitor struct {
+	Username string
 	*InstProfile
 	*competitor
+}
+
+func (self InstCompetitor) String() string {
+	return utils.ObjToString(&self)
 }
 
 type Competition struct {
@@ -144,7 +149,7 @@ func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, use
 	return combineProfileAndCompetitor(profile, compttr), nil
 }
 
-func (self *Competition) Remove(ctx context.Context, usernames []string) error {
+func (self *Competition) Remove(ctx context.Context, usernames ...string) error {
 	var err error
 	for i := range usernames {
 		usernames[i], err = instagram.ExtractUsername(usernames[i])
@@ -246,7 +251,7 @@ func (self *Competition) convertToInstCompetitors(ctx context.Context, competito
 }
 
 func combineProfileAndCompetitor(profile *InstProfile, competitor *competitor) *InstCompetitor {
-	return &InstCompetitor{InstProfile: profile, competitor: competitor}
+	return &InstCompetitor{InstProfile: profile, competitor: competitor, Username: profile.Username}
 }
 
 func choseCompetition(followersNumber int) []string {
@@ -262,14 +267,32 @@ func choseCompetition(followersNumber int) []string {
 }
 
 func (self *Competition) Test() {
-	ok, err := self.voters.tryVote(nil, "global", "tt", "22", "1", "2")
+	ctx := context.Background()
+	n, err := self.GetCompetitorsNumber(ctx, "global")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(ok)
-	seen, err := self.voters.haveSeenPair(nil, "global", "tt", "2", "1")
+	fmt.Println(n)
+	p1, p2, err := self.GetNextPair(ctx, "global", "fff")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(seen)
+	fmt.Println(p1)
+	fmt.Println(p2)
+	c, err := self.GetCompetitor(ctx, "global", "justonemysoul")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(c)
+	p1, p2, err = self.Vote(ctx, "global", "fff", "2", "sofia_official_life", "galina_dub")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(p1)
+	fmt.Println(p2)
+	sl, err := self.GetTop(ctx, "global", 10, 0)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(sl)
 }

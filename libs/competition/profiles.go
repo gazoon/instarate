@@ -37,6 +37,10 @@ func (self *InstProfile) getProfileLink() string {
 	return instagram.BuildProfileUrl(self.Username)
 }
 
+func (self InstProfile) String() string {
+	return utils.ObjToString(&self)
+}
+
 type profilesStorage struct {
 	client *mgo.Collection
 }
