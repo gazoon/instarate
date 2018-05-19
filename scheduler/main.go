@@ -8,20 +8,19 @@ import (
 	"instarate/scheduler/sender"
 	"instarate/scheduler/tasks"
 
-	"fmt"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
 )
 
 func main() {
+
 	conf := &config.Config{}
 	configPath := path.Join(utils.GetCurrentFileDir(), "config")
 	err := utils.ParseConfig(configPath, conf)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(conf)
 	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
 	taskSender, err := sender.New(conf.MongoQueue)
 	if err != nil {
@@ -31,7 +30,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	worker := consumer.New(taskStorage.GetTask, taskSender.SendTask, "", conf.TasksConsumer.FetchDelay)
+
+	// consumer expects a function that returns interface{}
+	// but .GetTasks() returns *Task
+	// so we need an adopter function
+	getTask := func() interface{} { return taskStorage.GetTask() }
+	worker := consumer.New(getTask, taskSender.SendTask, "", conf.TasksConsumer.FetchDelay)
 	worker.Run()
 	utils.WaitingForShutdown()
 	worker.Stop()

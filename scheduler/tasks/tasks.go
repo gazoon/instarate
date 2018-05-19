@@ -6,6 +6,7 @@ import (
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/pkg/errors"
 )
 
 type Task struct {
@@ -18,6 +19,11 @@ type Task struct {
 func (self Task) String() string {
 	return utils.ObjToString(&self)
 }
+
+var (
+	TaskAlreadyExistsErr = errors.New(
+		"Task with that name already exists for the chat")
+)
 
 type Storage struct {
 	client *mgo.Collection
@@ -32,7 +38,7 @@ func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
 	return &Storage{collection}, nil
 }
 
-func (self *Storage) GetTask() interface{} {
+func (self *Storage) GetTask() *Task {
 	currentTime := utils.TimestampMilliseconds()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
@@ -44,4 +50,21 @@ func (self *Storage) GetTask() interface{} {
 		return nil
 	}
 	return task
+}
+
+func (self *Storage) CreateTask(task *Task) error {
+	err := self.client.Insert(task)
+	if mgo.IsDup(err) {
+		return TaskAlreadyExistsErr
+	}
+	return err
+}
+
+func (self *Storage) CreateOrReplaceTask(task *Task) error {
+	_, err := self.client.Upsert(bson.M{"chat_id": task.ChatId, "name": task.Name}, task)
+	return err
+}
+
+func (self *Storage) DeleteTask(chatId int, name string) error {
+	return self.client.Remove(bson.M{"chat_id": chatId, "name": name})
 }
