@@ -6,14 +6,24 @@ import (
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
 type Task struct {
-	ChatId int                    `bson:"chat_id"`
-	Name   string                 `bson:"name"`
-	Args   map[string]interface{} `bson:"args"`
-	DoAt   int                    `bson:"do_at"`
+	ChatId int                    `bson:"chat_id" mapstructure:"chat_id"`
+	Name   string                 `bson:"name" mapstructure:"name"`
+	Args   map[string]interface{} `bson:"args" mapstructure:"args"`
+	DoAt   int                    `bson:"do_at" mapstructure:"do_at"`
+}
+
+func TaskFromData(data interface{}) (*Task, error) {
+	t := &Task{}
+	err := mapstructure.Decode(data, t)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create task from data")
+	}
+	return t, nil
 }
 
 func (self Task) String() string {
