@@ -8,6 +8,7 @@ import (
 	"instarate/scheduler/sender"
 	"instarate/scheduler/tasks"
 
+	"context"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
@@ -34,7 +35,7 @@ func main() {
 	// consumer expects a function that returns interface{}
 	// but .GetTasks() returns *Task
 	// so we need an adopter function
-	getTask := func() interface{} { return taskStorage.GetTask() }
+	getTask := func(ctx context.Context) interface{} { return taskStorage.GetTask(ctx) }
 	worker := consumer.New(getTask, taskSender.SendTask, "", conf.TasksConsumer.FetchDelay)
 	worker.Run()
 	utils.WaitingForShutdown()

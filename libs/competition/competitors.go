@@ -37,11 +37,10 @@ type competitorsStorage struct {
 }
 
 func newCompetitorsStorage(mongoSettings *utils.MongoDBSettings) (*competitorsStorage, error) {
-	db, err := mongo.Connect(mongoSettings)
+	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	collection := db.C(mongoSettings.Collection)
 	return &competitorsStorage{collection}, nil
 }
 

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
@@ -40,15 +41,14 @@ type Storage struct {
 }
 
 func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
-	db, err := mongo.Connect(mongoSettings)
+	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	collection := db.C(mongoSettings.Collection)
 	return &Storage{collection}, nil
 }
 
-func (self *Storage) GetTask() *Task {
+func (self *Storage) GetTask(ctx context.Context) *Task {
 	currentTime := utils.TimestampMilliseconds()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
@@ -62,7 +62,7 @@ func (self *Storage) GetTask() *Task {
 	return task
 }
 
-func (self *Storage) CreateTask(task *Task) error {
+func (self *Storage) CreateTask(ctx context.Context, task *Task) error {
 	err := self.client.Insert(task)
 	if mgo.IsDup(err) {
 		return TaskAlreadyExistsErr
@@ -70,11 +70,11 @@ func (self *Storage) CreateTask(task *Task) error {
 	return err
 }
 
-func (self *Storage) CreateOrReplaceTask(task *Task) error {
+func (self *Storage) CreateOrReplaceTask(ctx context.Context, task *Task) error {
 	_, err := self.client.Upsert(bson.M{"chat_id": task.ChatId, "name": task.Name}, task)
 	return err
 }
 
-func (self *Storage) DeleteTask(chatId int, name string) error {
+func (self *Storage) DeleteTask(ctx context.Context, chatId int, name string) error {
 	return self.client.Remove(bson.M{"chat_id": chatId, "name": name})
 }

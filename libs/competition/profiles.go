@@ -46,11 +46,10 @@ type profilesStorage struct {
 }
 
 func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*profilesStorage, error) {
-	db, err := mongo.Connect(mongoSettings)
+	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	collection := db.C(mongoSettings.Collection)
 	return &profilesStorage{collection}, nil
 }
 

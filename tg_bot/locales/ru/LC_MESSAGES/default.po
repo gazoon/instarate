@@ -1,0 +1,96 @@
+msgid "propose_to_vote"
+msgstr "Привет! Не желаете продолжить голосовать?"
+
+msgid "add_girl_no_link"
+msgstr "Ты не отправил мне ссылку на фото, пример:\naddGirl@InstaRateBot <photo_link>"
+
+msgid "girl_added"
+msgstr "Девушка [%{username}](%{profile_url}) была успешно добавлена!"
+
+msgid "daily_notification_enabled"
+msgstr "Ежедневные уведомления включены."
+
+msgid "daily_notification_disabled"
+msgstr "Ежедневные уведомления отключены. Теперь я не буду сам предлагать начать голосовать."
+
+msgid "voting_timeout_is_set"
+msgstr "Время между голосованиями составляет %{timeout} секунд."
+
+msgid "set_voting_timeout_no_number"
+msgstr "Пожалуйста, введи число."
+
+msgid "set_voting_timeout_out_of_range"
+msgstr "Время-задержка должно быть больше чем %{lower_bound} секунд и меньше %{upper_bound} минут."
+
+msgid "global_competition_enabled"
+msgstr "Теперь вы будете видеть всех девушек."
+
+msgid "celebrities_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек-звезд (500к+ подписчиков)."
+
+msgid "models_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек-моделей (10к - 500к подписчиков)."
+
+msgid "normal_competition_enabled"
+msgstr "Теперь вы будете видеть только девушек, у которых меньше 10к подписчиков."
+
+msgid "switch_to_language"
+msgstr "Хорошо. Я буду писать на русском, ну почти..."
+
+msgid "get_girl_no_username"
+msgstr "Пожалуйста, отправь мне username\ngirlInfo@InstaRateBot <username>"
+
+msgid "success_vote"
+msgstr "Голос за %{username}"
+
+msgid "already_voted"
+msgstr "Ты уже проголосовал."
+
+msgid "place_in_competition"
+msgstr "%{place}-е место: "
+
+msgid "no_more_girls_in_top"
+msgstr "Напиши /showTop@InstaRateBot чтобы начать смотреть с начала."
+
+msgid "girl_statistics"
+msgstr ""
+"Место в соревновании: %{position}\n"
+"Количество побед: %{wins}\n"
+"Количество поражений: %{loses}"
+
+msgid "dont_get_you"
+msgstr "Прости, но я не понимаю. Может это поможет: /help@InstaRateBot"
+
+msgid "help_message"
+msgstr ""
+"Привет! Моя цель - найти самых привлекательных девушек с Инстаграма!\n"
+"Просто выбирай какая из двух девушек более симпатичная и голосуй.\n\n"
+"Я поддерживаю два языка:\n"
+"/setRussian@InstaRateBot\n"
+"/setEnglish@InstaRateBot\n\n"
+"Для того чтобы начать голосование, отправь:\n"
+"/start@InstaRateBot\n\n"
+"Чтобы посмотреть топ девушек в соревновании:\n"
+"/showTop@InstaRateBot\n\n"
+"Если ты хочешь добавить девушку в соревнование - выбери любую ее фотку из Инстаграма и пошли мне ссылку в личку. "
+"У девушки должен быть открытый аккаунт.\n\n"
+"Посмотреть статистику конкретной девушки:\n"
+"girlInfo@InstaRateBot <username>\n\n"
+"Список команд для настройки чата:\n"
+"/chatSettings@InstaRateBot\n\n"
+"Пожалуйста, шарь меня своим друзьям, чем больше людей голосуют тем точнее будут результаты!"
+
+msgid "chat_settings_commands"
+msgstr ""
+"Используй следующие команды чтобы настроить мое поведение в чате:\n\n"
+"/celebritiesCompetition@InstaRateBot - Вы будете видеть только девушек с 500к+ подписчиков.\n\n"
+"/modelsCompetition@InstaRateBot - Вы будете видеть только девушек с 10к - 500к подписчиков.\n\n"
+"/normalCompetition@InstaRateBot - Вы будете видеть только девушек у кого меньше чем 10к подписчиков.\n\n"
+"/globalCompetition@InstaRateBot - Вы будете видеть всех девушек, это вариант по умолчанию.\n\n"
+"/enableNotification@InstaRateBot - Разрешить мне ежедневно начинать новое голосование, вдруг вы забыли про меня.\n\n"
+"/disableNotification@InstaRateBot - Отключить ежедневные уведомления. По умолчанию они включены.\n\n"
+"votingTimeout@InstaRateBot <timeout> - Установить время, которое я буду ждать перед тем как послать новую пару девушек. В секундах, минимум - 5 секунд. Пример:\n"
+"votingTimeout@InstaRateBot 10"
+
+msgid "no_more_girls_in_competition"
+msgstr "Простите, но у меня больше нет девушек для вас. Вы можете выбрать другое соревнование /chatSettings@InstaRateBot"

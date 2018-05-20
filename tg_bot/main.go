@@ -1,20 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"instarate/scheduler/tasks"
+	"github.com/gazoon/go-utils"
+	"github.com/gazoon/go-utils/localization"
+	"path"
 )
 
 func main() {
-	d := map[string]interface{}{
-		"chat_id": 1,
-		"name":    "true",
-		"args":    map[string]interface{}{"foo": "bar"},
-		"do_at":   9898,
-	}
-	c, err := tasks.TaskFromData(d)
+	localesDir := path.Join(utils.GetCurrentFileDir(), "locales")
+	lm, err := localization.NewManager(localesDir)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(c)
+	println(lm.GettextD("ru", "messages", "propose_to_vote"))
 }

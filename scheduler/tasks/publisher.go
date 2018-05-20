@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"github.com/gazoon/go-utils"
 	"instarate/scheduler/config"
 	"path"
@@ -24,14 +25,14 @@ func NewPublisher() (*Publisher, error) {
 	return &Publisher{storage}, nil
 }
 
-func (self *Publisher) CreateTask(task *Task) error {
-	return self.storage.CreateTask(task)
+func (self *Publisher) CreateTask(ctx context.Context, task *Task) error {
+	return self.storage.CreateTask(ctx, task)
 }
 
-func (self *Publisher) CreateOrReplaceTask(task *Task) error {
-	return self.storage.CreateOrReplaceTask(task)
+func (self *Publisher) CreateOrReplaceTask(ctx context.Context, task *Task) error {
+	return self.storage.CreateOrReplaceTask(ctx, task)
 }
 
-func (self *Publisher) DeleteTask(chatId int, name string) error {
-	return self.storage.DeleteTask(chatId, name)
+func (self *Publisher) DeleteTask(ctx context.Context, chatId int, name string) error {
+	return self.storage.DeleteTask(ctx, chatId, name)
 }

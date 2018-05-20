@@ -15,11 +15,10 @@ type votersStorage struct {
 }
 
 func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*votersStorage, error) {
-	db, err := mongo.Connect(mongoSettings)
+	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	collection := db.C(mongoSettings.Collection)
 	return &votersStorage{collection}, nil
 }
 
