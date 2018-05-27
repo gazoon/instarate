@@ -1,12 +1,12 @@
-package main
+package concatenation
 
 import (
-	"bytes"
 	"image"
 	"image/color"
 	"net/http"
 	"strings"
 
+	"bytes"
 	"github.com/disintegration/imaging"
 	"github.com/i/paralyze"
 	"github.com/pkg/errors"
@@ -15,22 +15,6 @@ import (
 const separatorWidth = 10
 
 var separatorColor = color.White
-
-func paralyzeTasks(funcs ...paralyze.Paralyzable) ([]interface{}, error) {
-	results, errs := paralyze.Paralyze(funcs...)
-
-	var errorMsgs []string
-	for _, e := range errs {
-		if e == nil {
-			continue
-		}
-		errorMsgs = append(errorMsgs, e.Error())
-	}
-	if errorMsgs != nil {
-		return nil, errors.New(strings.Join(errorMsgs, "; "))
-	}
-	return results, nil
-}
 
 func Concatenate(leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) {
 	images, err := paralyzeTasks(
@@ -49,6 +33,22 @@ func Concatenate(leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) 
 		return nil, errors.Wrap(err, "concatenation failed")
 	}
 	return buf, nil
+}
+
+func paralyzeTasks(funcs ...paralyze.Paralyzable) ([]interface{}, error) {
+	results, errs := paralyze.Paralyze(funcs...)
+
+	var errorMsgs []string
+	for _, e := range errs {
+		if e == nil {
+			continue
+		}
+		errorMsgs = append(errorMsgs, e.Error())
+	}
+	if errorMsgs != nil {
+		return nil, errors.New(strings.Join(errorMsgs, "; "))
+	}
+	return results, nil
 }
 
 func appendHorizontally(leftPicture, rightPicture image.Image) image.Image {
