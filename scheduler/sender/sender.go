@@ -29,5 +29,14 @@ func (self *Sender) SendTask(ctx context.Context, data interface{}) {
 	ctx = utils.FillContext(ctx)
 	logger := self.GetLogger(ctx)
 	logger.Debugf("Send task to the queue: %s", task)
-	self.queueWriter.Put(ctx, self.queueName, task.ChatId, task)
+	messageData := map[string]interface{}{
+		"chat_id": task.ChatId, "do_at": task.DoAt,
+	}
+	for k, v := range task.Args {
+		messageData[k] = v
+	}
+	message := map[string]interface{}{
+		"type": task.Name, "data": messageData,
+	}
+	self.queueWriter.Put(ctx, self.queueName, task.ChatId, message)
 }

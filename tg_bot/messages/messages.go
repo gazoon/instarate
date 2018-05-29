@@ -8,10 +8,21 @@ import (
 )
 
 var (
-	TextMessageType     = "text"
-	CallbackMessageType = "callback"
-	TaskMessageType     = "task"
+	TextType                = "text"
+	CallbackType            = "callback"
+	NextPairTaskType        = "next_pair_task"
+	DailyActivationTaskType = "daily_activation_task"
 )
+
+type Message interface {
+	GetChatId() int
+}
+
+type UserMessage interface {
+	Message
+	GetIsGroupChat() bool
+	GetUser() *User
+}
 
 type User struct {
 	Id       int    `mapstructure:"id"`
@@ -32,16 +43,20 @@ func (self User) String() string {
 	return utils.ObjToString(&self)
 }
 
-type UserMessage struct {
+type userMessage struct {
 	ChatId      int   `mapstructure:"chat_id"`
 	IsGroupChat bool  `mapstructure:"is_group_chat"`
 	User        *User `mapstructure:"-"`
 }
 
+func (self userMessage) GetChatId() int       { return self.ChatId }
+func (self userMessage) GetIsGroupChat() bool { return self.IsGroupChat }
+func (self userMessage) GetUser() *User       { return self.User }
+
 var callbackPayloadSeparator = ":"
 
 type Callback struct {
-	UserMessage `mapstructure:",squash"`
+	userMessage `mapstructure:",squash"`
 	CallbackId  string `mapstructure:"callback_id"`
 	ParentMsgId int    `mapstructure:"parent_msg_id"`
 	Payload     string `mapstructure:"payload"`
@@ -87,7 +102,7 @@ func BuildCallbackPayload(callbackName, args string) string {
 }
 
 type TextMessage struct {
-	UserMessage   `mapstructure:",squash"`
+	userMessage   `mapstructure:",squash"`
 	Text          string       `mapstructure:"text"`
 	TextLowercase string       `mapstructure:"-"`
 	MessageId     int          `mapstructure:"message_id"`
@@ -157,4 +172,36 @@ func (self *TextMessage) GetCommandArgs() []string {
 		return []string{}
 	}
 	return tokens[1:]
+}
+
+type task struct {
+	ChatId int `mapstructure:"chat_id"`
+	DoAt   int `mapstructure:"do_at"`
+}
+
+type NextPairTask struct {
+	task               `mapstructure:",squash"`
+	LastMatchMessageId int `mapstructure:"last_match_message_id"`
+}
+
+func NextPairTaskFromData(data interface{}) (*NextPairTask, error) {
+	t := &NextPairTask{}
+	err := mapstructure.Decode(data, t)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create next pair task from data")
+	}
+	return t, nil
+}
+
+type DailyActivationTask struct {
+	task `mapstructure:",squash"`
+}
+
+func DailyActivationTaskFromData(data interface{}) (*DailyActivationTask, error) {
+	t := &DailyActivationTask{}
+	err := mapstructure.Decode(data, t)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create daily activation task from data")
+	}
+	return t, nil
 }
