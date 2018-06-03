@@ -1,39 +1,46 @@
 package main
 
 import (
-	"fmt"
-	"github.com/gazoon/go-utils"
-	"github.com/gazoon/go-utils/localization"
-	"gopkg.in/telegram-bot-api.v4"
+	"instarate/tg_bot/config"
 	"instarate/tg_bot/messenger"
-	"os"
 	"path"
+
+	"context"
+	"github.com/gazoon/bot_libs/queue"
+	"github.com/gazoon/go-utils"
+	"github.com/gazoon/go-utils/consumer"
+	"github.com/gazoon/go-utils/localization"
+	"instarate/tg_bot/chats"
+	"instarate/tg_bot/core"
 )
 
 func main() {
-	localesDir := path.Join(utils.GetCurrentFileDir(), "locales")
-	lm, err := localization.NewManager(localesDir)
+	rootDir := utils.GetCurrentFileDir()
+	conf := &config.Config{}
+	configPath := path.Join(rootDir, "config")
+	err := utils.ParseConfig(configPath, conf)
 	if err != nil {
 		panic(err)
 	}
-	println(lm.GettextD("ru", "messages", "propose_to_vote"))
-	m, err := messenger.NewTelegram("480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20")
+	localesDir := path.Join(rootDir, "locales")
+	locales, err := localization.NewManager(localesDir)
 	if err != nil {
 		panic(err)
 	}
-	f, err := os.Open("tmp.jpg")
+	tg, err := messenger.NewTelegram(conf.Telegram.Token)
+	chatsStorage, err := chats.NewMongoStorage(conf.MongoChats)
 	if err != nil {
 		panic(err)
 	}
-	msgid, fileId, err := m.SendBinaryPhoto(nil, 231193206, f, func(opts *tgbotapi.PhotoConfig) {
-		opts.Caption = "balalblalblblal"
-		opts.ReplyMarkup = tgbotapi.ReplyKeyboardMarkup{
-			OneTimeKeyboard: true,
-			Keyboard:        [][]tgbotapi.KeyboardButton{{{Text: "teeee"}}},
-		}
-	})
+	bot := core.NewBot(chatsStorage, tg, locales)
+	incomingQueue, err := queue.NewMongoReader(conf.MongoQueue)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(msgid, fileId)
+	incomingQueue.GetNext()
+	getTask := func(ctx context.Context) interface{} { return taskStorage.GetTask(ctx) }
+	worker := consumer.New(getTask, bot.OnMessage, conf.QueueConsumer.FetchDelay)
+	worker.Run()
+	utils.WaitingForShutdown()
+	worker.Stop()
 }

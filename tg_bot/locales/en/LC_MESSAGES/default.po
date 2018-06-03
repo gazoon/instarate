@@ -14,13 +14,13 @@ msgid "daily_notification_disabled"
 msgstr "You turned daily notifications off. I will no longer propose to vote."
 
 msgid "voting_timeout_is_set"
-msgstr "Voting timeout is set to %{timeout} seconds."
+msgstr "Voting timeout is set to %d seconds."
 
 msgid "set_voting_timeout_no_number"
 msgstr "Please, enter a valid number."
 
 msgid "set_voting_timeout_out_of_range"
-msgstr "Timeout must be more than %{lower_bound} seconds and less than %{upper_bound} minutes."
+msgstr "Timeout must be more than %d seconds and less than %d minutes."
 
 msgid "global_competition_enabled"
 msgstr "Now you will see all girls."
@@ -41,22 +41,22 @@ msgid "get_girl_no_username"
 msgstr "Please send me an Instagram username\ngirlInfo@InstaRateBot <username>"
 
 msgid "success_vote"
-msgstr "Vote for %{username}"
+msgstr "Vote for %s"
 
 msgid "already_voted"
 msgstr "You already voted."
 
 msgid "place_in_competition"
-msgstr "%{place} place: "
+msgstr "%s place: "
 
 msgid "no_more_girls_in_top"
 msgstr "Send /showTop@InstaRateBot to watch from the beginning."
 
 msgid "girl_statistics"
 msgstr ""
-"Position in the competition: %{position}\n"
-"Number of wins: %{wins}\n"
-"Number of loses: %{loses}"
+"Position in the competition: %d\n"
+"Number of wins: %d\n"
+"Number of loses: %d"
 
 msgid "dont_get_you"
 msgstr "Sorry, I don't get you. Maybe it will help: /help@InstaRateBot"

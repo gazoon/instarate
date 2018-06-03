@@ -18,6 +18,29 @@ type Message interface {
 	GetChatId() int
 }
 
+func Instantiate(messageEnvelope map[string]interface{}) (Message, error) {
+	messageType := messageEnvelope["type"]
+	messageData := messageEnvelope["data"]
+	var message Message
+	var err error
+	switch messageType {
+	case TextType:
+		message, err = TextMessageFromData(messageData)
+	case CallbackType:
+		message, err = CallbackFromData(messageData)
+	case NextPairTaskType:
+		message, err = NextPairTaskFromData(messageData)
+	case DailyActivationTaskType:
+		message, err = DailyActivationTaskFromData(messageData)
+	default:
+		return nil, errors.Errorf("unknown message type: %s", messageType)
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "can't build message type of %s", messageType)
+	}
+	return message, nil
+}
+
 type UserMessage interface {
 	Message
 	GetIsGroupChat() bool
@@ -177,6 +200,10 @@ func (self *TextMessage) GetCommandArgs() []string {
 type task struct {
 	ChatId int `mapstructure:"chat_id"`
 	DoAt   int `mapstructure:"do_at"`
+}
+
+func (self *task) GetChatId() int {
+	return self.ChatId
 }
 
 type NextPairTask struct {

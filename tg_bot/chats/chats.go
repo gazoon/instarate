@@ -25,6 +25,9 @@ func (self *MongoStorage) Get(ctx context.Context, chatId int) (*models.Chat, er
 	chat := &models.Chat{}
 	err := self.client.Find(bson.M{"chat_id": chatId}).One(chat)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return chat, nil

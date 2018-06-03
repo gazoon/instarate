@@ -1,0 +1,5 @@
+queue_consumer:
+ fetch_delay: 100
+
+service_name: "tg_bot"
+log_level: info

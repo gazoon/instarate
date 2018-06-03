@@ -1,0 +1,32 @@
+mongo_cache:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_cache
+
+mongo_chats:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_chats
+
+mongo_queue:
+  host: "localhost"
+  port: 27017
+  database: "local"
+  timeout: 5
+  pool_size: 10
+  collection: insta_queue
+
+telegram:
+  token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
+
+bot:
+  name: "InstaRateLocal",
+  username: "InstaRateLocalBot",
+  admins: [231193206, 309370324]
+

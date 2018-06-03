@@ -36,7 +36,7 @@ func main() {
 	// but .GetTasks() returns *Task
 	// so we need an adopter function
 	getTask := func(ctx context.Context) interface{} { return taskStorage.GetTask(ctx) }
-	worker := consumer.New(getTask, taskSender.SendTask, "", conf.TasksConsumer.FetchDelay)
+	worker := consumer.New(getTask, taskSender.SendTask, conf.TasksConsumer.FetchDelay)
 	worker.Run()
 	utils.WaitingForShutdown()
 	worker.Stop()

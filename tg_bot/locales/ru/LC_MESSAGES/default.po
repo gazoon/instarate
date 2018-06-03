@@ -5,7 +5,7 @@ msgid "add_girl_no_link"
 msgstr "Ты не отправил мне ссылку на фото, пример:\naddGirl@InstaRateBot <photo_link>"
 
 msgid "girl_added"
-msgstr "Девушка [%{username}](%{profile_url}) была успешно добавлена!"
+msgstr "Девушка [%s](%s) была успешно добавлена!"
 
 msgid "daily_notification_enabled"
 msgstr "Ежедневные уведомления включены."
@@ -14,13 +14,13 @@ msgid "daily_notification_disabled"
 msgstr "Ежедневные уведомления отключены. Теперь я не буду сам предлагать начать голосовать."
 
 msgid "voting_timeout_is_set"
-msgstr "Время между голосованиями составляет %{timeout} секунд."
+msgstr "Время между голосованиями составляет %d секунд."
 
 msgid "set_voting_timeout_no_number"
 msgstr "Пожалуйста, введи число."
 
 msgid "set_voting_timeout_out_of_range"
-msgstr "Время-задержка должно быть больше чем %{lower_bound} секунд и меньше %{upper_bound} минут."
+msgstr "Время-задержка должно быть больше чем %d секунд и меньше %d минут."
 
 msgid "global_competition_enabled"
 msgstr "Теперь вы будете видеть всех девушек."
@@ -41,22 +41,22 @@ msgid "get_girl_no_username"
 msgstr "Пожалуйста, отправь мне username\ngirlInfo@InstaRateBot <username>"
 
 msgid "success_vote"
-msgstr "Голос за %{username}"
+msgstr "Голос за %s"
 
 msgid "already_voted"
 msgstr "Ты уже проголосовал."
 
 msgid "place_in_competition"
-msgstr "%{place}-е место: "
+msgstr "%d-е место: "
 
 msgid "no_more_girls_in_top"
 msgstr "Напиши /showTop@InstaRateBot чтобы начать смотреть с начала."
 
 msgid "girl_statistics"
 msgstr ""
-"Место в соревновании: %{position}\n"
-"Количество побед: %{wins}\n"
-"Количество поражений: %{loses}"
+"Место в соревновании: %d\n"
+"Количество побед: %d\n"
+"Количество поражений: %d"
 
 msgid "dont_get_you"
 msgstr "Прости, но я не понимаю. Может это поможет: /help@InstaRateBot"
