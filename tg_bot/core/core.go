@@ -44,9 +44,12 @@ func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope
 		return
 	}
 	defer func() {
-		if r := recover(); r != nil {
-			self.handleError(ctx, message, r)
+		r := recover()
+		if r == nil {
+			return
 		}
+		err := r.(error)
+		self.handleError(ctx, message, err)
 	}()
 	ctx = initializeContext(ctx, message)
 	err = self.processMessage(ctx, message)
@@ -69,9 +72,9 @@ func (self *Bot) processMessage(ctx context.Context, message messages.Message) e
 	return nil
 }
 
-func (self *Bot) handleError(ctx context.Context, message messages.Message, err interface{}) {
+func (self *Bot) handleError(ctx context.Context, message messages.Message, err error) {
 	logger := self.GetLogger(ctx)
-	logger.Errorf("Message processing failed; error: %s, message: %v", err, message)
+	logger.WithError(err).WithField("message", message).Error("Message processing failed")
 	if _, ok := message.(messages.UserMessage); !ok {
 		return
 	}

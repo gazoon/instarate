@@ -8,11 +8,12 @@ import (
 	"instarate/scheduler/sender"
 	"instarate/scheduler/tasks"
 
-	"context"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
 )
+
+var logger = logging.WithPackage("main")
 
 func main() {
 
@@ -31,13 +32,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// consumer expects a function that returns interface{}
-	// but .GetTasks() returns *Task
-	// so we need an adopter function
-	getTask := func(ctx context.Context) interface{} { return taskStorage.GetTask(ctx) }
-	worker := consumer.New(getTask, taskSender.SendTask, conf.TasksConsumer.FetchDelay)
+	tasksPipe := sender.NewTasksPipeline(taskStorage.GetTask, taskSender.SendTask)
+	worker := consumer.New(tasksPipe.Fetch, conf.TasksConsumer.FetchDelay)
 	worker.Run()
+	logger.Info("Scheduler successfully started")
 	utils.WaitingForShutdown()
 	worker.Stop()
 }

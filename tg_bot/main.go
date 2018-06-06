@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	messagesPipe := core.NewMessagesPipe(incomingQueue, bot)
+	messagesPipe := core.NewMessagesPipe(incomingQueue, bot.OnMessage)
 	worker := consumer.New(messagesPipe.Fetch, conf.QueueConsumer.FetchDelay)
 	worker.Run()
 	logger.Info("Bot successfully started")

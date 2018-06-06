@@ -2,12 +2,10 @@ package tasks
 
 import (
 	"context"
-	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -16,15 +14,6 @@ type Task struct {
 	Name   string                 `bson:"name" mapstructure:"name"`
 	Args   map[string]interface{} `bson:"args" mapstructure:"args"`
 	DoAt   int                    `bson:"do_at" mapstructure:"do_at"`
-}
-
-func TaskFromData(data interface{}) (*Task, error) {
-	t := &Task{}
-	err := mapstructure.Decode(data, t)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't create task from data")
-	}
-	return t, nil
 }
 
 func (self Task) String() string {
@@ -48,18 +37,18 @@ func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
 	return &Storage{collection}, nil
 }
 
-func (self *Storage) GetTask(ctx context.Context) *Task {
+func (self *Storage) GetTask(ctx context.Context) (*Task, error) {
 	currentTime := utils.TimestampMilliseconds()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
 		Apply(mgo.Change{Remove: true}, task)
-	if err != nil {
-		if err != mgo.ErrNotFound {
-			log.Errorf("Cannot get task from mongo: %s", err)
-		}
-		return nil
+	if err == mgo.ErrNotFound {
+		return nil, nil
 	}
-	return task
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
 }
 
 func (self *Storage) CreateTask(ctx context.Context, task *Task) error {

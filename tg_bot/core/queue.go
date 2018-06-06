@@ -10,23 +10,27 @@ import (
 	"github.com/pkg/errors"
 )
 
-type MessagesPipe struct {
+type MessagesPipeline struct {
 	*logging.LoggerMixin
-	queue *queue.MongoReader
-	bot   *Bot
+	queue     *queue.MongoReader
+	onMessage func(context.Context, *MessageEnvelope)
 }
 
-func NewMessagesPipe(incomingQueue *queue.MongoReader, bot *Bot) *MessagesPipe {
-	return &MessagesPipe{
+func NewMessagesPipe(incomingQueue *queue.MongoReader,
+	onMessage func(context.Context, *MessageEnvelope)) *MessagesPipeline {
+
+	return &MessagesPipeline{
 		queue:       incomingQueue,
-		bot:         bot,
-		LoggerMixin: logging.NewLoggerMixin("messages_pipe", nil)}
+		onMessage:   onMessage,
+		LoggerMixin: logging.NewLoggerMixin("messages_pipe", nil),
+	}
 }
 
-func (self *MessagesPipe) Fetch(ctx context.Context) consumer.Process {
-	msg, err := self.queue.GetNext()
+func (self *MessagesPipeline) Fetch(ctx context.Context) consumer.Process {
+	msg, err := self.queue.GetNext(ctx)
 	if err != nil {
-		self.Logger.Errorf("Cant obtain message from the incoming queue: %s", err)
+		logger := self.GetLogger(ctx)
+		logger.WithError(err).Error("Cant obtain message from the incoming queue")
 		return nil
 	}
 	if msg == nil {
@@ -37,10 +41,12 @@ func (self *MessagesPipe) Fetch(ctx context.Context) consumer.Process {
 	}
 }
 
-func (self *MessagesPipe) process(ctx context.Context, msg *queue.ReadyMessage) {
+func (self *MessagesPipeline) process(ctx context.Context, msg *queue.ReadyMessage) {
 	defer func() {
 		if r := recover(); r != nil {
-			self.GetLogger(ctx).Errorf("Can't process queue message; error: %v", r)
+			err := r.(error)
+			logger := self.GetLogger(ctx)
+			logger.WithError(err).Error("Can't process queue message")
 		}
 		err := self.queue.FinishProcessing(ctx, msg.ProcessingId)
 		if err != nil {
@@ -57,5 +63,5 @@ func (self *MessagesPipe) process(ctx context.Context, msg *queue.ReadyMessage) 
 	if err != nil {
 		panic(errors.Wrapf(err, "queue message payload parsing %v", msg.Payload))
 	}
-	self.bot.OnMessage(ctx, messageEnvelope)
+	self.onMessage(ctx, messageEnvelope)
 }
