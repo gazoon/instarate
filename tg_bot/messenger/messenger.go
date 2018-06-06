@@ -33,14 +33,15 @@ type Telegram struct {
 }
 
 func NewTelegram(token string) (*Telegram, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
+	httpClient := &http.Client{Timeout: httpTimeout}
+	bot, err := tgbotapi.NewBotAPIWithClient(token, httpClient)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Telegram API")
 	}
 	return &Telegram{
 		botAPI: bot,
 		token:  token,
-		client: &http.Client{Timeout: httpTimeout},
+		client: httpClient,
 	}, nil
 }
 

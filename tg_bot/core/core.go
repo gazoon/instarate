@@ -3,9 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils/localization"
 	"github.com/gazoon/go-utils/logging"
-	"github.com/gazoon/go-utils/request"
 	"github.com/pkg/errors"
 	"gopkg.in/telegram-bot-api.v4"
 	"instarate/tg_bot/chats"
@@ -13,6 +13,11 @@ import (
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
 )
+
+type MessageEnvelope struct {
+	Type string      `mapstructure:"type"`
+	Data interface{} `mapstructure:"data"`
+}
 
 type Bot struct {
 	*logging.LoggerMixin
@@ -32,27 +37,21 @@ func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Teleg
 	}
 }
 
-func (self *Bot) OnMessage(ctx context.Context, data interface{}) {
-	messageEnvelope, ok := data.(map[string]interface{})
-	if !ok {
-		self.Logger.Errorf("Message envelope must be a map, got: %v", data)
-		return
-	}
-	message, err := messages.Instantiate(messageEnvelope)
+func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope) {
+	message, err := instantiateMessage(messageEnvelope)
 	if err != nil {
-		self.Logger.Error(err)
+		self.GetLogger(ctx).Error(err)
 		return
 	}
-	ctx = initializeContext(ctx, messageEnvelope, message)
 	defer func() {
 		if r := recover(); r != nil {
-			err := errors.Errorf("panic recovered: %v", r)
-			self.handleError(ctx, message, err)
+			self.handleError(ctx, message, r)
 		}
 	}()
+	ctx = initializeContext(ctx, message)
 	err = self.processMessage(ctx, message)
 	if err != nil {
-		self.handleError(ctx, message, err)
+		panic(err)
 	}
 }
 
@@ -70,19 +69,18 @@ func (self *Bot) processMessage(ctx context.Context, message messages.Message) e
 	return nil
 }
 
-func (self *Bot) handleError(ctx context.Context, message messages.Message, err error) {
+func (self *Bot) handleError(ctx context.Context, message messages.Message, err interface{}) {
 	logger := self.GetLogger(ctx)
-	logger.Error(err)
+	logger.Errorf("Message processing failed; error: %s, message: %v", err, message)
 	if _, ok := message.(messages.UserMessage); !ok {
 		return
 	}
 	// user expects reaction, so we should show him a error
 	chatId := message.GetChatId()
 	errorText := self.gettext(models.DefaultLang, "unknown_error")
-	_, err = self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
+	if _, err := self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
 		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
-	})
-	if err != nil {
+	}); err != nil {
 		logger.Errorf("Can't send error message: %s", err)
 	}
 }
@@ -166,16 +164,33 @@ func (self *Bot) gettext(lang, msgid string, vars ...interface{}) string {
 	return self.locales.Gettext(lang, msgid, vars...)
 }
 
-func initializeContext(ctx context.Context, messageEnvelope map[string]interface{},
-	message messages.Message) context.Context {
+func initializeContext(ctx context.Context, message messages.Message) context.Context {
 
-	requestId, _ := messageEnvelope["request_id"].(string)
-	if requestId == "" {
-		requestId = request.NewRequestId()
-	}
-	ctx = request.NewContext(ctx, requestId)
-	logger := logging.WithRequestID(requestId).WithField("chat_id", message.GetChatId())
+	logger := log.WithField("chat_id", message.GetChatId())
 
 	ctx = logging.NewContext(ctx, logger)
 	return ctx
+}
+
+func instantiateMessage(messageEnvelope *MessageEnvelope) (messages.Message, error) {
+	messageType := messageEnvelope.Type
+	messageData := messageEnvelope.Data
+	var message messages.Message
+	var err error
+	switch messageType {
+	case messages.TextType:
+		message, err = messages.TextMessageFromData(messageData)
+	case messages.CallbackType:
+		message, err = messages.CallbackFromData(messageData)
+	case messages.NextPairTaskType:
+		message, err = messages.NextPairTaskFromData(messageData)
+	case messages.DailyActivationTaskType:
+		message, err = messages.DailyActivationTaskFromData(messageData)
+	default:
+		return nil, errors.Errorf("unknown message type: %s", messageType)
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "can't build message type of %s", messageType)
+	}
+	return message, nil
 }

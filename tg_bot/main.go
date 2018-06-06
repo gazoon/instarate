@@ -5,14 +5,17 @@ import (
 	"instarate/tg_bot/messenger"
 	"path"
 
-	"context"
+	"instarate/tg_bot/chats"
+	"instarate/tg_bot/core"
+
 	"github.com/gazoon/bot_libs/queue"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/localization"
-	"instarate/tg_bot/chats"
-	"instarate/tg_bot/core"
+	"github.com/gazoon/go-utils/logging"
 )
+
+var logger = logging.WithPackage("main")
 
 func main() {
 	rootDir := utils.GetCurrentFileDir()
@@ -28,6 +31,9 @@ func main() {
 		panic(err)
 	}
 	tg, err := messenger.NewTelegram(conf.Telegram.Token)
+	if err != nil {
+		panic(err)
+	}
 	chatsStorage, err := chats.NewMongoStorage(conf.MongoChats)
 	if err != nil {
 		panic(err)
@@ -37,10 +43,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	incomingQueue.GetNext()
-	getTask := func(ctx context.Context) interface{} { return taskStorage.GetTask(ctx) }
-	worker := consumer.New(getTask, bot.OnMessage, conf.QueueConsumer.FetchDelay)
+	messagesPipe := core.NewMessagesPipe(incomingQueue, bot)
+	worker := consumer.New(messagesPipe.Fetch, conf.QueueConsumer.FetchDelay)
 	worker.Run()
+	logger.Info("Bot successfully started")
 	utils.WaitingForShutdown()
 	worker.Stop()
 }

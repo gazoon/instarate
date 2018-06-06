@@ -7,7 +7,9 @@
 . support localized human written commands
 . add list of protected girls, they can't be added
 . don't crop images, use black background instead
+. check retries during network outages
 . fix translations
 . don't return errors as text, use constant atoms, to be able to map the error
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
+. wrap all goroutines in recover

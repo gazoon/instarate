@@ -18,29 +18,6 @@ type Message interface {
 	GetChatId() int
 }
 
-func Instantiate(messageEnvelope map[string]interface{}) (Message, error) {
-	messageType := messageEnvelope["type"]
-	messageData := messageEnvelope["data"]
-	var message Message
-	var err error
-	switch messageType {
-	case TextType:
-		message, err = TextMessageFromData(messageData)
-	case CallbackType:
-		message, err = CallbackFromData(messageData)
-	case NextPairTaskType:
-		message, err = NextPairTaskFromData(messageData)
-	case DailyActivationTaskType:
-		message, err = DailyActivationTaskFromData(messageData)
-	default:
-		return nil, errors.Errorf("unknown message type: %s", messageType)
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "can't build message type of %s", messageType)
-	}
-	return message, nil
-}
-
 type UserMessage interface {
 	Message
 	GetIsGroupChat() bool

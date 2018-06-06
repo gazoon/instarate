@@ -26,7 +26,7 @@ telegram:
   token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 
 bot:
-  name: "InstaRateLocal",
-  username: "InstaRateLocalBot",
+  name: "InstaRateLocal"
+  username: "InstaRateLocalBot"
   admins: [231193206, 309370324]
 
