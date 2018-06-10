@@ -43,11 +43,17 @@ func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope
 		return err
 	}
 	defer func() {
-		r := recover()
-		self.sendError(ctx, message)
-		panic(r)
+		if r := recover(); r != nil {
+			self.sendError(ctx, message)
+			panic(r)
+		}
 	}()
 	ctx = initializeContext(ctx, message)
+	logger := self.GetLogger(ctx)
+	logger.WithFields(log.Fields{
+		"message":      message,
+		"message_type": messageEnvelope.Type,
+	}).Info("Process message")
 	err = self.processMessage(ctx, message)
 	if err != nil {
 		self.sendError(ctx, message)
@@ -87,13 +93,13 @@ func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message messages.Message) error {
 	switch actualMessage := message.(type) {
 	case *messages.TextMessage:
-		self.onText(ctx, chat, actualMessage)
+		return self.onText(ctx, chat, actualMessage)
 	case *messages.Callback:
-		self.onCallback(ctx, chat, actualMessage)
+		return self.onCallback(ctx, chat, actualMessage)
 	case *messages.NextPairTask:
-		self.onNextPairTask(ctx, chat, actualMessage)
+		return self.onNextPairTask(ctx, chat, actualMessage)
 	case *messages.DailyActivationTask:
-		self.onDailyActivationTask(ctx, chat, actualMessage)
+		return self.onDailyActivationTask(ctx, chat, actualMessage)
 	default:
 		return errors.Errorf("can't dispatch message %T", actualMessage)
 	}

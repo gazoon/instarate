@@ -62,6 +62,7 @@ func (self *MessagesPipeline) process(ctx context.Context, msg *queue.ReadyMessa
 	}()
 	ctx = request.NewContext(ctx, msg.RequestId)
 	ctx = logging.NewContext(ctx, logging.WithRequestID(msg.RequestId))
+	self.GetLogger(ctx).WithField("queue_message", msg).Info("Message received from the queue")
 	messageEnvelope := &MessageEnvelope{}
 	err := mapstructure.Decode(msg.Payload, messageEnvelope)
 	if err != nil {

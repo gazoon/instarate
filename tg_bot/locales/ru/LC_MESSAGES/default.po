@@ -94,3 +94,6 @@ msgstr ""
 
 msgid "no_more_girls_in_competition"
 msgstr "Простите, но у меня больше нет девушек для вас. Вы можете выбрать другое соревнование /chatSettings@InstaRateBot"
+
+msgid "unknown_error"
+msgstr "Произошла неизвестная ошибка, попробуйте позже."

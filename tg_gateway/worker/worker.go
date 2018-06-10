@@ -25,10 +25,10 @@ func New(config *config.Config) (*Worker, error) {
 
 func (self *Worker) ProcessUpdate(ctx context.Context, queueName string, update *tgbotapi.Update) error {
 	logger := self.GetLogger(ctx)
-	logger.Debugf("Receive update %s", utils.ObjToString(update))
+	logger.WithField("update", utils.ObjToString(update)).Info("Update received")
 	chatId, message := buildQueueMessage(update)
 	if message == nil {
-		logger.Debugf("Unsupported update, skip")
+		logger.Info("Unsupported update, skip")
 		return nil
 	}
 	return self.queue.Put(ctx, queueName, chatId, message)

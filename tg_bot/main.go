@@ -25,6 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
 	localesDir := path.Join(rootDir, "locales")
 	locales, err := localization.NewManager(localesDir)
 	if err != nil {

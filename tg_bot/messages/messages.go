@@ -197,6 +197,10 @@ func NextPairTaskFromData(data interface{}) (*NextPairTask, error) {
 	return t, nil
 }
 
+func (self NextPairTask) String() string {
+	return utils.ObjToString(&self)
+}
+
 type DailyActivationTask struct {
 	task `mapstructure:",squash"`
 }
@@ -208,4 +212,8 @@ func DailyActivationTaskFromData(data interface{}) (*DailyActivationTask, error)
 		return nil, errors.Wrap(err, "can't create daily activation task from data")
 	}
 	return t, nil
+}
+
+func (self DailyActivationTask) String() string {
+	return utils.ObjToString(&self)
 }
