@@ -13,11 +13,11 @@ import (
 type MessagesPipeline struct {
 	*logging.LoggerMixin
 	queue     *queue.MongoReader
-	onMessage func(context.Context, *MessageEnvelope)
+	onMessage func(context.Context, *MessageEnvelope) error
 }
 
 func NewMessagesPipe(incomingQueue *queue.MongoReader,
-	onMessage func(context.Context, *MessageEnvelope)) *MessagesPipeline {
+	onMessage func(context.Context, *MessageEnvelope) error) *MessagesPipeline {
 
 	return &MessagesPipeline{
 		queue:       incomingQueue,
@@ -27,10 +27,14 @@ func NewMessagesPipe(incomingQueue *queue.MongoReader,
 }
 
 func (self *MessagesPipeline) Fetch(ctx context.Context) consumer.Process {
+	defer func() {
+		if r := recover(); r != nil {
+			self.LogError(ctx, r)
+		}
+	}()
 	msg, err := self.queue.GetNext(ctx)
 	if err != nil {
-		logger := self.GetLogger(ctx)
-		logger.WithError(err).Error("Cant obtain message from the incoming queue")
+		self.LogError(ctx, err)
 		return nil
 	}
 	if msg == nil {
@@ -44,16 +48,16 @@ func (self *MessagesPipeline) Fetch(ctx context.Context) consumer.Process {
 func (self *MessagesPipeline) process(ctx context.Context, msg *queue.ReadyMessage) {
 	defer func() {
 		if r := recover(); r != nil {
-			err := r.(error)
-			logger := self.GetLogger(ctx)
-			logger.WithError(err).Error("Can't process queue message")
+			self.LogError(ctx, r)
 		}
+		defer func() {
+			if r := recover(); r != nil {
+				self.LogError(ctx, r)
+			}
+		}()
 		err := self.queue.FinishProcessing(ctx, msg.ProcessingId)
 		if err != nil {
-			self.GetLogger(ctx).Errorf(
-				"Can't finish queue message processing; error: %s, processing_id: %s",
-				err, msg.ProcessingId,
-			)
+			self.LogError(ctx, err)
 		}
 	}()
 	ctx = request.NewContext(ctx, msg.RequestId)
@@ -61,7 +65,10 @@ func (self *MessagesPipeline) process(ctx context.Context, msg *queue.ReadyMessa
 	messageEnvelope := &MessageEnvelope{}
 	err := mapstructure.Decode(msg.Payload, messageEnvelope)
 	if err != nil {
-		panic(errors.Wrapf(err, "queue message payload parsing %v", msg.Payload))
+		self.LogError(ctx, errors.Wrapf(err, "queue message payload parsing %v", msg.Payload))
 	}
-	self.onMessage(ctx, messageEnvelope)
+	err = self.onMessage(ctx, messageEnvelope)
+	if err != nil {
+		self.LogError(ctx, err)
+	}
 }

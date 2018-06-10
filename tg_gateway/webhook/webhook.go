@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"instarate/tg_gateway/worker"
 	"net/http"
 	"time"
 
@@ -15,16 +14,18 @@ import (
 	"gopkg.in/telegram-bot-api.v4"
 )
 
+type ProcessUpdate func(ctx context.Context, queueName string, update *tgbotapi.Update) error
+
 type Webhook struct {
 	*logging.LoggerMixin
 	httpServer      *http.Server
 	botTokenToQueue map[string]string
-	worker          *worker.Worker
+	processUpdate   ProcessUpdate
 }
 
-func New(port int, botTokenToQueue map[string]string, worker *worker.Worker) *Webhook {
+func New(port int, botTokenToQueue map[string]string, processUpdate ProcessUpdate) *Webhook {
 	logger := logging.NewLoggerMixin("webhook", nil)
-	webhook := &Webhook{worker: worker, botTokenToQueue: botTokenToQueue, LoggerMixin: logger}
+	webhook := &Webhook{processUpdate: processUpdate, botTokenToQueue: botTokenToQueue, LoggerMixin: logger}
 	r := httprouter.New()
 	r.POST("/update/:bot_token", webhook.updateHandler)
 	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: utils.RecoveryHandler(r)}
@@ -46,14 +47,20 @@ func (self *Webhook) Stop() error {
 }
 
 func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	ctx := utils.FillContext(r.Context())
+	defer func() {
+		if r := recover(); r != nil {
+			self.handleError(ctx, w, r)
+		}
+	}()
+	logger := self.GetLogger(ctx)
 	botToken := ps.ByName("bot_token")
 	queueName, ok := self.botTokenToQueue[botToken]
 	if !ok {
+		logger.WithField("bot_token", botToken).Error("Unknown bot token")
 		http.NotFound(w, r)
 		return
 	}
-	ctx := utils.CreateContext()
-	logger := self.GetLogger(ctx)
 	update := &tgbotapi.Update{}
 	err := json.NewDecoder(r.Body).Decode(update)
 	if err != nil {
@@ -61,10 +68,14 @@ func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps ht
 		http.Error(w, "Bad request data", http.StatusBadRequest)
 		return
 	}
-	err = self.worker.ProcessUpdate(ctx, queueName, update)
+	err = self.processUpdate(ctx, queueName, update)
 	if err != nil {
-		logger.Errorf("Process update: %s", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		self.handleError(ctx, w, err)
 		return
 	}
+}
+
+func (self *Webhook) handleError(ctx context.Context, w http.ResponseWriter, err interface{}) {
+	self.LogError(ctx, err)
+	http.Error(w, "Internal error", http.StatusInternalServerError)
 }

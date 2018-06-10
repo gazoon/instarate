@@ -24,7 +24,12 @@ func New(mongoSettings *utils.MongoDBSettings) (*Sender, error) {
 	return &Sender{queueWriter: writer, LoggerMixin: logger, queueName: mongoSettings.Collection}, nil
 }
 
-func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) error {
+func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) {
+	defer func() {
+		if r := recover(); r != nil {
+			self.LogError(ctx, r)
+		}
+	}()
 	ctx = utils.FillContext(ctx)
 	logger := self.GetLogger(ctx)
 	logger.Debugf("Send task to the queue: %s", task)
@@ -38,5 +43,7 @@ func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) error {
 		"type": task.Name, "data": messageData,
 	}
 	err := self.queueWriter.Put(ctx, self.queueName, task.ChatId, message)
-	return err
+	if err != nil {
+		self.LogError(ctx, err)
+	}
 }

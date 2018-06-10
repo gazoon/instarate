@@ -37,25 +37,22 @@ func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Teleg
 	}
 }
 
-func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope) {
+func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope) error {
 	message, err := instantiateMessage(messageEnvelope)
 	if err != nil {
-		self.GetLogger(ctx).Error(err)
-		return
+		return err
 	}
 	defer func() {
 		r := recover()
-		if r == nil {
-			return
-		}
-		err := r.(error)
-		self.handleError(ctx, message, err)
+		self.sendError(ctx, message)
+		panic(r)
 	}()
 	ctx = initializeContext(ctx, message)
 	err = self.processMessage(ctx, message)
 	if err != nil {
-		panic(err)
+		self.sendError(ctx, message)
 	}
+	return err
 }
 
 func (self *Bot) processMessage(ctx context.Context, message messages.Message) error {
@@ -72,19 +69,18 @@ func (self *Bot) processMessage(ctx context.Context, message messages.Message) e
 	return nil
 }
 
-func (self *Bot) handleError(ctx context.Context, message messages.Message, err error) {
-	logger := self.GetLogger(ctx)
-	logger.WithError(err).WithField("message", message).Error("Message processing failed")
+func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 	if _, ok := message.(messages.UserMessage); !ok {
 		return
 	}
 	// user expects reaction, so we should show him a error
 	chatId := message.GetChatId()
 	errorText := self.gettext(models.DefaultLang, "unknown_error")
-	if _, err := self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
+	_, err := self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
 		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
-	}); err != nil {
-		logger.Errorf("Can't send error message: %s", err)
+	})
+	if err != nil {
+		self.LogError(ctx, errors.Wrap(err, "during error sending, another occurred"))
 	}
 }
 

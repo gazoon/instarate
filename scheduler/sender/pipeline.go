@@ -11,11 +11,11 @@ import (
 type TasksPipeline struct {
 	*logging.LoggerMixin
 	getTask  func(context.Context) (*tasks.Task, error)
-	sendTask func(context.Context, *tasks.Task) error
+	sendTask func(context.Context, *tasks.Task)
 }
 
 func NewTasksPipeline(getTask func(context.Context) (*tasks.Task, error),
-	sendTask func(context.Context, *tasks.Task) error) *TasksPipeline {
+	sendTask func(context.Context, *tasks.Task)) *TasksPipeline {
 
 	return &TasksPipeline{
 		getTask:     getTask,
@@ -25,9 +25,14 @@ func NewTasksPipeline(getTask func(context.Context) (*tasks.Task, error),
 }
 
 func (self *TasksPipeline) Fetch(ctx context.Context) consumer.Process {
+	defer func() {
+		if r := recover(); r != nil {
+			self.LogError(ctx, r)
+		}
+	}()
 	task, err := self.getTask(ctx)
 	if err != nil {
-		// TODO: handle error
+		self.LogError(ctx, err)
 		return nil
 	}
 	if task == nil {

@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	webhookServer := webhook.New(conf.Port, conf.KnownBots, updatesWorker)
+	webhookServer := webhook.New(conf.Port, conf.KnownBots, updatesWorker.ProcessUpdate)
 	webhookServer.Run()
 	utils.WaitingForShutdown()
 	webhookServer.Stop()
