@@ -32,7 +32,7 @@ func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) {
 	}()
 	ctx = utils.FillContext(ctx)
 	logger := self.GetLogger(ctx)
-	logger.Debugf("Send task to the queue: %s", task)
+	logger.WithField("task", task).Info("Task is ready, send")
 	messageData := map[string]interface{}{
 		"chat_id": task.ChatId, "do_at": task.DoAt,
 	}

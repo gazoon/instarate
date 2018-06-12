@@ -7,13 +7,22 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type Task struct {
 	ChatId int                    `bson:"chat_id" mapstructure:"chat_id"`
 	Name   string                 `bson:"name" mapstructure:"name"`
 	Args   map[string]interface{} `bson:"args" mapstructure:"args"`
-	DoAt   int                    `bson:"do_at" mapstructure:"do_at"`
+	DoAt   time.Time              `bson:"do_at" mapstructure:"do_at"`
+}
+
+func NewTaskWithoutArgs(name string, chatId int, doAt time.Time) *Task {
+	return NewTask(name, chatId, doAt, nil)
+}
+
+func NewTask(name string, chatId int, doAt time.Time, args map[string]interface{}) *Task {
+	return &Task{chatId, name, args, doAt}
 }
 
 func (self Task) String() string {
@@ -38,7 +47,7 @@ func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
 }
 
 func (self *Storage) GetTask(ctx context.Context) (*Task, error) {
-	currentTime := utils.TimestampMilliseconds()
+	currentTime := utils.UTCNow()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
 		Apply(mgo.Change{Remove: true}, task)

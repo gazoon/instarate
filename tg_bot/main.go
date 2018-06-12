@@ -13,6 +13,7 @@ import (
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/localization"
 	"github.com/gazoon/go-utils/logging"
+	"instarate/scheduler/tasks"
 )
 
 var logger = logging.WithPackage("main")
@@ -39,7 +40,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bot := core.NewBot(chatsStorage, tg, locales)
+	scheduler, err := tasks.NewPublisher()
+	if err != nil {
+		panic(err)
+	}
+	bot := core.NewBot(chatsStorage, tg, scheduler, locales)
 	incomingQueue, err := queue.NewMongoReader(conf.MongoQueue)
 	if err != nil {
 		panic(err)

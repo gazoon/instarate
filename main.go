@@ -6,6 +6,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/pkg/errors"
 	"runtime/debug"
+	"time"
 )
 
 func init() {
@@ -57,5 +58,6 @@ func handle(err error) {
 }
 
 func main() {
-	f2()
+	fmt.Println(time.Now())
+	fmt.Println(time.Now().UTC())
 }

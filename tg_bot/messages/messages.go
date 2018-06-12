@@ -5,6 +5,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"strings"
+	"time"
 )
 
 var (
@@ -175,8 +176,8 @@ func (self *TextMessage) GetCommandArgs() []string {
 }
 
 type task struct {
-	ChatId int `mapstructure:"chat_id"`
-	DoAt   int `mapstructure:"do_at"`
+	ChatId int       `mapstructure:"chat_id"`
+	DoAt   time.Time `mapstructure:"do_at"`
 }
 
 func (self *task) GetChatId() int {

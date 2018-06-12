@@ -10,6 +10,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"time"
 )
 
 var (
@@ -21,11 +22,11 @@ type InstProfile struct {
 	PhotoPath     string `bson:"photo"`
 	PhotoInstCode string `bson:"photo_code"`
 	Followers     int
-	AddedAt       int `bson:"added_at"`
+	AddedAt       time.Time `bson:"added_at"`
 }
 
 func createProfile(username, photoInstCode string, followers int) *InstProfile {
-	addedAt := utils.TimestampSeconds()
+	addedAt := utils.UTCNow()
 	photoStoragePath := username + "-" + uuid.NewV4().String()
 	return &InstProfile{
 		Username: username, PhotoPath: photoStoragePath,

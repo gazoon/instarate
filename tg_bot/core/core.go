@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/localization"
 	"github.com/gazoon/go-utils/logging"
 	"github.com/pkg/errors"
 	"gopkg.in/telegram-bot-api.v4"
+	"instarate/scheduler/tasks"
 	"instarate/tg_bot/chats"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
+	"time"
 )
 
 type MessageEnvelope struct {
@@ -23,15 +26,17 @@ type Bot struct {
 	*logging.LoggerMixin
 	chats     *chats.MongoStorage
 	messenger *messenger.Telegram
+	scheduler *tasks.Publisher
 	locales   *localization.Manager
 }
 
 func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Telegram,
-	locales *localization.Manager) *Bot {
+	scheduler *tasks.Publisher, locales *localization.Manager) *Bot {
 
 	return &Bot{
 		chats:       chatsStorage,
 		messenger:   telegramMessenger,
+		scheduler:   scheduler,
 		locales:     locales,
 		LoggerMixin: logging.NewLoggerMixin("bot", nil),
 	}
@@ -112,6 +117,10 @@ func (self *Bot) onText(ctx context.Context, chat *models.Chat, message *message
 	if _, err := self.messenger.SendText(ctx, chat.Id, text); err != nil {
 		return err
 	}
+	if err := self.scheduler.CreateTask(ctx, tasks.NewTaskWithoutArgs(messages.NextPairTaskType,
+		chat.Id, utils.UTCNow().Add(time.Second*5))); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -121,6 +130,9 @@ func (self *Bot) onCallback(ctx context.Context, chat *models.Chat, message *mes
 }
 
 func (self *Bot) onNextPairTask(ctx context.Context, chat *models.Chat, message *messages.NextPairTask) error {
+	if _, err := self.messenger.SendText(ctx, chat.Id, "next pair"); err != nil {
+		return err
+	}
 
 	return nil
 }
