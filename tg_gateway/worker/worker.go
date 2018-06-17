@@ -2,9 +2,9 @@ package worker
 
 import (
 	"context"
-	"github.com/gazoon/bot_libs/queue"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/logging"
+	"github.com/gazoon/go-utils/queue"
 	"gopkg.in/telegram-bot-api.v4"
 	"instarate/tg_gateway/config"
 )

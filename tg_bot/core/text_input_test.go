@@ -33,6 +33,7 @@ func TestCommands(t *testing.T) {
 		{"addGirl image_link", addGirlCmd},
 		{"what can you do?", helpCmd},
 		{"tell about yourself", helpCmd},
+		{"tell about", noTextCommand.Name},
 		{"settings", chatSettingsCmd},
 		{"/enableNotifications@botname", enableNotificationsCmd},
 		{"setVotingTimeout@botname 10", setVotingTimeoutCmd},

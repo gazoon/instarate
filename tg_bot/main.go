@@ -8,11 +8,11 @@ import (
 	"instarate/tg_bot/chats"
 	"instarate/tg_bot/core"
 
-	"github.com/gazoon/bot_libs/queue"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/localization"
 	"github.com/gazoon/go-utils/logging"
+	"github.com/gazoon/go-utils/queue"
 	"instarate/scheduler/tasks"
 )
 

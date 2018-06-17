@@ -4,9 +4,9 @@ import (
 	"instarate/scheduler/tasks"
 
 	"context"
-	"github.com/gazoon/bot_libs/queue"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/logging"
+	"github.com/gazoon/go-utils/queue"
 )
 
 type Sender struct {

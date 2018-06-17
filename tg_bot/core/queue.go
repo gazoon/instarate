@@ -2,9 +2,9 @@ package core
 
 import (
 	"context"
-	"github.com/gazoon/bot_libs/queue"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
+	"github.com/gazoon/go-utils/queue"
 	"github.com/gazoon/go-utils/request"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
