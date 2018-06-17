@@ -12,11 +12,7 @@ type Config struct {
 	Telegram         *struct {
 		Token string `yaml:"token"`
 	} `yaml:"telegram"`
-	Bot *struct {
-		Name     string `yaml:"name"`
-		Username string `yaml:"username"`
-		Admins   []int  `yaml:"admins"`
-	} `yaml:"bot"`
+	Bot *utils.BotInfo `yaml:"bot"`
 
 	QueueConsumer *struct {
 		FetchDelay int `yaml:"fetch_delay"`

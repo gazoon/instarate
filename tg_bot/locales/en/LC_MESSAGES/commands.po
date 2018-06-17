@@ -1,0 +1,56 @@
+msgid "left_vote"
+msgstr "left"
+
+msgid "right_vote"
+msgstr "right"
+
+msgid "next_top_girl"
+msgstr "next"
+
+msgid "show_top"
+msgstr "showTop|top|best|popular|beautiful|beautiful|gorgeous"
+
+msgid "girl_profile"
+msgstr "profile|info about|information about|statistic|statistics|stat|stats|data about"
+
+msgid "start"
+msgstr "start|work|go"
+
+msgid "add_girl"
+msgstr "addGirl|add|save|enroll"
+
+msgid "help"
+msgstr "help|support|what you can|tell yourself|commands|information|info|what write|functions|functional|features"
+
+msgid "chat_settings"
+msgstr "chatSettings|settings|options"
+
+msgid "global_competition"
+msgstr "globalCompetition|global"
+
+msgid "celebrities_competition"
+msgstr "celebritiesCompetition|celebrities"
+
+msgid "models_competition"
+msgstr "modelsCompetition|models"
+
+msgid "regular_competition"
+msgstr "regularCompetition|regular girls"
+
+msgid "enable_notifications"
+msgstr "enableNotifications|enable notification|on notifications"
+
+msgid "disable_notifications"
+msgstr "disableNotifications|disable notification|off notifications"
+
+msgid "delete_girls"
+msgstr "deleteGirls"
+
+msgid "set_russian"
+msgstr "setRussian|russian"
+
+msgid "set_english"
+msgstr "setEnglish|english"
+
+msgid "set_voting_timeout"
+msgstr "setVotingTimeout"

@@ -14,7 +14,6 @@ import (
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
-	"time"
 )
 
 type MessageEnvelope struct {
@@ -24,22 +23,27 @@ type MessageEnvelope struct {
 
 type Bot struct {
 	*logging.LoggerMixin
-	chats     *chats.MongoStorage
-	messenger *messenger.Telegram
-	scheduler *tasks.Publisher
-	locales   *localization.Manager
+	chats            *chats.MongoStorage
+	messenger        *messenger.Telegram
+	scheduler        *tasks.Publisher
+	locales          *localization.Manager
+	commandsRegistry []*TextCommand
+	info             *utils.BotInfo
 }
 
 func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Telegram,
-	scheduler *tasks.Publisher, locales *localization.Manager) *Bot {
+	scheduler *tasks.Publisher, locales *localization.Manager, info *utils.BotInfo) *Bot {
 
-	return &Bot{
+	b := &Bot{
 		chats:       chatsStorage,
 		messenger:   telegramMessenger,
 		scheduler:   scheduler,
 		locales:     locales,
 		LoggerMixin: logging.NewLoggerMixin("bot", nil),
+		info:        info,
 	}
+	b.commandsRegistry = b.buildCommandsList()
+	return b
 }
 
 func (self *Bot) OnMessage(ctx context.Context, messageEnvelope *MessageEnvelope) error {
@@ -107,19 +111,6 @@ func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message
 		return self.onDailyActivationTask(ctx, chat, actualMessage)
 	default:
 		return errors.Errorf("can't dispatch message %T", actualMessage)
-	}
-	return nil
-}
-
-func (self *Bot) onText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	self.GetLogger(ctx).Info("On text")
-	text := self.gettext("ru", "propose_to_vote")
-	if _, err := self.messenger.SendText(ctx, chat.Id, text); err != nil {
-		return err
-	}
-	if err := self.scheduler.CreateTask(ctx, tasks.NewTaskWithoutArgs(messages.NextPairTaskType,
-		chat.Id, utils.UTCNow().Add(time.Second*5))); err != nil {
-		return err
 	}
 	return nil
 }

@@ -15,7 +15,7 @@ import (
 const (
 	CelebritiesCompetition = "celebrities"
 	ModelsCompetition      = "models"
-	NormalCompetition      = "normal"
+	RegularCompetition     = "regular"
 	GlobalCompetition      = "global"
 )
 
@@ -257,7 +257,7 @@ func combineProfileAndCompetitor(profile *InstProfile, competitor *competitor) *
 func choseCompetition(followersNumber int) []string {
 	var competitionByFollowers string
 	if followersNumber < modelFollowersThreshold {
-		competitionByFollowers = NormalCompetition
+		competitionByFollowers = RegularCompetition
 	} else if followersNumber < celebrityFollowersThreshold {
 		competitionByFollowers = ModelsCompetition
 	} else {

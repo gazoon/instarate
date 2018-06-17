@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"github.com/deckarep/golang-set"
 	"github.com/gazoon/go-utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -103,11 +104,11 @@ func BuildCallbackPayload(callbackName, args string) string {
 }
 
 type TextMessage struct {
-	userMessage   `mapstructure:",squash"`
-	Text          string       `mapstructure:"text"`
-	TextLowercase string       `mapstructure:"-"`
-	MessageId     int          `mapstructure:"message_id"`
-	ReplyTo       *TextMessage `mapstructure:"-"`
+	userMessage  `mapstructure:",squash"`
+	Text         string       `mapstructure:"text"`
+	MessageId    int          `mapstructure:"message_id"`
+	ReplyTo      *TextMessage `mapstructure:"-"`
+	wordsLowered mapset.Set
 }
 
 func TextMessageFromData(data interface{}) (*TextMessage, error) {
@@ -135,12 +136,35 @@ func TextMessageFromData(data interface{}) (*TextMessage, error) {
 	}
 	message.User = user
 	message.ReplyTo = replyTo
-	message.TextLowercase = strings.ToLower(message.Text)
 	return message, nil
 }
 
 func (self TextMessage) String() string {
 	return utils.ObjToString(&self)
+}
+
+func (self *TextMessage) TextContains(phrase string) bool {
+	phraseWords := utils.SplitWordsLowered(phrase)
+	messageWords := self.GetWordsLowered()
+	for _, w := range phraseWords {
+		if !messageWords.Contains(w) {
+			return false
+		}
+	}
+	return true
+}
+
+func (self *TextMessage) GetWordsLowered() mapset.Set {
+	if self.wordsLowered != nil {
+		return self.wordsLowered
+	}
+	self.wordsLowered = mapset.NewSet()
+	words := utils.SplitWordsLowered(self.Text)
+	for _, w := range words {
+		self.wordsLowered.Add(w)
+	}
+
+	return self.wordsLowered
 }
 
 func (self *TextMessage) IsReplyToBot(botUsername string) bool {
@@ -151,7 +175,7 @@ func (self *TextMessage) IsReplyToBot(botUsername string) bool {
 }
 
 func (self *TextMessage) IsAppealToBot(botName string) bool {
-	return strings.Contains(self.TextLowercase, strings.ToLower(botName))
+	return strings.Contains(strings.ToLower(self.Text), strings.ToLower(botName))
 }
 
 func (self *TextMessage) GetCommandArg() string {

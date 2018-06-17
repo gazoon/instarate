@@ -1,0 +1,56 @@
+msgid "left_vote"
+msgstr "левая"
+
+msgid "right_vote"
+msgstr "правая"
+
+msgid "next_top_girl"
+msgstr "дальше|следующая"
+
+msgid "show_top"
+msgstr "топ|топе|лучшие|лучших|популярных|популярные|красивые|красивых"
+
+msgid "girl_profile"
+msgstr "профиль|профайл|информацию о|информация о|инфу о|инфа о|статистику|статистика|стата|стату|данные|сведенья"
+
+msgid "start"
+msgstr "начать|начинай|работай|привет|го|старт"
+
+msgid "add_girl"
+msgstr "добавить|добавь|запиши|записать|сохрани|сохранить"
+
+msgid "help"
+msgstr "помощь|что можешь|расскажи себе|команды|хэлп|информация|инфа|управление|что делать|что писать|функции|функционал|фичи"
+
+msgid "chat_settings"
+msgstr "настройки|опции"
+
+msgid "global_competition"
+msgstr "глобальное|глобальный"
+
+msgid "celebrities_competition"
+msgstr "звезды|звёзды"
+
+msgid "models_competition"
+msgstr "модели|модэли"
+
+msgid "regular_competition"
+msgstr "обычные девушки"
+
+msgid "enable_notifications"
+msgstr "включи уведомления|включить уведомления"
+
+msgid "disable_notifications"
+msgstr "отключи уведомления|отключить уведомления"
+
+msgid "delete_girls"
+msgstr ""
+
+msgid "set_russian"
+msgstr "русский|русски|по-русски"
+
+msgid "set_english"
+msgstr "английский|английски|по-английски"
+
+msgid "set_voting_timeout"
+msgstr ""

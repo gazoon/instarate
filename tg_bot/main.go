@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bot := core.NewBot(chatsStorage, tg, scheduler, locales)
+	bot := core.NewBot(chatsStorage, tg, scheduler, locales, conf.Bot)
 	incomingQueue, err := queue.NewMongoReader(conf.MongoQueue)
 	if err != nil {
 		panic(err)
