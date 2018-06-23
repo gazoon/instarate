@@ -2,12 +2,11 @@ package core
 
 import (
 	"context"
-	"github.com/gazoon/go-utils"
-	"instarate/scheduler/tasks"
+	"instarate/libs/competition"
+	"instarate/libs/instagram"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/models"
 	"strings"
-	"time"
 )
 
 var (
@@ -40,7 +39,6 @@ var (
 	regularCompetitionCmd     = "regular_competition"
 	enableNotificationsCmd    = "enable_notifications"
 	disableNotificationsCmd   = "disable_notifications"
-	deleteGirlsCmd            = "delete_girls"
 	setRussianCmd             = "set_russian"
 	setEnglishCmd             = "set_english"
 	setVotingTimeoutCmd       = "set_voting_timeout"
@@ -96,7 +94,6 @@ func (self *Bot) buildCommandsList() []*TextCommand {
 		{regularCompetitionCmd, self.regularCompetitionCmd},
 		{enableNotificationsCmd, self.enableNotificationsCmd},
 		{disableNotificationsCmd, self.disableNotificationsCmd},
-		{deleteGirlsCmd, self.deleteGirlsCmd},
 		{setRussianCmd, self.setRussianCmd},
 		{setEnglishCmd, self.setEnglishCmd},
 		{setVotingTimeoutCmd, self.setVotingTimeoutCmd},
@@ -105,18 +102,24 @@ func (self *Bot) buildCommandsList() []*TextCommand {
 }
 
 func (self *Bot) startCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	if _, err := self.messenger.SendText(ctx, chat.Id, "s"); err != nil {
-		return err
-	}
-	if err := self.scheduler.CreateTask(ctx, tasks.NewTaskWithoutArgs(messages.NextPairTaskType,
-		chat.Id, utils.UTCNow().Add(time.Second*5))); err != nil {
-		return err
-	}
-	return nil
+	return self.trySendNextGirlsPair(ctx, chat)
 }
 
 func (self *Bot) addGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	photoLink := message.GetCommandArg()
+	if photoLink == "" {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
+		return err
+	}
+	err := self.addGirl(ctx, chat, photoLink)
+	if err == competition.BadPhotoLinkErr {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
+		return err
+	} else if err == instagram.MediaForbidden {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_media_forbidden"))
+		return err
+	}
+	return err
 }
 
 func (self *Bot) showTopCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
@@ -140,11 +143,19 @@ func (self *Bot) chatSettingsCmd(ctx context.Context, chat *models.Chat, message
 }
 
 func (self *Bot) leftVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	if chat.LastMatch == nil {
+		self.GetLogger(ctx).Warn("Received left vote command, but chat doesn't have a match")
+		return nil
+	}
+	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.LeftGirlUsername, chat.LastMatch.RightGirlUsername)
 }
 
 func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	if chat.LastMatch == nil {
+		self.GetLogger(ctx).Warn("Received right vote command, but chat doesn't have a match")
+		return nil
+	}
+	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.RightGirlUsername, chat.LastMatch.LeftGirlUsername)
 }
 
 func (self *Bot) globalCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
@@ -168,10 +179,6 @@ func (self *Bot) enableNotificationsCmd(ctx context.Context, chat *models.Chat, 
 }
 
 func (self *Bot) disableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
-}
-
-func (self *Bot) deleteGirlsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	return nil
 }
 

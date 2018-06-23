@@ -193,7 +193,7 @@ func ExtractUsername(profileUrl string) (string, error) {
 
 func ExtractMediaCode(mediaUrl string) (string, error) {
 	mediaCode, err := extractLastPathPart(mediaUrl)
-	return mediaCode, errors.Wrap(err, "cant extract media code")
+	return mediaCode, err
 }
 
 func extractLastPathPart(uri string) (string, error) {

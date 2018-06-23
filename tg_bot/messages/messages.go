@@ -179,24 +179,11 @@ func (self *TextMessage) IsAppealToBot(botName string) bool {
 }
 
 func (self *TextMessage) GetCommandArg() string {
-	args := self.GetCommandArgs()
-	if len(args) == 0 {
+	tokens := strings.Fields(self.Text)
+	if len(tokens) < 2 {
 		return ""
 	}
-	return args[len(args)-1]
-}
-
-func (self *TextMessage) GetCommandArgs() []string {
-	var tokens []string
-	for _, token := range strings.Split(self.Text, " ") {
-		if token != "" {
-			tokens = append(tokens, token)
-		}
-	}
-	if len(tokens) == 0 {
-		return []string{}
-	}
-	return tokens[1:]
+	return tokens[len(tokens)-1]
 }
 
 type task struct {

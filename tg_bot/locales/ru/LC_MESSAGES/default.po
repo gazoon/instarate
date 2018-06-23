@@ -2,10 +2,19 @@ msgid "propose_to_vote"
 msgstr "Привет! Не желаете продолжить голосовать?"
 
 msgid "add_girl_no_link"
-msgstr "Ты не отправил мне ссылку на фото, пример:\naddGirl@InstaRateBot <photo_link>"
+msgstr "Ты не отправил мне ссылку, пример:\naddGirl@InstaRateBot <photo_link>"
 
-msgid "girl_added"
+msgid "add_girl_not_photo"
+msgstr "Это должна быть фотка."
+
+msgid "add_girl_media_forbidden"
+msgstr "Это закрытый аккаунт или такого фото нет."
+
+msgid "girl_successfully_added"
 msgstr "Девушка [%s](%s) была успешно добавлена!"
+
+msgid "girl_already_added"
+msgstr "Девушка [%s](%s) уже участвует в соревновании."
 
 msgid "daily_notification_enabled"
 msgstr "Ежедневные уведомления включены."

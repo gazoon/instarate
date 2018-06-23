@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"bytes"
+	"context"
 	"github.com/disintegration/imaging"
 	"github.com/i/paralyze"
 	"github.com/pkg/errors"
@@ -14,9 +15,12 @@ import (
 
 const separatorWidth = 10
 
-var separatorColor = color.White
+var (
+	Version        = "v1"
+	separatorColor = color.White
+)
 
-func Concatenate(leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) {
+func Concatenate(ctx context.Context, leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) {
 	images, err := paralyzeTasks(
 		func() (interface{}, error) { return downloadImage(leftPictureUrl) },
 		func() (interface{}, error) { return downloadImage(rightPictureUrl) },

@@ -6,6 +6,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/pkg/errors"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -57,7 +58,24 @@ func handle(err error) {
 	raven.CaptureErrorAndWait(err, map[string]string{"request_id": "2228"})
 }
 
+type A struct {
+	X string
+	Y int
+}
+
+//func (self A) String() string {
+//	return utils.ObjToString(&self)
+//}
+
 func main() {
-	fmt.Println(time.Now())
-	fmt.Println(time.Now().UTC())
+	a := &A{"sss", 2}
+	fmt.Printf("%v\n", a)
+	fmt.Printf("%s\n", a)
+	fmt.Printf("%+v\n", a)
+	log.WithField("struct", a).Info("kek")
+	fmt.Println(2*time.Hour - 2*time.Minute)
+	fmt.Println(len(strings.Fields("   ")))
+	fmt.Println(len(strings.Fields("sss")))
+	fmt.Println(len(strings.Split("s", "s")))
+
 }

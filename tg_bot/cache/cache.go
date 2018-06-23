@@ -20,16 +20,16 @@ func NewMongo(mongoSettings *utils.MongoDBSettings) (*Mongo, error) {
 	return &Mongo{collection}, nil
 }
 
-func (self *Mongo) Get(ctx context.Context, key string) (string, error) {
+func (self *Mongo) Get(ctx context.Context, key string) (string, bool, error) {
 	var result map[string]string
 	err := self.client.Find(bson.M{"key": key}).One(&result)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return "", nil
+			return "", false, nil
 		}
-		return "", err
+		return "", false, err
 	}
-	return result["value"], nil
+	return result["value"], true, nil
 }
 
 func (self *Mongo) Set(ctx context.Context, key, value string) error {

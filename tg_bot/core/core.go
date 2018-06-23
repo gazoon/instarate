@@ -9,11 +9,20 @@ import (
 	"github.com/gazoon/go-utils/logging"
 	"github.com/pkg/errors"
 	"gopkg.in/telegram-bot-api.v4"
+	"instarate/libs/competition"
+	"instarate/libs/instagram"
 	"instarate/scheduler/tasks"
+	"instarate/tg_bot/cache"
 	"instarate/tg_bot/chats"
+	"instarate/tg_bot/concatenation"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
+	"time"
+)
+
+var (
+	sessionDuration = 20 * time.Minute
 )
 
 type MessageEnvelope struct {
@@ -29,9 +38,12 @@ type Bot struct {
 	locales          *localization.Manager
 	commandsRegistry []*TextCommand
 	info             *utils.BotInfo
+	competition      *competition.Competition
+	cache            *cache.Mongo
 }
 
-func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Telegram,
+func NewBot(competitionAPI *competition.Competition, chatsStorage *chats.MongoStorage,
+	cacheStorage *cache.Mongo, telegramMessenger *messenger.Telegram,
 	scheduler *tasks.Publisher, locales *localization.Manager, info *utils.BotInfo) *Bot {
 
 	b := &Bot{
@@ -41,6 +53,8 @@ func NewBot(chatsStorage *chats.MongoStorage, telegramMessenger *messenger.Teleg
 		locales:     locales,
 		LoggerMixin: logging.NewLoggerMixin("bot", nil),
 		info:        info,
+		competition: competitionAPI,
+		cache:       cacheStorage,
 	}
 	b.commandsRegistry = b.buildCommandsList()
 	return b
@@ -90,7 +104,7 @@ func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 	}
 	// user expects reaction, so we should show him a error
 	chatId := message.GetChatId()
-	errorText := self.gettext(models.DefaultLang, "unknown_error")
+	errorText := self.locales.Gettext(models.DefaultLang, "unknown_error")
 	_, err := self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
 		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
 	})
@@ -120,19 +134,6 @@ func (self *Bot) onCallback(ctx context.Context, chat *models.Chat, message *mes
 	return nil
 }
 
-func (self *Bot) onNextPairTask(ctx context.Context, chat *models.Chat, message *messages.NextPairTask) error {
-	if _, err := self.messenger.SendText(ctx, chat.Id, "next pair"); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (self *Bot) onDailyActivationTask(ctx context.Context, chat *models.Chat, message *messages.DailyActivationTask) error {
-
-	return nil
-}
-
 func (self *Bot) getOrCreateChat(ctx context.Context, message messages.Message) (*models.Chat, error) {
 	chatId := message.GetChatId()
 	chat, err := self.chats.Get(ctx, chatId)
@@ -153,9 +154,172 @@ func (self *Bot) getOrCreateChat(ctx context.Context, message messages.Message) 
 	return chat, nil
 }
 
-func (self *Bot) gettext(lang, msgid string, vars ...interface{}) string {
-	if lang == "en" && msgid == "place_in_competition" {
-		place := vars[0].(int)
+func (self *Bot) trySendNextGirlsPair(ctx context.Context, chat *models.Chat) error {
+	if chat.LastMatch == nil {
+		return self.sendNextGirlsPair(ctx, chat)
+	}
+	timeToShow := chat.LastMatch.ShownAt.Add(time.Duration(chat.VotingTimeout) * time.Second)
+	if timeToShow.Before(utils.UTCNow()) {
+		return self.sendNextGirlsPair(ctx, chat)
+	}
+	task := tasks.NewTask(
+		messages.NextPairTaskType, chat.Id, timeToShow,
+		map[string]interface{}{"last_match_message_id": chat.LastMatch.MessageId},
+	)
+	self.GetLogger(ctx).WithField("time_to_show", timeToShow).Info("Schedule send next pair task")
+	return self.scheduler.CreateTask(ctx, task)
+}
+
+func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error {
+	votersGroupId := buildVotersGroupId(chat.Id)
+	girl1, girl2, err := self.competition.GetNextPair(ctx, chat.CompetitionCode, votersGroupId)
+	if err == competition.GetNextPairNoAttemptsErr {
+		self.LogErrorWithFields(ctx, err, map[string]interface{}{
+			"chat_id": chat.Id, "competition": chat.CompetitionCode})
+		text := self.gettext(chat, "no_more_girls_in_competition")
+		_, err = self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		})
+		return err
+	}
+	leftGirl, rightGirl := girl1, girl2
+	var tgFileId string
+	tgFileId, err = self.getMatchPhoto(ctx, girl1.PhotoPath, girl2.PhotoPath)
+	if err != nil {
+		return err
+	}
+	if tgFileId == "" {
+		tgFileId, err = self.getMatchPhoto(ctx, girl2.PhotoPath, girl1.PhotoPath)
+		if err != nil {
+			return err
+		}
+		leftGirl, rightGirl = girl2, girl1
+	}
+	captionText := fmt.Sprintf("%s vs %s", leftGirl.GetProfileLink(), rightGirl.GetProfileLink())
+	logger := self.GetLogger(ctx)
+	logger.WithField("caption_text", captionText).Info("Send pair match")
+	keyboard := tgbotapi.ReplyKeyboardMarkup{OneTimeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
+		{tgbotapi.KeyboardButton{Text: "Left"}},
+		{tgbotapi.KeyboardButton{Text: "Right"}},
+	}}
+	var messageId int
+	if tgFileId != "" {
+		logger.WithField("tg_file_id", tgFileId).Info("Use cached match photo")
+		messageId, _, err = self.messenger.SendPhoto(ctx, chat.Id, tgFileId, func(settings *tgbotapi.PhotoConfig) {
+			settings.Caption = captionText
+			settings.ReplyMarkup = keyboard
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		leftPhotoUrl := self.competition.GetPhotoUrl(leftGirl)
+		rightPhotoUrl := self.competition.GetPhotoUrl(rightGirl)
+		logger.WithFields(log.Fields{"left_url": leftPhotoUrl, "right_url": rightPhotoUrl}).Info("Concatenate photos")
+		imageBody, err := concatenation.Concatenate(ctx, leftPhotoUrl, rightPhotoUrl)
+		if err != nil {
+			return err
+		}
+		messageId, tgFileId, err = self.messenger.SendBinaryPhoto(ctx, chat.Id, imageBody, func(settings *tgbotapi.PhotoConfig) {
+			settings.Caption = captionText
+			settings.ReplyMarkup = keyboard
+		})
+		if err != nil {
+			return err
+		}
+		if err = self.setMatchPhoto(ctx, leftGirl.PhotoPath, rightGirl.PhotoPath, tgFileId); err != nil {
+			return err
+		}
+	}
+	if err := self.scheduleDailyNotification(ctx, chat); err != nil {
+		return err
+	}
+	chat.LastMatch = models.NewMatch(messageId, leftGirl.Username, rightGirl.Username)
+	return nil
+}
+
+func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
+	message messages.UserMessage, winner, loser string) error {
+	votersGroupId := buildVotersGroupId(message.GetChatId())
+	voterId := buildVoterId(message.GetUser())
+	_, _, err := self.competition.Vote(ctx, chat.CompetitionCode, votersGroupId, voterId, winner, loser)
+	if err == competition.AlreadyVotedErr {
+		return nil
+	}
+	return err
+}
+
+func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Chat) error {
+	logger := self.GetLogger(ctx)
+	if !chat.SelfActivationAllowed {
+		logger.Info("Self activation disabled for the chat")
+		return nil
+	}
+	activationTime := utils.UTCNow().Add(24*time.Hour - sessionDuration)
+	task := tasks.NewTaskWithoutArgs(messages.DailyActivationTaskType, chat.Id, activationTime)
+	logger.WithField("activation_time", activationTime).Info("Schedule next day activation")
+	return self.scheduler.CreateOrReplaceTask(ctx, task)
+}
+func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat, offset int) error {
+	amount := 2
+	girls, err := self.competition.GetTop(ctx, chat.CompetitionCode, amount, offset)
+	if err != nil {
+		return err
+	}
+	if len(girls) == 0 {
+		totalNumber, err := self.competition.GetCompetitorsNumber(ctx, chat.CompetitionCode)
+		if err != nil {
+			return err
+		}
+		logger := self.GetLogger(ctx).WithFields(log.Fields{"offset": offset, "total_number": totalNumber})
+		logger.Warn("Girl offset exceeds the total number of girls")
+		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "no_more_girls_in_top"), func(msg *tgbotapi.MessageConfig) {
+			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		})
+		return err
+	}
+	var keyboard interface{} = tgbotapi.ReplyKeyboardMarkup{Keyboard: [][]tgbotapi.KeyboardButton{
+		{tgbotapi.KeyboardButton{Text: "Next girl"}},
+	}}
+	if len(girls) == 1 {
+		keyboard = tgbotapi.ReplyKeyboardRemove{}
+	}
+	girl := girls[0]
+	caption := self.getPlaceInCompetitionText(chat, offset+1) + girl.GetProfileLink()
+	err = self.sendSingleGirlPhoto(ctx, chat, girl, func(settings *tgbotapi.PhotoConfig) {
+		settings.ReplyMarkup = keyboard
+		settings.Caption = caption
+	})
+	return err
+}
+
+func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink string) error {
+	profile, err := self.competition.Add(ctx, photoLink)
+	if err == competition.BadPhotoLinkErr || err == instagram.MediaForbidden {
+		return err
+	}
+	if err == competition.NotPhotoMediaErr {
+		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_not_photo"))
+		return err
+	}
+	if err != nil && err != competition.ProfileExistsErr {
+		return err
+	}
+
+	var msgid string
+	if err == competition.ProfileExistsErr {
+		msgid = "girl_already_added"
+	} else {
+		msgid = "girl_successfully_added"
+	}
+	text := self.gettext(chat, msgid, profile.Username, profile.GetProfileLink())
+	_, err = self.messenger.SendMarkdown(ctx, chat.Id, text)
+	return err
+}
+
+func (self *Bot) getPlaceInCompetitionText(chat *models.Chat, place int) string {
+	var vars []interface{}
+	if chat.Language == "en" {
 		var format string
 		switch place % 10 {
 		case 1:
@@ -168,37 +332,55 @@ func (self *Bot) gettext(lang, msgid string, vars ...interface{}) string {
 			format = "%dth"
 		}
 		vars = []interface{}{fmt.Sprintf(format, place)}
+	} else {
+		vars = []interface{}{place}
 	}
-	return self.locales.Gettext(lang, msgid, vars...)
+	return self.gettext(chat, "place_in_competition", vars...)
 }
 
-func initializeContext(ctx context.Context, message messages.Message) context.Context {
-
-	logger := log.WithField("chat_id", message.GetChatId())
-
-	ctx = logging.NewContext(ctx, logger)
-	return ctx
-}
-
-func instantiateMessage(messageEnvelope *MessageEnvelope) (messages.Message, error) {
-	messageType := messageEnvelope.Type
-	messageData := messageEnvelope.Data
-	var message messages.Message
-	var err error
-	switch messageType {
-	case messages.TextType:
-		message, err = messages.TextMessageFromData(messageData)
-	case messages.CallbackType:
-		message, err = messages.CallbackFromData(messageData)
-	case messages.NextPairTaskType:
-		message, err = messages.NextPairTaskFromData(messageData)
-	case messages.DailyActivationTaskType:
-		message, err = messages.DailyActivationTaskFromData(messageData)
-	default:
-		return nil, errors.Errorf("unknown message type: %s", messageType)
+func (self *Bot) displayGirlInfo(ctx context.Context, chat *models.Chat, girl *competition.InstCompetitor) error {
+	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
+	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
+		return err
 	}
+	if err := self.sendSingleGirlPhoto(ctx, chat, girl); err != nil {
+		return err
+	}
+	place, err := self.competition.GetPosition(ctx, girl)
 	if err != nil {
-		return nil, errors.Wrapf(err, "can't build message type of %s", messageType)
+		return err
 	}
-	return message, nil
+	profileText := self.gettext(chat, "girl_statistics", place, girl.Wins, girl.Loses)
+	if _, err := self.messenger.SendText(ctx, chat.Id, profileText); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (self *Bot) sendSingleGirlPhoto(ctx context.Context, chat *models.Chat,
+	girl *competition.InstCompetitor, opts ...func(settings *tgbotapi.PhotoConfig)) error {
+	tgFileId, ok, err := self.cache.Get(ctx, girl.PhotoPath)
+	if err != nil {
+		return err
+	}
+	isNew := false
+	photoUri := tgFileId
+	if !ok {
+		photoUri = self.competition.GetPhotoUrl(girl)
+		isNew = true
+	}
+	_, tgFileId, err = self.messenger.SendPhoto(ctx, chat.Id, photoUri, opts...)
+	if err != nil {
+		return err
+	}
+	if isNew {
+		if err := self.cache.Set(ctx, girl.PhotoPath, tgFileId); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (self *Bot) gettext(chat *models.Chat, msgid string, vars ...interface{}) string {
+	return self.locales.Gettext(chat.Language, msgid, vars...)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	profileExistsErr = errors.New("profile already exists")
+	ProfileExistsErr = errors.New("profile already exists")
 )
 
 type InstProfile struct {
@@ -25,7 +25,7 @@ type InstProfile struct {
 	AddedAt       time.Time `bson:"added_at"`
 }
 
-func createProfile(username, photoInstCode string, followers int) *InstProfile {
+func newProfile(username, photoInstCode string, followers int) *InstProfile {
 	addedAt := utils.UTCNow()
 	photoStoragePath := username + "-" + uuid.NewV4().String()
 	return &InstProfile{
@@ -34,7 +34,7 @@ func createProfile(username, photoInstCode string, followers int) *InstProfile {
 	}
 }
 
-func (self *InstProfile) getProfileLink() string {
+func (self *InstProfile) GetProfileLink() string {
 	return instagram.BuildProfileUrl(self.Username)
 }
 
@@ -54,10 +54,10 @@ func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*profilesStorage,
 	return &profilesStorage{collection}, nil
 }
 
-func (self *profilesStorage) save(ctx context.Context, model *InstProfile) error {
+func (self *profilesStorage) create(ctx context.Context, model *InstProfile) error {
 	err := self.client.Insert(model)
 	if mgo.IsDup(err) {
-		return profileExistsErr
+		return ProfileExistsErr
 	}
 	return err
 }

@@ -13,7 +13,9 @@ import (
 	"github.com/gazoon/go-utils/localization"
 	"github.com/gazoon/go-utils/logging"
 	"github.com/gazoon/go-utils/queue"
+	"instarate/libs/competition"
 	"instarate/scheduler/tasks"
+	"instarate/tg_bot/cache"
 )
 
 var logger = logging.WithPackage("main")
@@ -40,11 +42,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	cacheStorage, err := cache.NewMongo(conf.MongoCache)
+	if err != nil {
+		panic(err)
+	}
 	scheduler, err := tasks.NewPublisher()
 	if err != nil {
 		panic(err)
 	}
-	bot := core.NewBot(chatsStorage, tg, scheduler, locales, conf.Bot)
+	competitionAPI, err := competition.New()
+	if err != nil {
+		panic(err)
+	}
+	bot := core.NewBot(competitionAPI, chatsStorage, cacheStorage, tg, scheduler, locales, conf.Bot)
 	incomingQueue, err := queue.NewMongoReader(conf.MongoQueue)
 	if err != nil {
 		panic(err)

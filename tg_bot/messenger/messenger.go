@@ -81,7 +81,7 @@ func (self *Telegram) AnswerCallback(ctx context.Context, callbackId string) err
 }
 
 func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
-	fileData io.Reader, opts ...func(config *tgbotapi.PhotoConfig)) (int, string, error) {
+	fileData io.Reader, opts ...func(settings *tgbotapi.PhotoConfig)) (int, string, error) {
 	c := tgbotapi.PhotoConfig{}
 	for _, o := range opts {
 		o(&c)
@@ -127,7 +127,7 @@ func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
 }
 
 func (self *Telegram) SendPhoto(ctx context.Context, chatId int,
-	photoUri string, opts ...func(config *tgbotapi.PhotoConfig)) (int, string, error) {
+	photoUri string, opts ...func(settings *tgbotapi.PhotoConfig)) (int, string, error) {
 
 	c := tgbotapi.NewPhotoUpload(int64(chatId), photoUri)
 	for _, o := range opts {

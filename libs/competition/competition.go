@@ -7,8 +7,9 @@ import (
 	"path"
 	"time"
 
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils"
+	"github.com/gazoon/go-utils/logging"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +30,10 @@ const (
 )
 
 var (
-	AlreadyVotedErr = errors.New("already voted")
+	AlreadyVotedErr          = errors.New("already voted")
+	BadPhotoLinkErr          = errors.New("photo link doesn't contain a valid media code")
+	NotPhotoMediaErr         = errors.New("media is not a photo")
+	GetNextPairNoAttemptsErr = errors.New("out of attempts to get next pair")
 )
 
 type InstCompetitor struct {
@@ -43,6 +47,7 @@ func (self InstCompetitor) String() string {
 }
 
 type Competition struct {
+	*logging.LoggerMixin
 	competitors   *competitorsStorage
 	profiles      *profilesStorage
 	voters        *votersStorage
@@ -73,27 +78,53 @@ func New() (*Competition, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Competition{competitors: competitors, profiles: profiles, photosStorage: photosStorage, voters: voters}, nil
+	return &Competition{
+		competitors: competitors, profiles: profiles, photosStorage: photosStorage,
+		voters: voters, LoggerMixin: logging.NewLoggerMixin("competition", nil)}, nil
 }
 
-func (self *Competition) Add(ctx context.Context, photoUrl string) (*InstProfile, error) {
-	mediaCode, err := instagram.ExtractMediaCode(photoUrl)
+func (self *Competition) GetPhotoUrl(competitor *InstCompetitor) string {
+	return self.photosStorage.buildUrl(competitor.PhotoPath)
+}
+
+func (self *Competition) GetPosition(ctx context.Context, competitor *InstCompetitor) (int, error) {
+	num, err := self.competitors.getNumberWithHigherRating(ctx, competitor.CompetitionCode, competitor.Rating)
 	if err != nil {
-		return nil, err
+		return 0, err
+	}
+	return num + 1, nil
+}
+
+func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfile, error) {
+	logger := self.GetLogger(ctx)
+	mediaCode, err := instagram.ExtractMediaCode(photoLink)
+	if err != nil {
+		logger.WithFields(log.Fields{"photo_link": photoLink, "error": err}).
+			Warn("Can't extract media code from the photo link")
+		return nil, BadPhotoLinkErr
 	}
 	mediaInfo, err := instagram.GetMediaInfo(ctx, mediaCode)
 	if err != nil {
+		if err == instagram.MediaForbidden {
+			logger.WithField("media_code", mediaCode).Warn("Media not found")
+		}
 		return nil, err
 	}
 	if !mediaInfo.IsPhoto {
-		return nil, errors.Errorf("media %s is not a photo", mediaCode)
+		logger.WithField("media_code", mediaCode).Warn("Media is not a photo")
+		return nil, NotPhotoMediaErr
 	}
 	followers, err := instagram.GetFollowersNumber(ctx, mediaInfo.Owner)
 	if err != nil {
 		return nil, err
 	}
-	profile := createProfile(mediaInfo.Owner, mediaCode, followers)
-	err = self.profiles.save(ctx, profile)
+	profile := newProfile(mediaInfo.Owner, mediaCode, followers)
+	logger.WithField("profile", profile).Info("Add new instagram profile")
+	err = self.profiles.create(ctx, profile)
+	if err == ProfileExistsErr {
+		logger.WithField("username", mediaInfo.Owner).Info("Instagram profile already exists")
+		return profile, ProfileExistsErr
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +132,9 @@ func (self *Competition) Add(ctx context.Context, photoUrl string) (*InstProfile
 	if err != nil {
 		return nil, err
 	}
-	for _, competitionCode := range choseCompetition(followers) {
+	competitions := choseCompetition(followers)
+	logger.WithField("competitions", competitions).Info("Add new profile to suitable competitions")
+	for _, competitionCode := range competitions {
 		compttr := createCompetitor(mediaInfo.Owner, competitionCode)
 		err = self.competitors.create(ctx, compttr)
 		if err != nil {
@@ -130,7 +163,7 @@ func (self *Competition) GetNextPair(ctx context.Context, competitionCode, voter
 		}
 		return self.convertPairToInstCompetitors(ctx, competitor1, competitor2)
 	}
-	return nil, nil, errors.Errorf("out of attempts to get next pair in %s for %s", competitionCode, votersGroupId)
+	return nil, nil, GetNextPairNoAttemptsErr
 }
 
 func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, username string) (*InstCompetitor, error) {
@@ -177,11 +210,20 @@ func (self *Competition) GetTop(ctx context.Context, competitionCode string, num
 }
 
 func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername string) (*InstCompetitor, *InstCompetitor, error) {
+	logger := self.GetLogger(ctx)
+	logger.WithFields(log.Fields{
+		"competition":     competitionCode,
+		"voters_group_id": votersGroupId,
+		"voter_id":        voterId,
+		"winner":          winnerUsername,
+		"loser":           loserUsername,
+	}).Info("Save user vote")
 	ok, err := self.voters.tryVote(ctx, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername)
 	if err != nil {
 		return nil, nil, err
 	}
 	if !ok {
+		logger.Info("User already voter")
 		return nil, nil, AlreadyVotedErr
 	}
 
@@ -264,35 +306,4 @@ func choseCompetition(followersNumber int) []string {
 		competitionByFollowers = CelebritiesCompetition
 	}
 	return []string{GlobalCompetition, competitionByFollowers}
-}
-
-func (self *Competition) Test() {
-	ctx := context.Background()
-	n, err := self.GetCompetitorsNumber(ctx, "global")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(n)
-	p1, p2, err := self.GetNextPair(ctx, "global", "fff")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(p1)
-	fmt.Println(p2)
-	c, err := self.GetCompetitor(ctx, "global", "justonemysoul")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(c)
-	p1, p2, err = self.Vote(ctx, "global", "fff", "2", "sofia_official_life", "galina_dub")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(p1)
-	fmt.Println(p2)
-	sl, err := self.GetTop(ctx, "global", 10, 0)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(sl)
 }

@@ -2,10 +2,19 @@ msgid "propose_to_vote"
 msgstr "Hi! Don't you mind to vote?"
 
 msgid "add_girl_no_link"
-msgstr "Please send me a link to the photo, example:\naddGirl@InstaRateBot <photo_link>"
+msgstr "Please send me a link, example:\naddGirl@InstaRateBot <photo_link>"
 
-msgid "girl_added"
+msgid "add_girl_not_photo"
+msgstr "It must be a photo."
+
+msgid "add_girl_media_forbidden"
+msgstr "This Instagram profile is private or photo doesn't exist."
+
+msgid "girl_successfully_added"
 msgstr "Girl [%s](%s) has been successfully added!"
+
+msgid "girl_already_added"
+msgstr "Girl [%s](%s) already in the competition."
 
 msgid "daily_notification_enabled"
 msgstr "You turned daily notifications on."
