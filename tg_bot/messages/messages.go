@@ -186,6 +186,14 @@ func (self *TextMessage) GetCommandArg() string {
 	return tokens[len(tokens)-1]
 }
 
+func (self *TextMessage) GetLastWord() string {
+	tokens := strings.Fields(self.Text)
+	if len(tokens) == 0 {
+		return ""
+	}
+	return tokens[len(tokens)-1]
+}
+
 type task struct {
 	ChatId int       `mapstructure:"chat_id"`
 	DoAt   time.Time `mapstructure:"do_at"`

@@ -70,12 +70,10 @@ type A struct {
 func main() {
 	a := &A{"sss", 2}
 	fmt.Printf("%v\n", a)
-	fmt.Printf("%s\n", a)
-	fmt.Printf("%+v\n", a)
 	log.WithField("struct", a).Info("kek")
 	fmt.Println(2*time.Hour - 2*time.Minute)
 	fmt.Println(len(strings.Fields("   ")))
-	fmt.Println(len(strings.Fields("sss")))
+	fmt.Println(strings.Fields("https://www.instagram.com/p/BkISd3KlaEyey8yrI1dR-n4d9Jf5Uf6mRc50dk0/?hl=ru&taken-by=nik_nik0n0v"))
 	fmt.Println(len(strings.Split("s", "s")))
 
 }

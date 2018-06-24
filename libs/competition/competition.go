@@ -97,6 +97,7 @@ func (self *Competition) GetPosition(ctx context.Context, competitor *InstCompet
 
 func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfile, error) {
 	logger := self.GetLogger(ctx)
+	logger.WithField("photo_link", photoLink).Info("Add instagram competitor by photo link")
 	mediaCode, err := instagram.ExtractMediaCode(photoLink)
 	if err != nil {
 		logger.WithFields(log.Fields{"photo_link": photoLink, "error": err}).

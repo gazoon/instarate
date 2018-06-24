@@ -195,5 +195,13 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 }
 
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	photoLink := message.GetLastWord()
+	if photoLink == "" {
+		return nil
+	}
+	err := self.addGirl(ctx, chat, photoLink)
+	if err == competition.BadPhotoLinkErr || err == instagram.MediaForbidden {
+		return nil
+	}
+	return err
 }
