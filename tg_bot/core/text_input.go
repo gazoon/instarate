@@ -2,10 +2,12 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"instarate/libs/competition"
 	"instarate/libs/instagram"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/models"
+	"strconv"
 	"strings"
 )
 
@@ -123,14 +125,58 @@ func (self *Bot) addGirlCmd(ctx context.Context, chat *models.Chat, message *mes
 }
 
 func (self *Bot) showTopCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	arg := message.GetCommandArg()
+	offset := 0
+	if arg != "" {
+		startPosition, err := strconv.Atoi(arg)
+		if err != nil {
+			self.GetLogger(ctx).WithField("command_arg", arg).Warn("Show top command expects an int arg")
+		} else if startPosition > 0 {
+			offset = startPosition - 1
+		}
+	}
+	return self.sendGirlFromTop(ctx, chat, offset)
 }
 
 func (self *Bot) nextGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	err := self.sendGirlFromTop(ctx, chat, chat.CurrentTopOffset+1)
+	return err
 }
 
 func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	girlLink := message.GetCommandArg()
+	if girlLink == "" {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "get_girl_no_username"))
+		return err
+	}
+	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, girlLink)
+	if err == competition.BadProfileLinkErr {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "get_girl_no_username"))
+		return err
+	}
+	if noGirlErr, ok := err.(*competition.CompetitorNotFound); ok {
+		text := self.gettext(chat, "get_girl_no_girl", noGirlErr.Username, noGirlErr.Username)
+		_, err := self.messenger.SendText(ctx, chat.Id, text)
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
+	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
+		return err
+	}
+	if err := self.sendSingleGirlPhoto(ctx, chat, girl); err != nil {
+		return err
+	}
+	place, err := self.competition.GetPosition(ctx, girl)
+	if err != nil {
+		return err
+	}
+	profileText := self.gettext(chat, "girl_statistics", place, girl.Wins, girl.Loses)
+	if _, err := self.messenger.SendText(ctx, chat.Id, profileText); err != nil {
+		return err
+	}
 	return nil
 }
 

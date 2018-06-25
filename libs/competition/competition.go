@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/logging"
@@ -32,9 +33,18 @@ const (
 var (
 	AlreadyVotedErr          = errors.New("already voted")
 	BadPhotoLinkErr          = errors.New("photo link doesn't contain a valid media code")
+	BadProfileLinkErr        = errors.New("profile link doesn't contain a valid username")
 	NotPhotoMediaErr         = errors.New("media is not a photo")
 	GetNextPairNoAttemptsErr = errors.New("out of attempts to get next pair")
 )
+
+type CompetitorNotFound struct {
+	Username string
+}
+
+func (self *CompetitorNotFound) Error() string {
+	return fmt.Sprintf("competitor %s doesn't exist", self.Username)
+}
 
 type InstCompetitor struct {
 	Username string
@@ -167,10 +177,13 @@ func (self *Competition) GetNextPair(ctx context.Context, competitionCode, voter
 	return nil, nil, GetNextPairNoAttemptsErr
 }
 
-func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, username string) (*InstCompetitor, error) {
-	username, err := instagram.ExtractUsername(username)
+func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, profileLink string) (*InstCompetitor, error) {
+	username, err := instagram.ExtractUsername(profileLink)
 	if err != nil {
-		return nil, err
+		logger := self.GetLogger(ctx)
+		logger.WithFields(log.Fields{"profile_link": profileLink, "error": err}).
+			Warn("Can't extract username from the profile link")
+		return nil, BadProfileLinkErr
 	}
 	compttr, err := self.competitors.get(ctx, competitionCode, username)
 	if err != nil {

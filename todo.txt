@@ -4,7 +4,6 @@
 . enhance ban mechanism, let users do ban reports, mark reported girls
 . add photo verification, when someone adds a girl
 . text girls from the top via instagram
-. support localized human written commands
 . add list of protected girls, they can't be added
 . don't crop images, use black background instead
 . check retries during network outages

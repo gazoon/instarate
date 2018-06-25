@@ -338,25 +338,6 @@ func (self *Bot) getPlaceInCompetitionText(chat *models.Chat, place int) string 
 	return self.gettext(chat, "place_in_competition", vars...)
 }
 
-func (self *Bot) displayGirlInfo(ctx context.Context, chat *models.Chat, girl *competition.InstCompetitor) error {
-	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
-	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
-		return err
-	}
-	if err := self.sendSingleGirlPhoto(ctx, chat, girl); err != nil {
-		return err
-	}
-	place, err := self.competition.GetPosition(ctx, girl)
-	if err != nil {
-		return err
-	}
-	profileText := self.gettext(chat, "girl_statistics", place, girl.Wins, girl.Loses)
-	if _, err := self.messenger.SendText(ctx, chat.Id, profileText); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (self *Bot) sendSingleGirlPhoto(ctx context.Context, chat *models.Chat,
 	girl *competition.InstCompetitor, opts ...func(settings *tgbotapi.PhotoConfig)) error {
 	tgFileId, ok, err := self.cache.Get(ctx, girl.PhotoPath)

@@ -15,10 +15,6 @@ const (
 	randomPairGetAttempts = 5
 )
 
-var (
-	CompetitorNotFoundErr = errors.New("competitor doesn't exist")
-)
-
 type competitor struct {
 	Username        string
 	CompetitionCode string `bson:"competition"`
@@ -65,7 +61,7 @@ func (self *competitorsStorage) get(ctx context.Context, competitionCode, userna
 	err := self.client.Find(bson.M{"competition": competitionCode, "username": username}).One(result)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, CompetitorNotFoundErr
+			return nil, &CompetitorNotFound{Username: username}
 		}
 		return nil, err
 	}
