@@ -6,6 +6,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/pkg/errors"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -75,5 +76,7 @@ func main() {
 	fmt.Println(len(strings.Fields("   ")))
 	fmt.Println(strings.Fields("https://www.instagram.com/p/BkISd3KlaEyey8yrI1dR-n4d9Jf5Uf6mRc50dk0/?hl=ru&taken-by=nik_nik0n0v"))
 	fmt.Println(len(strings.Split("s", "s")))
+	_, err := strconv.Atoi("")
+	fmt.Println(err)
 
 }

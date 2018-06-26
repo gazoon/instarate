@@ -3,16 +3,18 @@ package core
 import (
 	"context"
 	"fmt"
+	"gopkg.in/telegram-bot-api.v4"
 	"instarate/libs/competition"
 	"instarate/libs/instagram"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/models"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
-	defaultCommandsLanguage = "en"
+	defaultCommandsLanguage = models.EnLanguage
 )
 
 type TextMessageHandler func(context.Context, *models.Chat, *messages.TextMessage) error
@@ -25,6 +27,7 @@ type TextCommand struct {
 var (
 	noTextCommand = &TextCommand{}
 )
+
 var (
 	leftVoteCmd               = "left_vote"
 	rightVoteCmd              = "right_vote"
@@ -181,11 +184,13 @@ func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message 
 }
 
 func (self *Bot) helpCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "help_message"))
+	return err
 }
 
 func (self *Bot) chatSettingsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "chat_settings_commands"))
+	return err
 }
 
 func (self *Bot) leftVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
@@ -205,39 +210,98 @@ func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *m
 }
 
 func (self *Bot) globalCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	text := self.gettext(chat, "global_competition_enabled")
+	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+	}); err != nil {
+		return err
+	}
+	chat.CompetitionCode = competition.GlobalCompetition
 	return nil
 }
 
 func (self *Bot) celebritiesCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	text := self.gettext(chat, "celebrities_competition_enabled")
+	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+	}); err != nil {
+		return err
+	}
+	chat.CompetitionCode = competition.CelebritiesCompetition
 	return nil
 }
 
 func (self *Bot) modelsCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	text := self.gettext(chat, "models_competition_enabled")
+	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+	}); err != nil {
+		return err
+	}
+	chat.CompetitionCode = competition.ModelsCompetition
 	return nil
 }
 
 func (self *Bot) regularCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	text := self.gettext(chat, "regular_competition_enabled")
+	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+	}); err != nil {
+		return err
+	}
+	chat.CompetitionCode = competition.RegularCompetition
 	return nil
 }
 
 func (self *Bot) enableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	chat.SelfActivationAllowed = true
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_activation_enabled"))
+	return err
 }
 
 func (self *Bot) disableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	chat.SelfActivationAllowed = false
+	if _, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_activation_disabled")); err != nil {
+		return err
+	}
+	err := self.scheduler.DeleteTask(ctx, chat.Id, messages.DailyActivationTaskType)
+	return err
 }
 
 func (self *Bot) setRussianCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	chat.Language = models.RuLanguage
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "switch_to_language"))
+	return err
 }
 
 func (self *Bot) setEnglishCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	chat.Language = models.EnLanguage
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "switch_to_language"))
+	return err
 }
 
 func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	return nil
+	logger := self.GetLogger(ctx)
+	arg := message.GetCommandArg()
+	timeoutSeconds, err := strconv.Atoi(arg)
+	if err != nil {
+		logger.WithError(err).Warn("Can't parse voting timeout arg as an int")
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "set_voting_timeout_no_number"))
+		return err
+	}
+	timeout := time.Second * time.Duration(timeoutSeconds)
+	if models.MinVotingTimeout < timeout || timeout > sessionDuration {
+		lowerBound := models.MinVotingTimeoutSeconds
+		upperBound := int(sessionDuration / time.Minute)
+		logger.WithField("timeout", timeout).Warn("User entered invalid timeout")
+		text := self.gettext(chat, "set_voting_timeout_out_of_range", lowerBound, upperBound)
+		_, err := self.messenger.SendText(ctx, chat.Id, text)
+		return err
+	}
+	chat.VotingTimeout = timeoutSeconds
+	text := self.gettext(chat, "voting_timeout_is_set", timeoutSeconds)
+	_, err = self.messenger.SendText(ctx, chat.Id, text)
+	return err
 }
 
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {

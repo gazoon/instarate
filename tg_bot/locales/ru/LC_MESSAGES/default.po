@@ -29,7 +29,7 @@ msgid "set_voting_timeout_no_number"
 msgstr "Пожалуйста, введи число."
 
 msgid "set_voting_timeout_out_of_range"
-msgstr "Время-задержка должно быть больше чем %d секунд и меньше %d минут."
+msgstr "Время-задержка должно быть больше или равно чем %d секунд и меньше %d минут."
 
 msgid "global_competition_enabled"
 msgstr "Теперь вы будете видеть всех девушек."
@@ -40,7 +40,7 @@ msgstr "Теперь вы будете видеть только девушек-
 msgid "models_competition_enabled"
 msgstr "Теперь вы будете видеть только девушек-моделей (10к - 500к подписчиков)."
 
-msgid "normal_competition_enabled"
+msgid "regular_competition_enabled"
 msgstr "Теперь вы будете видеть только девушек, у которых меньше 10к подписчиков."
 
 msgid "switch_to_language"
@@ -99,7 +99,7 @@ msgstr ""
 "Используй следующие команды чтобы настроить мое поведение в чате:\n\n"
 "/celebritiesCompetition@InstaRateBot - Вы будете видеть только девушек с 500к+ подписчиков.\n\n"
 "/modelsCompetition@InstaRateBot - Вы будете видеть только девушек с 10к - 500к подписчиков.\n\n"
-"/normalCompetition@InstaRateBot - Вы будете видеть только девушек у кого меньше чем 10к подписчиков.\n\n"
+"/regularCompetition@InstaRateBot - Вы будете видеть только девушек у кого меньше чем 10к подписчиков.\n\n"
 "/globalCompetition@InstaRateBot - Вы будете видеть всех девушек, это вариант по умолчанию.\n\n"
 "/enableNotification@InstaRateBot - Разрешить мне ежедневно начинать новое голосование, вдруг вы забыли про меня.\n\n"
 "/disableNotification@InstaRateBot - Отключить ежедневные уведомления. По умолчанию они включены.\n\n"

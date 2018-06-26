@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	DefaultVotingTimeout = 5
-	DefaultLang          = "ru"
+	MinVotingTimeoutSeconds = 5
+	MinVotingTimeout        = time.Duration(MinVotingTimeoutSeconds) * time.Second
+	RuLanguage              = "ru"
+	EnLanguage              = "en"
+	DefaultLang             = RuLanguage
 )
 
 type Chat struct {
@@ -32,7 +35,7 @@ func NewChat(chatId, membersNum int, isGroupChat bool) *Chat {
 		CreatedAt:             utils.UTCNow(),
 		CompetitionCode:       competition.GlobalCompetition,
 		SelfActivationAllowed: true,
-		VotingTimeout:         DefaultVotingTimeout,
+		VotingTimeout:         MinVotingTimeoutSeconds,
 		Language:              DefaultLang,
 	}
 }

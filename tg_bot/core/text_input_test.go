@@ -16,9 +16,9 @@ func TestCommands(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	bot := NewBot(nil, nil, nil, locales, &utils.BotInfo{Name: "bot", Username: "bot"})
+	bot := NewBot(nil, nil, nil, nil, nil, locales, &utils.BotInfo{Name: "bot", Username: "bot"})
 
-	enChat := &models.Chat{Language: "en"}
+	enChat := &models.Chat{Language: models.EnLanguage}
 	enTable := []struct {
 		Text        string
 		CommandName string
@@ -47,7 +47,7 @@ func TestCommands(t *testing.T) {
 		}
 	}
 
-	ruChat := &models.Chat{Language: "ru"}
+	ruChat := &models.Chat{Language: models.RuLanguage}
 	ruTable := []struct {
 		Text        string
 		CommandName string

@@ -319,7 +319,7 @@ func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink strin
 
 func (self *Bot) getPlaceInCompetitionText(chat *models.Chat, place int) string {
 	var vars []interface{}
-	if chat.Language == "en" {
+	if chat.Language == models.EnLanguage {
 		var format string
 		switch place % 10 {
 		case 1:
