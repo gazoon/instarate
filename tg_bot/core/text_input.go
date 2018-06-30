@@ -295,7 +295,7 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 		return err
 	}
 	timeout := time.Second * time.Duration(timeoutSeconds)
-	if models.MinVotingTimeout < timeout || timeout > sessionDuration {
+	if timeout < models.MinVotingTimeout || timeout > sessionDuration {
 		lowerBound := models.MinVotingTimeoutSeconds
 		upperBound := int(sessionDuration / time.Minute)
 		logger.WithField("timeout", timeout).Warn("User entered invalid timeout")

@@ -10,6 +10,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -17,6 +18,10 @@ import (
 var (
 	httpTimeout = time.Second * 3
 	apiURL      = "https://api.telegram.org/bot"
+)
+
+const (
+	sendPhotoMethod = "sendPhoto"
 )
 
 type messageResponse struct {
@@ -112,19 +117,7 @@ func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
 	}
 
 	resp, err := self.client.Post(self.buildUrl("sendPhoto"), writer.FormDataContentType(), body)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "send multipart post request")
-	}
-	defer resp.Body.Close()
-	apiResponse := &messageResponse{}
-	err = json.NewDecoder(resp.Body).Decode(apiResponse)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "parse sendPhoto response into json")
-	}
-	if !apiResponse.Ok || apiResponse.Result == nil {
-		return 0, "", errors.Errorf("invalid sendPhoto response: %s", apiResponse.Description)
-	}
-	return retrievePhotoInfo(apiResponse.Result)
+	return handleSendPhotoResponse(resp, err)
 }
 
 func (self *Telegram) SendPhoto(ctx context.Context, chatId int,
@@ -134,11 +127,22 @@ func (self *Telegram) SendPhoto(ctx context.Context, chatId int,
 	for _, o := range opts {
 		o(&c)
 	}
-	resp, err := self.botAPI.Send(c)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "send photo tg API call")
+	data := url.Values{}
+	data.Set("chat_id", strconv.Itoa(chatId))
+	data.Set("photo", photoUri)
+	if c.Caption != "" {
+		data.Set("caption", c.Caption)
 	}
-	return retrievePhotoInfo(&resp)
+	if c.ReplyMarkup != nil {
+		replayMarkupData, err := json.Marshal(c.ReplyMarkup)
+		if err != nil {
+			return 0, "", errors.Wrap(err, "serialize replay markup into json")
+		}
+		data.Set("reply_markup", string(replayMarkupData))
+	}
+
+	resp, err := self.client.PostForm(self.buildUrl(sendPhotoMethod), data)
+	return handleSendPhotoResponse(resp, err)
 }
 
 func (self *Telegram) DeleteAttachedKeyboard(ctx context.Context, chatId,
@@ -159,6 +163,23 @@ func (self *Telegram) send(c tgbotapi.Chattable) (int, error) {
 
 func (self *Telegram) buildUrl(methodName string) string {
 	return apiURL + self.token + "/" + methodName
+}
+
+func handleSendPhotoResponse(resp *http.Response, err error) (int, string, error) {
+	if err != nil {
+		return 0, "", errors.Wrap(err, "send multipart post request")
+	}
+	defer resp.Body.Close()
+	apiResponse := &messageResponse{}
+	err = json.NewDecoder(resp.Body).Decode(apiResponse)
+	if err != nil {
+		return 0, "", errors.Wrap(err, "parse sendPhoto response into json")
+	}
+	if !apiResponse.Ok || apiResponse.Result == nil {
+		return 0, "", errors.Errorf("invalid sendPhoto response: %s", apiResponse.Description)
+	}
+	return retrievePhotoInfo(apiResponse.Result)
+
 }
 
 func retrievePhotoInfo(resp *tgbotapi.Message) (int, string, error) {
