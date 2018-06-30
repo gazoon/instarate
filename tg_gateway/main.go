@@ -19,6 +19,10 @@ func main() {
 		panic(err)
 	}
 	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
+	err = utils.InitializeSentry(conf.Sentry.DSN)
+	if err != nil {
+		panic(err)
+	}
 	updatesWorker, err := worker.New(conf)
 	if err != nil {
 		panic(err)

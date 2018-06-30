@@ -75,5 +75,8 @@ func (self *Storage) CreateOrReplaceTask(ctx context.Context, task *Task) error 
 
 func (self *Storage) DeleteTask(ctx context.Context, chatId int, name string) error {
 	err := self.client.Remove(bson.M{"chat_id": chatId, "name": name})
+	if err == mgo.ErrNotFound {
+		return nil
+	}
 	return errors.Wrap(err, "delete task document")
 }

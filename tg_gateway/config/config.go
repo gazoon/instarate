@@ -9,6 +9,7 @@ type Config struct {
 	MongoQueue       *utils.MongoDBSettings `yaml:"mongo_queue"`
 	KnownBots        map[string]string      `yaml:"known_bots"`
 	PublicUrl        string                 `yaml:"public_url"`
+	Sentry           *utils.SentrySettings  `yaml:"sentry"`
 }
 
 func (self *Config) String() string {

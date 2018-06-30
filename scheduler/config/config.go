@@ -11,6 +11,7 @@ type Config struct {
 	TasksConsumer    *struct {
 		FetchDelay int `yaml:"fetch_delay"`
 	} `yaml:"tasks_consumer"`
+	Sentry *utils.SentrySettings `yaml:"sentry"`
 }
 
 func (self *Config) String() string {

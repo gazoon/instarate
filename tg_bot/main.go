@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
-	err = logging.SetSentryDSN(conf.Sentry.DSN)
+	err = utils.InitializeSentry(conf.Sentry.DSN)
 	if err != nil {
 		panic(err)
 	}

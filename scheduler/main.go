@@ -24,6 +24,10 @@ func main() {
 		panic(err)
 	}
 	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
+	err = utils.InitializeSentry(conf.Sentry.DSN)
+	if err != nil {
+		panic(err)
+	}
 	taskSender, err := sender.New(conf.MongoQueue)
 	if err != nil {
 		panic(err)
