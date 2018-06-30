@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tasksPipe := sender.NewTasksPipeline(taskStorage.GetTask, taskSender.SendTask)
+	tasksPipe := sender.NewTasksPipeline(taskStorage.GetAndRemoveTask, taskSender.SendTask)
 	worker := consumer.New(tasksPipe.Fetch, conf.TasksConsumer.FetchDelay)
 	worker.Run()
 	logger.Info("Scheduler successfully started")

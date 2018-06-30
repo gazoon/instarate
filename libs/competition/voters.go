@@ -5,6 +5,7 @@ import (
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
+	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 	"sort"
 	"strings"
@@ -35,7 +36,7 @@ func (self *votersStorage) tryVote(ctx context.Context, competitionCode, votersG
 		if mgo.IsDup(err) {
 			return false, nil
 		}
-		return false, err
+		return false, errors.Wrap(err, "insert new vote-record document")
 	}
 	return true, nil
 }
@@ -48,7 +49,7 @@ func (self *votersStorage) haveSeenPair(ctx context.Context, competitionCode, vo
 		"competitors_id": unitedCompetitorsId,
 	}).Count()
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "count vote-record documents")
 	}
 	return rows == 1, err
 }

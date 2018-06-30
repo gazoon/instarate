@@ -18,6 +18,7 @@ import (
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
+	"reflect"
 	"time"
 )
 
@@ -100,6 +101,10 @@ func (self *Bot) processMessage(ctx context.Context, message messages.Message) e
 
 func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 	if _, ok := message.(messages.UserMessage); !ok {
+		logger := self.GetLogger(ctx).WithField("message_type", reflect.TypeOf(message))
+		logger.Info(
+			"Error on not a user message, no need to send the error message to the chat",
+		)
 		return
 	}
 	// user expects reaction, so we should show him a error
@@ -109,7 +114,7 @@ func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
 	})
 	if err != nil {
-		self.LogError(ctx, errors.Wrap(err, "during error sending, another occurred"))
+		self.LogError(ctx, errors.Wrap(err, "during error message sending, another occurred"))
 	}
 }
 
@@ -130,7 +135,7 @@ func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message
 }
 
 func (self *Bot) onCallback(ctx context.Context, chat *models.Chat, message *messages.Callback) error {
-
+	self.GetLogger(ctx).WithField("callback", message).Info("Callback received")
 	return nil
 }
 

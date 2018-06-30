@@ -29,6 +29,10 @@ func main() {
 		panic(err)
 	}
 	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
+	err = logging.SetSentryDSN(conf.Sentry.DSN)
+	if err != nil {
+		panic(err)
+	}
 	localesDir := path.Join(rootDir, "locales")
 	locales, err := localization.NewManager(localesDir)
 	if err != nil {

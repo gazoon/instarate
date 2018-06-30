@@ -38,10 +38,10 @@ msgid "regular_competition"
 msgstr "regularCompetition|regular girls"
 
 msgid "enable_notifications"
-msgstr "enableNotifications|enable notification|on notifications"
+msgstr "enableNotifications|enable notifications|on notifications"
 
 msgid "disable_notifications"
-msgstr "disableNotifications|disable notification|off notifications"
+msgstr "disableNotifications|disable notifications|off notifications"
 
 msgid "delete_girls"
 msgstr "deleteGirls"

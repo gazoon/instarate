@@ -5,6 +5,7 @@ import (
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"instarate/tg_bot/models"
 )
@@ -28,12 +29,12 @@ func (self *MongoStorage) Get(ctx context.Context, chatId int) (*models.Chat, er
 		if err == mgo.ErrNotFound {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Wrap(err, "get chat document")
 	}
 	return chat, nil
 }
 
 func (self *MongoStorage) Save(ctx context.Context, chat *models.Chat) error {
 	_, err := self.client.Upsert(bson.M{"chat_id": chat.Id}, chat)
-	return err
+	return errors.Wrap(err, "upsert chat document")
 }

@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
 	"github.com/gazoon/go-utils/queue"
@@ -32,7 +33,7 @@ func (self *MessagesPipeline) Fetch(ctx context.Context) consumer.Process {
 			self.LogError(ctx, r)
 		}
 	}()
-	msg, err := self.queue.GetNext(ctx)
+	msg, err := self.queue.GetAndRemoveNext(ctx)
 	if err != nil {
 		self.LogError(ctx, err)
 		return nil

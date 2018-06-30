@@ -63,7 +63,7 @@ func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
 	mediaUrl := apiUrl + mediaPath + mediaCode
 	resp, err := httpClient.Get(mediaUrl)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "http get media data")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
@@ -140,7 +140,7 @@ func GetFollowersNumber(ctx context.Context, username string) (int, error) {
 	profileUrl := apiUrl + username
 	resp, err := httpClient.Get(profileUrl)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "http get profile data")
 	}
 	if resp.StatusCode != http.StatusOK {
 		return 0, errors.Errorf("user response unexpected status: %d", resp.StatusCode)
@@ -171,7 +171,7 @@ func validateUserResponse(data *userResponse) error {
 func extractData(resp *http.Response, destination interface{}) error {
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "read http response content")
 	}
 	text := string(b)
 	firstMarker := "window._sharedData = "
@@ -179,7 +179,8 @@ func extractData(resp *http.Response, destination interface{}) error {
 	dataStart := strings.Index(text, firstMarker) + len(firstMarker)
 	dataEnd := strings.Index(text, secondMarker)
 	data := text[dataStart:dataEnd]
-	return json.Unmarshal([]byte(data), destination)
+	err = json.Unmarshal([]byte(data), destination)
+	return errors.Wrap(err, "parse http response content into json")
 }
 
 func BuildProfileUrl(username string) string {
@@ -199,7 +200,7 @@ func ExtractMediaCode(mediaUrl string) (string, error) {
 func extractLastPathPart(uri string) (string, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "parse instagram url")
 	}
 	urlPath := strings.TrimSuffix(u.Path, "/")
 	_, lastPart := path.Split(urlPath)

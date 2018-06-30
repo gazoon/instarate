@@ -12,3 +12,4 @@
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
 . standardize log fields
+. check errors handling caused from paralyze

@@ -6,6 +6,7 @@ import (
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/pkg/errors"
 )
 
 type Mongo struct {
@@ -27,7 +28,7 @@ func (self *Mongo) Get(ctx context.Context, key string) (string, bool, error) {
 		if err == mgo.ErrNotFound {
 			return "", false, nil
 		}
-		return "", false, err
+		return "", false, errors.Wrap(err, "get cache-record document")
 	}
 	return result["value"], true, nil
 }
@@ -36,5 +37,5 @@ func (self *Mongo) Set(ctx context.Context, key, value string) error {
 	_, err := self.client.Upsert(
 		bson.M{"key": key}, bson.M{"key": key, "value": value},
 	)
-	return err
+	return errors.Wrap(err, "upsert cache-record document")
 }

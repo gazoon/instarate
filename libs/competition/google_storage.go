@@ -23,7 +23,7 @@ func newGoogleStorage(bucket string) (*googleStorage, error) {
 	credsPath := path.Join(utils.GetCurrentFileDir(), "config", "google_cloud_keys.json")
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credsPath))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "google storage client initialization")
 	}
 	httpClient := &http.Client{Timeout: httpTimeout}
 	return &googleStorage{
@@ -36,7 +36,7 @@ func (self *googleStorage) upload(ctx context.Context, storagePath, sourceUrl st
 	fileWriter := self.bucket.Object(storagePath).NewWriter(ctx)
 	resp, err := http.Get(sourceUrl)
 	if err != nil {
-		return "", nil
+		return "", errors.Wrap(err, "download source file")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -44,11 +44,11 @@ func (self *googleStorage) upload(ctx context.Context, storagePath, sourceUrl st
 	}
 	_, err = io.Copy(fileWriter, resp.Body)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "copy content from source file to the storage")
 	}
 	err = fileWriter.Close()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "close storage writer")
 	}
 	return self.buildUrl(storagePath), nil
 }

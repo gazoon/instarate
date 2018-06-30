@@ -36,7 +36,7 @@ func NewTelegram(token string) (*Telegram, error) {
 	httpClient := &http.Client{Timeout: httpTimeout}
 	bot, err := tgbotapi.NewBotAPIWithClient(token, httpClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Telegram API")
+		return nil, errors.Wrap(err, "Telegram API initialization")
 	}
 	return &Telegram{
 		botAPI: bot,
@@ -65,19 +65,20 @@ func (self *Telegram) SendMarkdown(ctx context.Context, chatId int, text string,
 
 func (self *Telegram) GetMembersNum(ctx context.Context, chatId int) (int, error) {
 	c := tgbotapi.ChatConfig{ChatID: int64(chatId)}
-	return self.botAPI.GetChatMembersCount(c)
+	num, err := self.botAPI.GetChatMembersCount(c)
+	return num, errors.Wrap(err, "get chat members tg API call")
 }
 
 func (self *Telegram) SendNotification(ctx context.Context, callbackId, text string) error {
 	_, err := self.botAPI.AnswerCallbackQuery(
 		tgbotapi.CallbackConfig{CallbackQueryID: callbackId, Text: text})
-	return err
+	return errors.Wrap(err, "answer callback tg API call, with text")
 }
 
 func (self *Telegram) AnswerCallback(ctx context.Context, callbackId string) error {
 	_, err := self.botAPI.AnswerCallbackQuery(
 		tgbotapi.CallbackConfig{CallbackQueryID: callbackId})
-	return err
+	return errors.Wrap(err, "answer callback tg API call")
 }
 
 func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
@@ -90,7 +91,7 @@ func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("photo", uuid.NewV4().String())
 	if err != nil {
-		return 0, "", err
+		return 0, "", errors.Wrap(err, "create form for file uploading")
 	}
 	_, err = io.Copy(part, fileData)
 	writer.WriteField("chat_id", strconv.Itoa(chatId))
@@ -100,25 +101,25 @@ func (self *Telegram) SendBinaryPhoto(ctx context.Context, chatId int,
 	if c.ReplyMarkup != nil {
 		replayMarkupData, err := json.Marshal(c.ReplyMarkup)
 		if err != nil {
-			return 0, "", err
+			return 0, "", errors.Wrap(err, "serialize replay markup into json")
 		}
 
 		writer.WriteField("reply_markup", string(replayMarkupData))
 	}
 	err = writer.Close()
 	if err != nil {
-		return 0, "", err
+		return 0, "", errors.Wrap(err, "close multipart writer")
 	}
 
 	resp, err := self.client.Post(self.buildUrl("sendPhoto"), writer.FormDataContentType(), body)
 	if err != nil {
-		return 0, "", err
+		return 0, "", errors.Wrap(err, "send multipart post request")
 	}
 	defer resp.Body.Close()
 	apiResponse := &messageResponse{}
 	err = json.NewDecoder(resp.Body).Decode(apiResponse)
 	if err != nil {
-		return 0, "", err
+		return 0, "", errors.Wrap(err, "parse sendPhoto response into json")
 	}
 	if !apiResponse.Ok || apiResponse.Result == nil {
 		return 0, "", errors.Errorf("invalid sendPhoto response: %s", apiResponse.Description)
@@ -135,7 +136,7 @@ func (self *Telegram) SendPhoto(ctx context.Context, chatId int,
 	}
 	resp, err := self.botAPI.Send(c)
 	if err != nil {
-		return 0, "", err
+		return 0, "", errors.Wrap(err, "send photo tg API call")
 	}
 	return retrievePhotoInfo(&resp)
 }
@@ -151,7 +152,7 @@ func (self *Telegram) DeleteAttachedKeyboard(ctx context.Context, chatId,
 func (self *Telegram) send(c tgbotapi.Chattable) (int, error) {
 	resp, err := self.botAPI.Send(c)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrapf(err, "send %T tg API call", c)
 	}
 	return resp.MessageID, nil
 }

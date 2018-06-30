@@ -59,14 +59,14 @@ func (self *profilesStorage) create(ctx context.Context, model *InstProfile) err
 	if mgo.IsDup(err) {
 		return ProfileExistsErr
 	}
-	return err
+	return errors.Wrap(err, "insert new profile document")
 }
 
 func (self *profilesStorage) get(ctx context.Context, username string) (*InstProfile, error) {
 	result := &InstProfile{}
 	err := self.client.Find(bson.M{"username": username}).One(result)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get single profile document")
 	}
 	return result, nil
 }
@@ -75,12 +75,12 @@ func (self *profilesStorage) getMultiple(ctx context.Context, usernames []string
 	var result []*InstProfile
 	err := self.client.Find(bson.M{"username": bson.M{"$in": usernames}}).All(&result)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get multiple profiles documents")
 	}
 	return result, nil
 }
 
 func (self *profilesStorage) delete(ctx context.Context, usernames []string) error {
 	_, err := self.client.RemoveAll(bson.M{"username": bson.M{"$in": usernames}})
-	return err
+	return errors.Wrap(err, "delete all profile documents by usernames")
 }

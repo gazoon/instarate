@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"gopkg.in/telegram-bot-api.v4"
 	"instarate/libs/competition"
 	"instarate/libs/instagram"
@@ -133,7 +134,10 @@ func (self *Bot) showTopCmd(ctx context.Context, chat *models.Chat, message *mes
 	if arg != "" {
 		startPosition, err := strconv.Atoi(arg)
 		if err != nil {
-			self.GetLogger(ctx).WithField("command_arg", arg).Warn("Show top command expects an int arg")
+			logger := self.GetLogger(ctx).WithFields(
+				log.Fields{"command_arg": arg, "parsing_error": err},
+			)
+			logger.Warn("Show top command expects an int arg")
 		} else if startPosition > 0 {
 			offset = startPosition - 1
 		}
@@ -255,13 +259,13 @@ func (self *Bot) regularCompetitionCmd(ctx context.Context, chat *models.Chat, m
 
 func (self *Bot) enableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	chat.SelfActivationAllowed = true
-	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_activation_enabled"))
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_notification_enabled"))
 	return err
 }
 
 func (self *Bot) disableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	chat.SelfActivationAllowed = false
-	if _, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_activation_disabled")); err != nil {
+	if _, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_notification_disabled")); err != nil {
 		return err
 	}
 	err := self.scheduler.DeleteTask(ctx, chat.Id, messages.DailyActivationTaskType)
@@ -285,7 +289,8 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 	arg := message.GetCommandArg()
 	timeoutSeconds, err := strconv.Atoi(arg)
 	if err != nil {
-		logger.WithError(err).Warn("Can't parse voting timeout arg as an int")
+		logger.WithFields(log.Fields{"command_arg": arg, "parsing_error": err}).
+			Warn("Can't parse voting timeout arg as an int")
 		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "set_voting_timeout_no_number"))
 		return err
 	}
@@ -307,11 +312,16 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	photoLink := message.GetLastWord()
 	if photoLink == "" {
-		return nil
+		return self.sendDontGetYou(ctx, chat)
 	}
 	err := self.addGirl(ctx, chat, photoLink)
 	if err == competition.BadPhotoLinkErr || err == instagram.MediaForbidden {
-		return nil
+		return self.sendDontGetYou(ctx, chat)
 	}
+	return err
+}
+
+func (self *Bot) sendDontGetYou(ctx context.Context, chat *models.Chat) error {
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "dont_get_you"))
 	return err
 }

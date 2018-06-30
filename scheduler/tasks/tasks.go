@@ -46,7 +46,7 @@ func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
 	return &Storage{collection}, nil
 }
 
-func (self *Storage) GetTask(ctx context.Context) (*Task, error) {
+func (self *Storage) GetAndRemoveTask(ctx context.Context) (*Task, error) {
 	currentTime := utils.UTCNow()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
@@ -55,7 +55,7 @@ func (self *Storage) GetTask(ctx context.Context) (*Task, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get and remove ready task document")
 	}
 	return task, nil
 }
@@ -65,14 +65,15 @@ func (self *Storage) CreateTask(ctx context.Context, task *Task) error {
 	if mgo.IsDup(err) {
 		return TaskAlreadyExistsErr
 	}
-	return err
+	return errors.Wrap(err, "insert new task document")
 }
 
 func (self *Storage) CreateOrReplaceTask(ctx context.Context, task *Task) error {
 	_, err := self.client.Upsert(bson.M{"chat_id": task.ChatId, "name": task.Name}, task)
-	return err
+	return errors.Wrap(err, "upsert task document")
 }
 
 func (self *Storage) DeleteTask(ctx context.Context, chatId int, name string) error {
-	return self.client.Remove(bson.M{"chat_id": chatId, "name": name})
+	err := self.client.Remove(bson.M{"chat_id": chatId, "name": name})
+	return errors.Wrap(err, "delete task document")
 }
