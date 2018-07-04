@@ -111,7 +111,7 @@ func (self *Bot) sendError(ctx context.Context, message messages.Message) {
 	chatId := message.GetChatId()
 	errorText := self.locales.Gettext(models.DefaultLang, "unknown_error")
 	_, err := self.messenger.SendText(ctx, chatId, errorText, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	})
 	if err != nil {
 		self.LogError(ctx, errors.Wrap(err, "during error message sending, another occurred"))
@@ -183,8 +183,9 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 			"chat_id": chat.Id, "competition": chat.CompetitionCode})
 		text := self.gettext(chat, "no_more_girls_in_competition")
 		_, err = self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 		})
+		chat.ResetState()
 		return err
 	}
 	leftGirl, rightGirl := girl1, girl2
@@ -251,6 +252,10 @@ func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
 	if err == competition.AlreadyVotedErr {
 		return nil
 	}
+	if err != nil {
+		return err
+	}
+	err = self.trySendNextGirlsPair(ctx, chat)
 	return err
 }
 
@@ -265,7 +270,8 @@ func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Cha
 	logger.WithField("activation_time", activationTime).Info("Schedule next day activation")
 	return self.scheduler.CreateOrReplaceTask(ctx, task)
 }
-func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat, offset int) error {
+func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
+	offset := chat.CurrentTopOffset
 	amount := 2
 	girls, err := self.competition.GetTop(ctx, chat.CompetitionCode, amount, offset)
 	if err != nil {
@@ -279,15 +285,17 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat, offset 
 		logger := self.GetLogger(ctx).WithFields(log.Fields{"offset": offset, "total_number": totalNumber})
 		logger.Warn("Girl offset exceeds the total number of girls")
 		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "no_more_girls_in_top"), func(msg *tgbotapi.MessageConfig) {
-			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 		})
+		chat.ResetState()
 		return err
 	}
 	var keyboard interface{} = tgbotapi.ReplyKeyboardMarkup{Keyboard: [][]tgbotapi.KeyboardButton{
 		{tgbotapi.KeyboardButton{Text: "Next girl"}},
 	}}
 	if len(girls) == 1 {
-		keyboard = tgbotapi.ReplyKeyboardRemove{}
+		keyboard = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
+		chat.ResetState()
 	}
 	girl := girls[0]
 	caption := self.getPlaceInCompetitionText(chat, offset+1) + girl.GetProfileLink()

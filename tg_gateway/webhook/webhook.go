@@ -28,12 +28,12 @@ func New(port int, botTokenToQueue map[string]string, processUpdate ProcessUpdat
 	webhook := &Webhook{processUpdate: processUpdate, botTokenToQueue: botTokenToQueue, LoggerMixin: logger}
 	r := httprouter.New()
 	r.POST("/update/:bot_token", webhook.updateHandler)
-	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: utils.RecoveryHandler(r)}
+	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: r}
 	return webhook
 }
 
 func (self *Webhook) Run() {
-	log.Infof("Run webhook on %s", self.httpServer.Addr)
+	log.WithField("address", self.httpServer.Addr).Info("Run webhook")
 	go func() {
 		if err := self.httpServer.ListenAndServe(); err != nil {
 			log.Panicf("Webhook server failed: %s", err)
@@ -64,7 +64,7 @@ func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps ht
 	update := &tgbotapi.Update{}
 	err := json.NewDecoder(r.Body).Decode(update)
 	if err != nil {
-		logger.Errorf("Cannot parse http request into Update: %s", err)
+		logger.WithError(err).Error("Cannot parse http request into Update")
 		http.Error(w, "Bad request data", http.StatusBadRequest)
 		return
 	}

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	httpTimeout = time.Second * 3
+	httpTimeout = time.Second * 10
 	apiURL      = "https://api.telegram.org/bot"
 )
 

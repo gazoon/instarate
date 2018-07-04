@@ -73,7 +73,7 @@ func ensureSameHeight(leftPicture, rightPicture image.Image) (image.Image, image
 	} else if leftPictureHeight < rightPictureHeight {
 		return leftPicture, crop(rightPicture, leftPictureHeight)
 	} else {
-		return rightPicture, crop(leftPicture, rightPictureHeight)
+		return crop(leftPicture, rightPictureHeight), rightPicture
 	}
 }
 

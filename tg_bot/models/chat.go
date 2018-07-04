@@ -39,3 +39,8 @@ func NewChat(chatId, membersNum int, isGroupChat bool) *Chat {
 		Language:              DefaultLang,
 	}
 }
+
+func (self *Chat) ResetState() {
+	self.LastMatch = nil
+	self.CurrentTopOffset = 0
+}

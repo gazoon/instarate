@@ -2,19 +2,21 @@ package core
 
 import (
 	"context"
-	log "github.com/Sirupsen/logrus"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/models"
 )
 
 func (self *Bot) onNextPairTask(ctx context.Context, chat *models.Chat,
 	message *messages.NextPairTask) error {
-	if message.LastMatchMessageId != chat.LastMatch.MessageId {
-		logger := self.GetLogger(ctx)
-		logger.WithFields(log.Fields{
-			"task_match_id":   message.LastMatchMessageId,
-			"actual_match_id": chat.LastMatch.MessageId,
-		}).Info("Next pair task relates to another match, skip")
+
+	logger := self.GetLogger(ctx).WithField("task_match_id", message.LastMatchMessageId)
+	if chat.LastMatch == nil {
+		logger.Info("Next pair task received, but chat doesn't have last match, skip")
+		return nil
+	}
+	if chat.LastMatch.MessageId != message.LastMatchMessageId {
+		logger.WithField("actual_match_id", chat.LastMatch.MessageId).
+			Info("Next pair task relates to another match, skip")
 		return nil
 	}
 	return self.sendNextGirlsPair(ctx, chat)

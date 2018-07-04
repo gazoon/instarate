@@ -142,11 +142,14 @@ func (self *Bot) showTopCmd(ctx context.Context, chat *models.Chat, message *mes
 			offset = startPosition - 1
 		}
 	}
-	return self.sendGirlFromTop(ctx, chat, offset)
+	chat.ResetState()
+	chat.CurrentTopOffset = offset
+	return self.sendGirlFromTop(ctx, chat)
 }
 
 func (self *Bot) nextGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	err := self.sendGirlFromTop(ctx, chat, chat.CurrentTopOffset+1)
+	chat.CurrentTopOffset += 1
+	err := self.sendGirlFromTop(ctx, chat)
 	return err
 }
 
@@ -199,7 +202,7 @@ func (self *Bot) chatSettingsCmd(ctx context.Context, chat *models.Chat, message
 
 func (self *Bot) leftVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	if chat.LastMatch == nil {
-		self.GetLogger(ctx).Warn("Received left vote command, but chat doesn't have a match")
+		self.GetLogger(ctx).Info("Received left vote command, but chat doesn't have a match")
 		return nil
 	}
 	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.LeftGirlUsername, chat.LastMatch.RightGirlUsername)
@@ -207,7 +210,7 @@ func (self *Bot) leftVoteCmd(ctx context.Context, chat *models.Chat, message *me
 
 func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	if chat.LastMatch == nil {
-		self.GetLogger(ctx).Warn("Received right vote command, but chat doesn't have a match")
+		self.GetLogger(ctx).Info("Received right vote command, but chat doesn't have a match")
 		return nil
 	}
 	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.RightGirlUsername, chat.LastMatch.LeftGirlUsername)
@@ -216,51 +219,61 @@ func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *m
 func (self *Bot) globalCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	text := self.gettext(chat, "global_competition_enabled")
 	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	}); err != nil {
 		return err
 	}
 	chat.CompetitionCode = competition.GlobalCompetition
+	chat.ResetState()
 	return nil
 }
 
 func (self *Bot) celebritiesCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	text := self.gettext(chat, "celebrities_competition_enabled")
 	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	}); err != nil {
 		return err
 	}
 	chat.CompetitionCode = competition.CelebritiesCompetition
+	chat.ResetState()
 	return nil
 }
 
 func (self *Bot) modelsCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	text := self.gettext(chat, "models_competition_enabled")
 	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	}); err != nil {
 		return err
 	}
 	chat.CompetitionCode = competition.ModelsCompetition
+	chat.ResetState()
 	return nil
 }
 
 func (self *Bot) regularCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	text := self.gettext(chat, "regular_competition_enabled")
 	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{}
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	}); err != nil {
 		return err
 	}
 	chat.CompetitionCode = competition.RegularCompetition
+	chat.ResetState()
 	return nil
 }
 
 func (self *Bot) enableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	chat.SelfActivationAllowed = true
-	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_notification_enabled"))
-	return err
+	if _, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "daily_notification_enabled")); err != nil {
+		return err
+	}
+	if !chat.SelfActivationAllowed {
+		chat.SelfActivationAllowed = true
+		err := self.scheduleDailyNotification(ctx, chat)
+		return err
+	}
+	return nil
 }
 
 func (self *Bot) disableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {

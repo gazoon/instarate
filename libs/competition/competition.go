@@ -237,7 +237,7 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 		return nil, nil, err
 	}
 	if !ok {
-		logger.Info("User already voter")
+		logger.Info("User already voted")
 		return nil, nil, AlreadyVotedErr
 	}
 
@@ -256,11 +256,11 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 	loser.Loses += 1
 	loser.Matches += 1
 
-	self.competitors.update(ctx, winner)
+	err = self.competitors.update(ctx, winner)
 	if err != nil {
 		return nil, nil, err
 	}
-	self.competitors.update(ctx, loser)
+	err = self.competitors.update(ctx, loser)
 	if err != nil {
 		return nil, nil, err
 	}

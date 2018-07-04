@@ -4,11 +4,10 @@
 . enhance ban mechanism, let users do ban reports, mark reported girls
 . add photo verification, when someone adds a girl
 . text girls from the top via instagram
+. temporary disable girls, that disabled theirs instagram account
 . add list of protected girls, they can't be added
 . don't crop images, use black background instead
 . check retries during network outages
-. fix translations
-. don't return errors as text, use constant atoms, to be able to map the error
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
 . standardize log fields
