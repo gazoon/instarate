@@ -281,8 +281,8 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 		return err
 	}
 	timeout := time.Second * time.Duration(timeoutSeconds)
-	if timeout < models.MinVotingTimeout || timeout > sessionDuration {
-		lowerBound := models.MinVotingTimeoutSeconds
+	if timeout < models.DefaultTimeout || timeout > sessionDuration {
+		lowerBound := models.DefaultTimeoutSeconds
 		upperBound := int(sessionDuration / time.Minute)
 		logger.WithField("timeout", timeout).Warn("User entered invalid timeout")
 		text := self.gettext(chat, "set_voting_timeout_out_of_range", lowerBound, upperBound)
@@ -297,14 +297,15 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	link := message.GetLastWord()
-
-	err := self.addGirl(ctx, chat, link)
-	if err != competition.BadPhotoLinkErr && err != instagram.MediaForbidden {
-		return err
-	}
+	var err error
 
 	err = self.sendGirlProfile(ctx, chat, link)
 	if _, ok := err.(*competition.CompetitorNotFound); !ok && err != competition.BadProfileLinkErr {
+		return err
+	}
+
+	err = self.addGirl(ctx, chat, link)
+	if err != competition.BadPhotoLinkErr && err != instagram.MediaForbidden {
 		return err
 	}
 

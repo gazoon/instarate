@@ -7,8 +7,9 @@
 . temporary disable girls, that disabled theirs instagram account
 . add list of protected girls, they can't be added
 . don't crop images, use black background instead
+. add timeouts to show top
 . check retries during network outages
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
-. standardize log fields
 . check errors handling caused from paralyze
+. add girls only by photo link not just an ID

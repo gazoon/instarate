@@ -163,7 +163,7 @@ func (self *Bot) trySendNextGirlsPair(ctx context.Context, chat *models.Chat) er
 	if chat.LastMatch == nil {
 		return self.sendNextGirlsPair(ctx, chat)
 	}
-	timeToShow := chat.LastMatch.ShownAt.Add(time.Duration(chat.VotingTimeout) * time.Second)
+	timeToShow := chat.LastMatch.ShownAt.Add(time.Duration(chat.GetVotingTimeout()) * time.Second)
 	if timeToShow.Before(utils.UTCNow()) {
 		return self.sendNextGirlsPair(ctx, chat)
 	}
@@ -172,7 +172,7 @@ func (self *Bot) trySendNextGirlsPair(ctx context.Context, chat *models.Chat) er
 		map[string]interface{}{"last_match_message_id": chat.LastMatch.MessageId},
 	)
 	self.GetLogger(ctx).WithField("time_to_show", timeToShow).Info("Schedule send next pair task")
-	return self.scheduler.CreateTask(ctx, task)
+	return self.scheduler.CreateOrReplaceTask(ctx, task)
 }
 
 func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error {
@@ -204,10 +204,11 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	captionText := fmt.Sprintf("%s vs %s", leftGirl.GetProfileLink(), rightGirl.GetProfileLink())
 	logger := self.GetLogger(ctx)
 	logger.WithField("caption_text", captionText).Info("Send pair match")
-	keyboard := tgbotapi.ReplyKeyboardMarkup{OneTimeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
-		{tgbotapi.KeyboardButton{Text: "Left"}},
-		{tgbotapi.KeyboardButton{Text: "Right"}},
-	}}
+	keyboard := tgbotapi.ReplyKeyboardMarkup{
+		OneTimeKeyboard: true, ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
+			{tgbotapi.KeyboardButton{Text: "Left"}},
+			{tgbotapi.KeyboardButton{Text: "Right"}},
+		}}
 	var messageId int
 	if tgFileId != "" {
 		logger.WithField("tg_file_id", tgFileId).Info("Use cached match photo")
@@ -290,9 +291,11 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 		chat.ResetState()
 		return err
 	}
-	var keyboard interface{} = tgbotapi.ReplyKeyboardMarkup{Keyboard: [][]tgbotapi.KeyboardButton{
-		{tgbotapi.KeyboardButton{Text: "Next girl"}},
-	}}
+	var keyboard interface{} = tgbotapi.ReplyKeyboardMarkup{
+		ResizeKeyboard: true,
+		Keyboard: [][]tgbotapi.KeyboardButton{
+			{tgbotapi.KeyboardButton{Text: "Next girl"}},
+		}}
 	if len(girls) == 1 {
 		keyboard = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 		chat.ResetState()
