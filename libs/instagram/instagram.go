@@ -189,7 +189,7 @@ func BuildProfileUrl(username string) string {
 
 func ExtractUsername(profileUrl string) (string, error) {
 	username, err := extractLastPathPart(profileUrl)
-	return username, errors.Wrap(err, "cant extract username")
+	return username, err
 }
 
 func ExtractMediaCode(mediaUrl string) (string, error) {
@@ -198,6 +198,9 @@ func ExtractMediaCode(mediaUrl string) (string, error) {
 }
 
 func extractLastPathPart(uri string) (string, error) {
+	if uri == "" {
+		return "", errors.New("empty url")
+	}
 	u, err := url.Parse(uri)
 	if err != nil {
 		return "", errors.Wrap(err, "parse instagram url")

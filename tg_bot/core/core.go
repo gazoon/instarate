@@ -330,6 +330,32 @@ func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink strin
 	return err
 }
 
+func (self *Bot) sendGirlProfile(ctx context.Context, chat *models.Chat, profileLink string) error {
+	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, profileLink)
+	if _, ok := err.(*competition.CompetitorNotFound); ok || err == competition.BadProfileLinkErr {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
+	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
+		return err
+	}
+	if err := self.sendSingleGirlPhoto(ctx, chat, girl); err != nil {
+		return err
+	}
+	place, err := self.competition.GetPosition(ctx, girl)
+	if err != nil {
+		return err
+	}
+	profileText := self.gettext(chat, "girl_statistics", place, girl.Wins, girl.Loses)
+	if _, err := self.messenger.SendText(ctx, chat.Id, profileText); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (self *Bot) getPlaceInCompetitionText(chat *models.Chat, place int) string {
 	var vars []interface{}
 	if chat.Language == models.EnLanguage {

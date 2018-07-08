@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/telegram-bot-api.v4"
 	"instarate/libs/competition"
@@ -113,10 +112,6 @@ func (self *Bot) startCmd(ctx context.Context, chat *models.Chat, message *messa
 
 func (self *Bot) addGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	photoLink := message.GetCommandArg()
-	if photoLink == "" {
-		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
-		return err
-	}
 	err := self.addGirl(ctx, chat, photoLink)
 	if err == competition.BadPhotoLinkErr {
 		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
@@ -155,39 +150,17 @@ func (self *Bot) nextGirlCmd(ctx context.Context, chat *models.Chat, message *me
 
 func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	girlLink := message.GetCommandArg()
-	if girlLink == "" {
-		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "get_girl_no_username"))
-		return err
-	}
-	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, girlLink)
+	err := self.sendGirlProfile(ctx, chat, girlLink)
 	if err == competition.BadProfileLinkErr {
 		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "get_girl_no_username"))
 		return err
 	}
 	if noGirlErr, ok := err.(*competition.CompetitorNotFound); ok {
 		text := self.gettext(chat, "get_girl_no_girl", noGirlErr.Username, noGirlErr.Username)
-		_, err := self.messenger.SendText(ctx, chat.Id, text)
+		_, err := self.messenger.SendMarkdown(ctx, chat.Id, text)
 		return err
 	}
-	if err != nil {
-		return err
-	}
-	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
-	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
-		return err
-	}
-	if err := self.sendSingleGirlPhoto(ctx, chat, girl); err != nil {
-		return err
-	}
-	place, err := self.competition.GetPosition(ctx, girl)
-	if err != nil {
-		return err
-	}
-	profileText := self.gettext(chat, "girl_statistics", place, girl.Wins, girl.Loses)
-	if _, err := self.messenger.SendText(ctx, chat.Id, profileText); err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (self *Bot) helpCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
@@ -323,14 +296,19 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 }
 
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	photoLink := message.GetLastWord()
-	if photoLink == "" {
-		return self.sendDontGetYou(ctx, chat)
+	link := message.GetLastWord()
+
+	err := self.addGirl(ctx, chat, link)
+	if err != competition.BadPhotoLinkErr && err != instagram.MediaForbidden {
+		return err
 	}
-	err := self.addGirl(ctx, chat, photoLink)
-	if err == competition.BadPhotoLinkErr || err == instagram.MediaForbidden {
-		return self.sendDontGetYou(ctx, chat)
+
+	err = self.sendGirlProfile(ctx, chat, link)
+	if _, ok := err.(*competition.CompetitorNotFound); !ok && err != competition.BadProfileLinkErr {
+		return err
 	}
+
+	err = self.sendDontGetYou(ctx, chat)
 	return err
 }
 
