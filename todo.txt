@@ -11,4 +11,4 @@
 . check retries during network outages
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
-. check errors handling caused from paralyze
+. manage dependencies

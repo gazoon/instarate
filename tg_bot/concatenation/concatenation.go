@@ -1,16 +1,13 @@
 package concatenation
 
 import (
-	"image"
-	"image/color"
-	"net/http"
-	"strings"
-
 	"bytes"
 	"context"
 	"github.com/disintegration/imaging"
-	"github.com/i/paralyze"
 	"github.com/pkg/errors"
+	"image"
+	"image/color"
+	"net/http"
 )
 
 const separatorWidth = 10
@@ -21,14 +18,14 @@ var (
 )
 
 func Concatenate(ctx context.Context, leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) {
-	images, err := paralyzeTasks(
-		func() (interface{}, error) { return downloadImage(leftPictureUrl) },
-		func() (interface{}, error) { return downloadImage(rightPictureUrl) },
-	)
+	leftPicture, err := downloadImage(leftPictureUrl)
 	if err != nil {
-		return nil, errors.Wrap(err, "concatenation failed")
+		return nil, err
 	}
-	leftPicture, rightPicture := images[0].(image.Image), images[1].(image.Image)
+	rightPicture, err := downloadImage(rightPictureUrl)
+	if err != nil {
+		return nil, err
+	}
 	leftPicture, rightPicture = ensureSameHeight(leftPicture, rightPicture)
 	resultImg := appendHorizontally(leftPicture, rightPicture)
 	buf := &bytes.Buffer{}
@@ -37,22 +34,6 @@ func Concatenate(ctx context.Context, leftPictureUrl, rightPictureUrl string) (*
 		return nil, errors.Wrap(err, "concatenation failed")
 	}
 	return buf, nil
-}
-
-func paralyzeTasks(funcs ...paralyze.Paralyzable) ([]interface{}, error) {
-	results, errs := paralyze.Paralyze(funcs...)
-
-	var errorMsgs []string
-	for _, e := range errs {
-		if e == nil {
-			continue
-		}
-		errorMsgs = append(errorMsgs, e.Error())
-	}
-	if errorMsgs != nil {
-		return nil, errors.New(strings.Join(errorMsgs, "; "))
-	}
-	return results, nil
 }
 
 func appendHorizontally(leftPicture, rightPicture image.Image) image.Image {
