@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
-	"path"
 	"strings"
 	"time"
 
 	"io/ioutil"
 
+	"github.com/gazoon/go-utils"
 	"github.com/pkg/errors"
 )
 
@@ -187,28 +186,11 @@ func BuildProfileUrl(username string) string {
 	return apiUrl + username + "/"
 }
 
-func ExtractUsername(profileUrl string) (string, error) {
-	username, err := extractLastPathPart(profileUrl)
-	return username, err
-}
-
 func ExtractMediaCode(mediaUrl string) (string, error) {
-	mediaCode, err := extractLastPathPart(mediaUrl)
+	if !strings.HasPrefix(mediaUrl, "https://instagram.com/p/") &&
+		!strings.HasPrefix(mediaUrl, "https://www.instagram.com/p/") {
+		return "", errors.New("url doesn't have the right prefix")
+	}
+	mediaCode, err := utils.ExtractLastPathPart(mediaUrl)
 	return mediaCode, err
-}
-
-func extractLastPathPart(uri string) (string, error) {
-	if uri == "" {
-		return "", errors.New("empty url")
-	}
-	u, err := url.Parse(uri)
-	if err != nil {
-		return "", errors.Wrap(err, "parse instagram url")
-	}
-	urlPath := strings.TrimSuffix(u.Path, "/")
-	_, lastPart := path.Split(urlPath)
-	if lastPart == "" {
-		return "", errors.New("url has empty path")
-	}
-	return lastPart, nil
 }

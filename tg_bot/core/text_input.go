@@ -112,9 +112,13 @@ func (self *Bot) startCmd(ctx context.Context, chat *models.Chat, message *messa
 
 func (self *Bot) addGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	photoLink := message.GetCommandArg()
+	if photoLink == "" {
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
+		return err
+	}
 	err := self.addGirl(ctx, chat, photoLink)
 	if err == competition.BadPhotoLinkErr {
-		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_no_link"))
+		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_bad_link"))
 		return err
 	} else if err == instagram.MediaForbidden {
 		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_media_forbidden"))
@@ -297,6 +301,10 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 
 func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	link := message.GetLastWord()
+	if link == "" {
+		return self.sendDontGetYou(ctx, chat)
+	}
+
 	var err error
 
 	err = self.sendGirlProfile(ctx, chat, link)

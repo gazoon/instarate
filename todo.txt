@@ -12,4 +12,3 @@
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
 . check errors handling caused from paralyze
-. add girls only by photo link not just an ID

@@ -2,7 +2,10 @@ msgid "propose_to_vote"
 msgstr "Привет! Не желаете продолжить голосовать?"
 
 msgid "add_girl_no_link"
-msgstr "Ты не отправил мне ссылку, пример:\naddGirl@InstaRateBot <photo_link>"
+msgstr "Ты не отправил мне ссылку, пример:\naddGirl@InstaRateBot https://instagram.com/p/<photo_code>/"
+
+msgid "add_girl_bad_link"
+msgstr "Ты отправил мне неправильную ссылку, пример:\naddGirl@InstaRateBot https://instagram.com/p/<photo_code>/"
 
 msgid "add_girl_not_photo"
 msgstr "Это должна быть фотка."

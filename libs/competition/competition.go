@@ -178,7 +178,7 @@ func (self *Competition) GetNextPair(ctx context.Context, competitionCode, voter
 }
 
 func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, profileLink string) (*InstCompetitor, error) {
-	username, err := instagram.ExtractUsername(profileLink)
+	username, err := utils.ExtractLastPathPart(profileLink)
 	if err != nil {
 		logger := self.GetLogger(ctx)
 		logger.WithFields(log.Fields{"profile_link": profileLink, "error": err}).
@@ -199,7 +199,7 @@ func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, pro
 func (self *Competition) Remove(ctx context.Context, usernames ...string) error {
 	var err error
 	for i := range usernames {
-		usernames[i], err = instagram.ExtractUsername(usernames[i])
+		usernames[i], err = utils.ExtractLastPathPart(usernames[i])
 		if err != nil {
 			return err
 		}
