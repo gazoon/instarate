@@ -8,7 +8,6 @@
 . add list of protected girls, they can't be added
 . don't crop images, use black background instead
 . add timeouts to show top
-. check retries during network outages
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
 . manage dependencies
