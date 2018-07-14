@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"net/http"
+	"time"
 )
 
 const separatorWidth = 10
@@ -15,6 +16,7 @@ const separatorWidth = 10
 var (
 	Version        = "v1"
 	separatorColor = color.White
+	httpClient     = &http.Client{Timeout: 3 * time.Second}
 )
 
 func Concatenate(ctx context.Context, leftPictureUrl, rightPictureUrl string) (*bytes.Buffer, error) {
@@ -72,7 +74,7 @@ func getHeight(picture image.Image) int {
 }
 
 func downloadImage(pictureUrl string) (image.Image, error) {
-	resp, err := http.Get(pictureUrl)
+	resp, err := httpClient.Get(pictureUrl)
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("download %s: not 200 resp code: %d", pictureUrl, resp.StatusCode)
 	}

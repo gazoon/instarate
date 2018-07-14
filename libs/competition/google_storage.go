@@ -34,7 +34,7 @@ func newGoogleStorage(bucket string) (*googleStorage, error) {
 
 func (self *googleStorage) upload(ctx context.Context, storagePath, sourceUrl string) (string, error) {
 	fileWriter := self.bucket.Object(storagePath).NewWriter(ctx)
-	resp, err := http.Get(sourceUrl)
+	resp, err := self.httpClient.Get(sourceUrl)
 	if err != nil {
 		return "", errors.Wrap(err, "download source file")
 	}
