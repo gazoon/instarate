@@ -1,43 +1,31 @@
 package main
 
 import (
-	"path"
-
-	"instarate/scheduler/config"
-
-	"instarate/scheduler/sender"
-	"instarate/scheduler/tasks"
+	. "instarate/scheduler/config"
 
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/consumer"
 	"github.com/gazoon/go-utils/logging"
+	"instarate/scheduler/sender"
+	"instarate/scheduler/services"
 )
 
 var logger = logging.WithPackage("main")
 
 func main() {
 
-	conf := &config.Config{}
-	configPath := path.Join(utils.GetCurrentFileDir(), "config")
-	err := utils.ParseConfig(configPath, conf)
+	logging.PatchStdLog(Config.LogLevel, Config.ServiceName)
+	err := utils.InitializeSentry(Config.Sentry.DSN)
 	if err != nil {
 		panic(err)
 	}
-	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
-	err = utils.InitializeSentry(conf.Sentry.DSN)
+	taskSender, err := sender.New(Config.MongoQueue)
 	if err != nil {
 		panic(err)
 	}
-	taskSender, err := sender.New(conf.MongoQueue)
-	if err != nil {
-		panic(err)
-	}
-	taskStorage, err := tasks.NewStorage(conf.MongoTasks)
-	if err != nil {
-		panic(err)
-	}
+	taskStorage := services.InitTaskStorage()
 	tasksPipe := sender.NewTasksPipeline(taskStorage.GetAndRemoveTask, taskSender.SendTask)
-	worker := consumer.New(tasksPipe.Fetch, conf.TasksConsumer.FetchDelay)
+	worker := consumer.New(tasksPipe.Fetch, Config.TasksConsumer.FetchDelay)
 	worker.Run()
 	logger.Info("Scheduler successfully started")
 	utils.WaitingForShutdown()

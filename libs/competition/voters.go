@@ -11,19 +11,19 @@ import (
 	"strings"
 )
 
-type votersStorage struct {
+type VotersStorage struct {
 	client *mgo.Collection
 }
 
-func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*votersStorage, error) {
+func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*VotersStorage, error) {
 	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	return &votersStorage{collection}, nil
+	return &VotersStorage{collection}, nil
 }
 
-func (self *votersStorage) tryVote(ctx context.Context, competitionCode, votersGroup, voter,
+func (self *VotersStorage) tryVote(ctx context.Context, competitionCode, votersGroup, voter,
 	competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	err := self.client.Insert(bson.M{
@@ -41,7 +41,7 @@ func (self *votersStorage) tryVote(ctx context.Context, competitionCode, votersG
 	return true, nil
 }
 
-func (self *votersStorage) haveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
+func (self *VotersStorage) haveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	rows, err := self.client.Find(bson.M{
 		"competition":    competitionCode,

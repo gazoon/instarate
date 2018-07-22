@@ -34,19 +34,19 @@ var (
 		"Task with that name already exists for the chat")
 )
 
-type Storage struct {
+type Reader struct {
 	client *mgo.Collection
 }
 
-func NewStorage(mongoSettings *utils.MongoDBSettings) (*Storage, error) {
+func NewReader(mongoSettings *utils.MongoDBSettings) (*Reader, error) {
 	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	return &Storage{collection}, nil
+	return &Reader{collection}, nil
 }
 
-func (self *Storage) GetAndRemoveTask(ctx context.Context) (*Task, error) {
+func (self *Reader) GetAndRemoveTask(ctx context.Context) (*Task, error) {
 	currentTime := utils.UTCNow()
 	task := &Task{}
 	_, err := self.client.Find(bson.M{"do_at": bson.M{"$lte": currentTime}}).
@@ -60,7 +60,19 @@ func (self *Storage) GetAndRemoveTask(ctx context.Context) (*Task, error) {
 	return task, nil
 }
 
-func (self *Storage) CreateTask(ctx context.Context, task *Task) error {
+type Publisher struct {
+	client *mgo.Collection
+}
+
+func NewPublisher(mongoSettings *utils.MongoDBSettings) (*Publisher, error) {
+	collection, err := mongo.ConnectCollection(mongoSettings)
+	if err != nil {
+		return nil, err
+	}
+	return &Publisher{collection}, nil
+}
+
+func (self *Publisher) CreateTask(ctx context.Context, task *Task) error {
 	err := self.client.Insert(task)
 	if mgo.IsDup(err) {
 		return TaskAlreadyExistsErr
@@ -68,12 +80,12 @@ func (self *Storage) CreateTask(ctx context.Context, task *Task) error {
 	return errors.Wrap(err, "insert new task document")
 }
 
-func (self *Storage) CreateOrReplaceTask(ctx context.Context, task *Task) error {
+func (self *Publisher) CreateOrReplaceTask(ctx context.Context, task *Task) error {
 	_, err := self.client.Upsert(bson.M{"chat_id": task.ChatId, "name": task.Name}, task)
 	return errors.Wrap(err, "upsert task document")
 }
 
-func (self *Storage) DeleteTask(ctx context.Context, chatId int, name string) error {
+func (self *Publisher) DeleteTask(ctx context.Context, chatId int, name string) error {
 	err := self.client.Remove(bson.M{"chat_id": chatId, "name": name})
 	if err == mgo.ErrNotFound {
 		return nil

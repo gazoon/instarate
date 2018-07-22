@@ -2,9 +2,15 @@ package config
 
 import (
 	"github.com/gazoon/go-utils"
+	"path"
 )
 
-type Config struct {
+var (
+	Config  *ConfigSchema
+	RootDir string
+)
+
+type ConfigSchema struct {
 	utils.RootConfig `yaml:",inline"`
 	MongoCache       *utils.MongoDBSettings `yaml:"mongo_cache"`
 	MongoChats       *utils.MongoDBSettings `yaml:"mongo_chats"`
@@ -19,6 +25,17 @@ type Config struct {
 	} `yaml:"queue_consumer"`
 }
 
-func (self *Config) String() string {
+func (self *ConfigSchema) String() string {
 	return utils.ObjToString(self)
+}
+
+func init() {
+	confDir := utils.GetCurrentFileDir()
+	conf := &ConfigSchema{}
+	err := utils.ParseConfig(confDir, conf)
+	if err != nil {
+		panic(err)
+	}
+	Config = conf
+	RootDir = path.Join(confDir, "./..")
 }

@@ -42,19 +42,19 @@ func (self InstProfile) String() string {
 	return utils.ObjToString(&self)
 }
 
-type profilesStorage struct {
+type ProfilesStorage struct {
 	client *mgo.Collection
 }
 
-func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*profilesStorage, error) {
+func newProfilesStorage(mongoSettings *utils.MongoDBSettings) (*ProfilesStorage, error) {
 	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
 	}
-	return &profilesStorage{collection}, nil
+	return &ProfilesStorage{collection}, nil
 }
 
-func (self *profilesStorage) create(ctx context.Context, model *InstProfile) error {
+func (self *ProfilesStorage) create(ctx context.Context, model *InstProfile) error {
 	err := self.client.Insert(model)
 	if mgo.IsDup(err) {
 		return ProfileExistsErr
@@ -62,7 +62,7 @@ func (self *profilesStorage) create(ctx context.Context, model *InstProfile) err
 	return errors.Wrap(err, "insert new profile document")
 }
 
-func (self *profilesStorage) get(ctx context.Context, username string) (*InstProfile, error) {
+func (self *ProfilesStorage) get(ctx context.Context, username string) (*InstProfile, error) {
 	result := &InstProfile{}
 	err := self.client.Find(bson.M{"username": username}).One(result)
 	if err != nil {
@@ -71,7 +71,7 @@ func (self *profilesStorage) get(ctx context.Context, username string) (*InstPro
 	return result, nil
 }
 
-func (self *profilesStorage) getMultiple(ctx context.Context, usernames []string) ([]*InstProfile, error) {
+func (self *ProfilesStorage) getMultiple(ctx context.Context, usernames []string) ([]*InstProfile, error) {
 	var result []*InstProfile
 	err := self.client.Find(bson.M{"username": bson.M{"$in": usernames}}).All(&result)
 	if err != nil {
@@ -80,7 +80,7 @@ func (self *profilesStorage) getMultiple(ctx context.Context, usernames []string
 	return result, nil
 }
 
-func (self *profilesStorage) delete(ctx context.Context, usernames []string) error {
+func (self *ProfilesStorage) delete(ctx context.Context, usernames []string) error {
 	_, err := self.client.RemoveAll(bson.M{"username": bson.M{"$in": usernames}})
 	return errors.Wrap(err, "delete all profile documents by usernames")
 }

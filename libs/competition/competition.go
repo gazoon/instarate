@@ -2,9 +2,7 @@ package competition
 
 import (
 	"context"
-	"instarate/libs/competition/config"
 	"instarate/libs/instagram"
-	"path"
 	"time"
 
 	"fmt"
@@ -58,39 +56,18 @@ func (self InstCompetitor) String() string {
 
 type Competition struct {
 	*logging.LoggerMixin
-	competitors   *competitorsStorage
-	profiles      *profilesStorage
-	voters        *votersStorage
-	photosStorage *googleStorage
+	competitors   *CompetitorsStorage
+	profiles      *ProfilesStorage
+	voters        *VotersStorage
+	photosStorage *GoogleFilesStorage
 }
 
-func New() (*Competition, error) {
+func NewCompetition(competitors *CompetitorsStorage, profiles *ProfilesStorage,
+	filesStorage *GoogleFilesStorage, voters *VotersStorage) *Competition {
 
-	conf := &config.Config{}
-	configPath := path.Join(utils.GetCurrentFileDir(), "config")
-	err := utils.ParseConfig(configPath, &conf)
-	if err != nil {
-		return nil, err
-	}
-	competitors, err := newCompetitorsStorage(conf.MongoCompetitors)
-	if err != nil {
-		return nil, err
-	}
-	profiles, err := newProfilesStorage(conf.MongoProfiles)
-	if err != nil {
-		return nil, err
-	}
-	photosStorage, err := newGoogleStorage(conf.GoogleStorage.BucketName)
-	if err != nil {
-		return nil, err
-	}
-	voters, err := newVotersStorage(conf.MongoVoters)
-	if err != nil {
-		return nil, err
-	}
 	return &Competition{
-		competitors: competitors, profiles: profiles, photosStorage: photosStorage,
-		voters: voters, LoggerMixin: logging.NewLoggerMixin("competition", nil)}, nil
+		competitors: competitors, profiles: profiles, photosStorage: filesStorage,
+		voters: voters, LoggerMixin: logging.NewLoggerMixin("competition", nil)}
 }
 
 func (self *Competition) GetPhotoUrl(competitor *InstCompetitor) string {

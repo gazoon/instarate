@@ -12,13 +12,13 @@ import (
 	"path"
 )
 
-type googleStorage struct {
+type GoogleFilesStorage struct {
 	bucket     *storage.BucketHandle
 	bucketName string
 	httpClient *http.Client
 }
 
-func newGoogleStorage(bucket string) (*googleStorage, error) {
+func newGoogleStorage(bucket string) (*GoogleFilesStorage, error) {
 	ctx := context.Background()
 	credsPath := path.Join(utils.GetCurrentFileDir(), "config", "google_cloud_keys.json")
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credsPath))
@@ -26,13 +26,13 @@ func newGoogleStorage(bucket string) (*googleStorage, error) {
 		return nil, errors.Wrap(err, "google storage client initialization")
 	}
 	httpClient := &http.Client{Timeout: httpTimeout}
-	return &googleStorage{
+	return &GoogleFilesStorage{
 		bucket:     client.Bucket(bucket),
 		bucketName: bucket,
 		httpClient: httpClient}, nil
 }
 
-func (self *googleStorage) upload(ctx context.Context, storagePath, sourceUrl string) (string, error) {
+func (self *GoogleFilesStorage) upload(ctx context.Context, storagePath, sourceUrl string) (string, error) {
 	fileWriter := self.bucket.Object(storagePath).NewWriter(ctx)
 	resp, err := self.httpClient.Get(sourceUrl)
 	if err != nil {
@@ -53,6 +53,6 @@ func (self *googleStorage) upload(ctx context.Context, storagePath, sourceUrl st
 	return self.buildUrl(storagePath), nil
 }
 
-func (self *googleStorage) buildUrl(path string) string {
+func (self *GoogleFilesStorage) buildUrl(path string) string {
 	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", self.bucketName, path)
 }

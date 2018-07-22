@@ -4,7 +4,11 @@ import (
 	"github.com/gazoon/go-utils"
 )
 
-type Config struct {
+var (
+	Config *ConfigSchema
+)
+
+type ConfigSchema struct {
 	MongoCompetitors *utils.MongoDBSettings `yaml:"mongo_competitors"`
 	MongoProfiles    *utils.MongoDBSettings `yaml:"mongo_profiles"`
 	MongoVoters      *utils.MongoDBSettings `yaml:"mongo_voters"`
@@ -13,6 +17,16 @@ type Config struct {
 	} `yaml:"google_storage"`
 }
 
-func (self *Config) String() string {
+func (self *ConfigSchema) String() string {
 	return utils.ObjToString(self)
+}
+
+func init() {
+	confDir := utils.GetCurrentFileDir()
+	conf := &ConfigSchema{}
+	err := utils.ParseConfig(confDir, conf)
+	if err != nil {
+		panic(err)
+	}
+	Config = conf
 }
