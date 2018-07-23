@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 
+var c = 2
+
 type A interface {
 	Foo() string
 }
@@ -14,4 +16,5 @@ func (self *B) Foo() string {
 func main() {
 	var a A = &B{}
 	fmt.Printf("%T\nllh", a)
+	fmt.Println(c)
 }

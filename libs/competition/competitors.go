@@ -16,12 +16,12 @@ const (
 )
 
 type competitor struct {
-	Username        string
+	Username        string `bson:"username"`
 	CompetitionCode string `bson:"competition"`
-	Rating          int
-	Matches         int
-	Wins            int
-	Loses           int
+	Rating          int    `bson:"rating"`
+	Matches         int    `bson:"matches"`
+	Wins            int    `bson:"wins"`
+	Loses           int    `bson:"loses"`
 }
 
 func createCompetitor(username, competitionCode string) *competitor {
@@ -122,4 +122,21 @@ func (self *CompetitorsStorage) getRandomPair(ctx context.Context, competitionCo
 		}
 	}
 	return nil, nil, errors.Errorf("can't get two distinct competitor in %s", competitionCode)
+}
+
+func (self *CompetitorsStorage) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(
+		mgo.Index{Key: []string{"competition", "username"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: competition,username")
+	}
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"competition", "-rating"}})
+	if err != nil {
+		return errors.Wrap(err, "key: competition,-rating")
+	}
+
+	return nil
 }

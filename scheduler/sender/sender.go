@@ -12,7 +12,6 @@ import (
 type Sender struct {
 	*logging.LoggerMixin
 	queueWriter *queue.MongoWriter
-	queueName   string
 }
 
 func New(mongoSettings *utils.MongoDBSettings) (*Sender, error) {
@@ -21,7 +20,7 @@ func New(mongoSettings *utils.MongoDBSettings) (*Sender, error) {
 		return nil, err
 	}
 	logger := logging.NewLoggerMixin("sender", nil)
-	return &Sender{queueWriter: writer, LoggerMixin: logger, queueName: mongoSettings.Collection}, nil
+	return &Sender{queueWriter: writer, LoggerMixin: logger}, nil
 }
 
 func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) {
@@ -42,7 +41,7 @@ func (self *Sender) SendTask(ctx context.Context, task *tasks.Task) {
 	message := map[string]interface{}{
 		"type": task.Name, "data": messageData,
 	}
-	err := self.queueWriter.Put(ctx, self.queueName, task.ChatId, message)
+	err := self.queueWriter.Put(ctx, task.ChatId, message)
 	if err != nil {
 		self.LogError(ctx, err)
 	}

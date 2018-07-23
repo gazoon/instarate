@@ -39,22 +39,22 @@ type mediaResponse struct {
 			GraphQL struct {
 				Media struct {
 					Owner struct {
-						Username string
-					}
+						Username string `json:"username"`
+					} `json:"owner"`
 					DisplayResources []struct {
-						Src string
+						Src string `json:"src"`
 					} `json:"display_resources"`
 					IsVideo *bool `json:"is_video"`
 					Sidecar struct {
 						Edges []struct {
 							Node struct {
 								IsVideo *bool `json:"is_video"`
-							}
-						}
+							} `json:"edges"`
+						} `json:"edges"`
 					} `json:"edge_sidecar_to_children"`
 				} `json:"shortcode_media"`
 			} `json:"graphql"`
-		}
+		} `json:"PostPage"`
 	} `json:"entry_data"`
 }
 
@@ -127,11 +127,11 @@ type userResponse struct {
 			GraphQL struct {
 				User struct {
 					FollowedBy struct {
-						Count *int
+						Count *int `json:"count"`
 					} `json:"edge_followed_by"`
-				}
+				} `json:"user"`
 			} `json:"graphql"`
-		}
+		} `json:"ProfilePage"`
 	} `json:"entry_data"`
 }
 

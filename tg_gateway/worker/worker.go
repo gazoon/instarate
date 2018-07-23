@@ -14,7 +14,7 @@ type Worker struct {
 	queue *queue.MongoWriter
 }
 
-func New(config *config.Config) (*Worker, error) {
+func New(config *config.ConfigSchema) (*Worker, error) {
 	mongoWriter, err := queue.NewMongoWriter(config.MongoQueue)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func New(config *config.Config) (*Worker, error) {
 	return &Worker{queue: mongoWriter, LoggerMixin: logger}, nil
 }
 
-func (self *Worker) ProcessUpdate(ctx context.Context, queueName string, update *tgbotapi.Update) error {
+func (self *Worker) ProcessUpdate(ctx context.Context, update *tgbotapi.Update) error {
 	logger := self.GetLogger(ctx)
 	logger.WithField("update", utils.ObjToString(update)).Info("Update received")
 	chatId, message := buildQueueMessage(update)
@@ -31,7 +31,7 @@ func (self *Worker) ProcessUpdate(ctx context.Context, queueName string, update 
 		logger.Info("Unsupported update, skip")
 		return nil
 	}
-	return self.queue.Put(ctx, queueName, chatId, message)
+	return self.queue.Put(ctx, chatId, message)
 }
 
 func buildQueueMessage(update *tgbotapi.Update) (int, map[string]interface{}) {

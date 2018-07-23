@@ -60,6 +60,17 @@ func (self *Reader) GetAndRemoveTask(ctx context.Context) (*Task, error) {
 	return task, nil
 }
 
+func (self *Reader) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"do_at"}})
+	if err != nil {
+		return errors.Wrap(err, "key: do_at")
+	}
+
+	return nil
+}
+
 type Publisher struct {
 	client *mgo.Collection
 }
@@ -91,4 +102,16 @@ func (self *Publisher) DeleteTask(ctx context.Context, chatId int, name string) 
 		return nil
 	}
 	return errors.Wrap(err, "delete task document")
+}
+
+func (self *Publisher) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(
+		mgo.Index{Key: []string{"chat_id", "name"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: chat_id,name")
+	}
+
+	return nil
 }

@@ -56,10 +56,19 @@ func InitBot() *core.Bot {
 	bot := core.NewBot(competitionAPI, chatsStorage, cacheStorage, tg, schedulerAPI, locales, Config.Bot)
 	return bot
 }
-func InitIncomingQueue() *queue.MongoReader {
-	incomingQueue, err := queue.NewMongoReader(Config.MongoQueue)
+
+func InitQueueReader() *queue.MongoReader {
+	queueReader, err := queue.NewMongoReader(Config.MongoQueue)
 	if err != nil {
 		panic(err)
 	}
-	return incomingQueue
+	return queueReader
+}
+
+func InitQueueWriter() *queue.MongoWriter {
+	queueWriter, err := queue.NewMongoWriter(Config.MongoQueue)
+	if err != nil {
+		panic(err)
+	}
+	return queueWriter
 }

@@ -14,20 +14,23 @@ import (
 	"gopkg.in/telegram-bot-api.v4"
 )
 
-type ProcessUpdate func(ctx context.Context, queueName string, update *tgbotapi.Update) error
+func BuildWebhookPath(botToken string) string {
+	return "/update/" + botToken
+}
+
+type ProcessUpdate func(ctx context.Context, update *tgbotapi.Update) error
 
 type Webhook struct {
 	*logging.LoggerMixin
-	httpServer      *http.Server
-	botTokenToQueue map[string]string
-	processUpdate   ProcessUpdate
+	httpServer    *http.Server
+	processUpdate ProcessUpdate
 }
 
-func New(port int, botTokenToQueue map[string]string, processUpdate ProcessUpdate) *Webhook {
+func New(port int, botToken string, processUpdate ProcessUpdate) *Webhook {
 	logger := logging.NewLoggerMixin("webhook", nil)
-	webhook := &Webhook{processUpdate: processUpdate, botTokenToQueue: botTokenToQueue, LoggerMixin: logger}
+	webhook := &Webhook{processUpdate: processUpdate, LoggerMixin: logger}
 	r := httprouter.New()
-	r.POST("/update/:bot_token", webhook.updateHandler)
+	r.POST(BuildWebhookPath(botToken), webhook.updateHandler)
 	webhook.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: r}
 	return webhook
 }
@@ -46,7 +49,7 @@ func (self *Webhook) Stop() error {
 	return self.httpServer.Shutdown(ctx)
 }
 
-func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := utils.FillContext(r.Context())
 	defer func() {
 		if r := recover(); r != nil {
@@ -54,13 +57,7 @@ func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps ht
 		}
 	}()
 	logger := self.GetLogger(ctx)
-	botToken := ps.ByName("bot_token")
-	queueName, ok := self.botTokenToQueue[botToken]
-	if !ok {
-		logger.WithField("bot_token", botToken).Error("Unknown bot token")
-		http.NotFound(w, r)
-		return
-	}
+
 	update := &tgbotapi.Update{}
 	err := json.NewDecoder(r.Body).Decode(update)
 	if err != nil {
@@ -68,7 +65,7 @@ func (self *Webhook) updateHandler(w http.ResponseWriter, r *http.Request, ps ht
 		http.Error(w, "Bad request data", http.StatusBadRequest)
 		return
 	}
-	err = self.processUpdate(ctx, queueName, update)
+	err = self.processUpdate(ctx, update)
 	if err != nil {
 		self.handleError(ctx, w, err)
 		return

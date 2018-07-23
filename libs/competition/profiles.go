@@ -18,10 +18,10 @@ var (
 )
 
 type InstProfile struct {
-	Username      string
-	PhotoPath     string `bson:"photo"`
-	PhotoInstCode string `bson:"photo_code"`
-	Followers     int
+	Username      string    `bson:"username"`
+	PhotoPath     string    `bson:"photo"`
+	PhotoInstCode string    `bson:"photo_code"`
+	Followers     int       `bson:"followers"`
 	AddedAt       time.Time `bson:"added_at"`
 }
 
@@ -83,4 +83,15 @@ func (self *ProfilesStorage) getMultiple(ctx context.Context, usernames []string
 func (self *ProfilesStorage) delete(ctx context.Context, usernames []string) error {
 	_, err := self.client.RemoveAll(bson.M{"username": bson.M{"$in": usernames}})
 	return errors.Wrap(err, "delete all profile documents by usernames")
+}
+
+func (self *ProfilesStorage) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: username")
+	}
+
+	return nil
 }

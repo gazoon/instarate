@@ -38,3 +38,14 @@ func (self *MongoStorage) Save(ctx context.Context, chat *models.Chat) error {
 	_, err := self.client.Upsert(bson.M{"chat_id": chat.Id}, chat)
 	return errors.Wrap(err, "upsert chat document")
 }
+
+func (self *MongoStorage) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"chat_id"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: chat_id")
+	}
+
+	return nil
+}

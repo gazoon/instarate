@@ -39,3 +39,14 @@ func (self *Mongo) Set(ctx context.Context, key, value string) error {
 	)
 	return errors.Wrap(err, "upsert cache-record document")
 }
+
+func (self *Mongo) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"key"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: key")
+	}
+
+	return nil
+}

@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	taskStorage := services.InitTaskStorage()
+	taskStorage := services.InitTaskReader()
 	tasksPipe := sender.NewTasksPipeline(taskStorage.GetAndRemoveTask, taskSender.SendTask)
 	worker := consumer.New(tasksPipe.Fetch, Config.TasksConsumer.FetchDelay)
 	worker.Run()

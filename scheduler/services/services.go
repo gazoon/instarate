@@ -5,7 +5,7 @@ import (
 	"instarate/scheduler/tasks"
 )
 
-func InitTaskStorage() *tasks.Reader {
+func InitTaskReader() *tasks.Reader {
 	taskStorage, err := tasks.NewReader(Config.MongoTasks)
 	if err != nil {
 		panic(err)

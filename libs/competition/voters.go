@@ -27,10 +27,10 @@ func (self *VotersStorage) tryVote(ctx context.Context, competitionCode, votersG
 	competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	err := self.client.Insert(bson.M{
-		"competition":    competitionCode,
 		"voters_group":   votersGroup,
-		"voter":          voter,
+		"competition":    competitionCode,
 		"competitors_id": unitedCompetitorsId,
+		"voter":          voter,
 	})
 	if err != nil {
 		if mgo.IsDup(err) {
@@ -44,14 +44,30 @@ func (self *VotersStorage) tryVote(ctx context.Context, competitionCode, votersG
 func (self *VotersStorage) haveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	rows, err := self.client.Find(bson.M{
-		"competition":    competitionCode,
 		"voters_group":   votersGroup,
+		"competition":    competitionCode,
 		"competitors_id": unitedCompetitorsId,
 	}).Count()
 	if err != nil {
 		return false, errors.Wrap(err, "count vote-record documents")
 	}
 	return rows == 1, err
+}
+
+func (self *VotersStorage) CreateIndexes() error {
+	var err error
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"voter"}})
+	if err != nil {
+		return errors.Wrap(err, "key: voter")
+	}
+
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{"voters_group", "competition", "competitors_id", "voter"}, Unique: true})
+	if err != nil {
+		return errors.Wrap(err, "unique key: voters_group,competition,competitors_id,voter")
+	}
+
+	return nil
 }
 
 func buildUnitedId(ids ...string) string {

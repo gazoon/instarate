@@ -1,9 +1,7 @@
 package main
 
 import (
-	"path"
-
-	"instarate/tg_gateway/config"
+	. "instarate/tg_gateway/config"
 	"instarate/tg_gateway/webhook"
 	"instarate/tg_gateway/worker"
 
@@ -12,22 +10,16 @@ import (
 )
 
 func main() {
-	conf := &config.Config{}
-	configPath := path.Join(utils.GetCurrentFileDir(), "config")
-	err := utils.ParseConfig(configPath, conf)
+	logging.PatchStdLog(Config.LogLevel, Config.ServiceName)
+	err := utils.InitializeSentry(Config.Sentry.DSN)
 	if err != nil {
 		panic(err)
 	}
-	logging.PatchStdLog(conf.LogLevel, conf.ServiceName)
-	err = utils.InitializeSentry(conf.Sentry.DSN)
+	updatesWorker, err := worker.New(Config)
 	if err != nil {
 		panic(err)
 	}
-	updatesWorker, err := worker.New(conf)
-	if err != nil {
-		panic(err)
-	}
-	webhookServer := webhook.New(conf.Port, conf.KnownBots, updatesWorker.ProcessUpdate)
+	webhookServer := webhook.New(Config.Port, Config.BotToken, updatesWorker.ProcessUpdate)
 	webhookServer.Run()
 	utils.WaitingForShutdown()
 	webhookServer.Stop()

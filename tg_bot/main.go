@@ -19,7 +19,7 @@ func main() {
 		panic(err)
 	}
 	bot := services.InitBot()
-	incomingQueue := services.InitIncomingQueue()
+	incomingQueue := services.InitQueueReader()
 	messagesPipe := core.NewMessagesPipe(incomingQueue, bot.OnMessage)
 	worker := consumer.New(messagesPipe.Fetch, Config.QueueConsumer.FetchDelay)
 	worker.Run()

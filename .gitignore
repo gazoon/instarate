@@ -21,3 +21,4 @@ erl_crash.dump
 *.ez
 .idea
 *.iml
+*.local.yaml
