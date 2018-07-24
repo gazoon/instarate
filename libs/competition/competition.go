@@ -120,11 +120,14 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	if err != nil {
 		return nil, err
 	}
-	competitions := choseCompetition(followers)
+	competitions := ChoseCompetitions(followers)
 	logger.WithField("competitions", competitions).Info("Add new profile to suitable competitions")
 	for _, competitionCode := range competitions {
-		compttr := CreateCompetitor(mediaInfo.Owner, competitionCode)
+		compttr := NewCompetitor(mediaInfo.Owner, competitionCode)
 		err = self.competitors.Create(ctx, compttr)
+		if _, ok := err.(CompetitorAlreadyExists); ok {
+			return nil, errors.Wrap(err, "competitor already allocated in the competition")
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +290,7 @@ func combineProfileAndCompetitor(profile *InstProfile, competitor *Competitor) *
 	return &InstCompetitor{InstProfile: profile, Competitor: competitor, Username: profile.Username}
 }
 
-func choseCompetition(followersNumber int) []string {
+func ChoseCompetitions(followersNumber int) []string {
 	var competitionByFollowers string
 	if followersNumber < modelFollowersThreshold {
 		competitionByFollowers = RegularCompetition

@@ -15,6 +15,8 @@ const (
 	randomPairGetAttempts = 5
 )
 
+type CompetitorAlreadyExists error
+
 type Competitor struct {
 	Username        string `bson:"username"`
 	CompetitionCode string `bson:"competition"`
@@ -24,7 +26,7 @@ type Competitor struct {
 	Loses           int    `bson:"loses"`
 }
 
-func CreateCompetitor(username, competitionCode string) *Competitor {
+func NewCompetitor(username, competitionCode string) *Competitor {
 	return &Competitor{Username: username, CompetitionCode: competitionCode, Rating: initialRating}
 }
 
@@ -64,7 +66,7 @@ func (self *CompetitorsStorage) Get(ctx context.Context, competitionCode, userna
 		if err == mgo.ErrNotFound {
 			return nil, &CompetitorNotFound{Username: username}
 		}
-		return nil, errors.Wrap(err, "get single Competitor document")
+		return nil, errors.Wrap(err, "get single competitor document")
 	}
 	return result, nil
 }
@@ -76,7 +78,7 @@ func (self *CompetitorsStorage) GetNumberWithHigherRating(ctx context.Context, c
 		"competition": competitionCode, "rating": bson.M{"$gt": rating},
 	}).All(&result)
 	if err != nil {
-		return 0, errors.Wrap(err, "get Competitor documents with higher rating")
+		return 0, errors.Wrap(err, "get competitor documents with higher rating")
 	}
 	ratings := map[int]bool{}
 	for _, compettr := range result {
@@ -95,12 +97,15 @@ func (self *CompetitorsStorage) Update(ctx context.Context, model *Competitor) e
 			"matches": model.Matches,
 		}},
 	)
-	return errors.Wrap(err, "update Competitor document")
+	return errors.Wrap(err, "update competitor document")
 }
 
 func (self *CompetitorsStorage) Create(ctx context.Context, model *Competitor) error {
 	err := self.client.Insert(model)
-	return errors.Wrap(err, "insert new Competitor document")
+	if mgo.IsDup(err) {
+		return CompetitorAlreadyExists(err)
+	}
+	return errors.Wrap(err, "insert new competitor document")
 }
 
 func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCode string) (*Competitor, *Competitor, error) {
@@ -121,7 +126,7 @@ func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCo
 			return competitorOne, competitorTwo, nil
 		}
 	}
-	return nil, nil, errors.Errorf("can't get two distinct Competitor in %s", competitionCode)
+	return nil, nil, errors.Errorf("can't get two distinct competitor in %s", competitionCode)
 }
 
 func (self *CompetitorsStorage) CreateIndexes() error {

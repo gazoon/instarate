@@ -252,6 +252,9 @@ func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
 	if err == competition.AlreadyVotedErr {
 		return nil
 	}
+	if _, ok := err.(*competition.CompetitorNotFound); ok {
+		return errors.Wrap(err, "winner or loser is no longer in the competition")
+	}
 	if err != nil {
 		return err
 	}

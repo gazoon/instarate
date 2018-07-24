@@ -71,6 +71,15 @@ func (self *ProfilesStorage) Get(ctx context.Context, username string) (*InstPro
 	return result, nil
 }
 
+func (self *ProfilesStorage) GetAll(ctx context.Context) ([]*InstProfile, error) {
+	var result []*InstProfile
+	err := self.client.Find(nil).All(&result)
+	if err != nil {
+		return nil, errors.Wrap(err, "get all profile document")
+	}
+	return result, nil
+}
+
 func (self *ProfilesStorage) GetMultiple(ctx context.Context, usernames []string) ([]*InstProfile, error) {
 	var result []*InstProfile
 	err := self.client.Find(bson.M{"username": bson.M{"$in": usernames}}).All(&result)
