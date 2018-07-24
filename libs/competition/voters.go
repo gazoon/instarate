@@ -57,12 +57,15 @@ func (self *VotersStorage) haveSeenPair(ctx context.Context, competitionCode, vo
 func (self *VotersStorage) CreateIndexes() error {
 	var err error
 
+	// This index is useful in case we need the history for a specific user.
 	err = self.client.EnsureIndex(mgo.Index{Key: []string{"voter"}})
 	if err != nil {
 		return errors.Wrap(err, "key: voter")
 	}
 
-	err = self.client.EnsureIndex(mgo.Index{Key: []string{"voters_group", "competition", "competitors_id", "voter"}, Unique: true})
+	// voters_group is the first because we may want to retrieve the history for a group.
+	err = self.client.EnsureIndex(mgo.Index{Key: []string{
+		"voters_group", "competition", "competitors_id", "voter"}, Unique: true})
 	if err != nil {
 		return errors.Wrap(err, "unique key: voters_group,competition,competitors_id,voter")
 	}

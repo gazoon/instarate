@@ -65,7 +65,7 @@ func (self *Bot) onText(ctx context.Context, chat *models.Chat, message *message
 	}
 
 	logger.Info("Handling regular text message")
-	return self.handleRegularText(ctx, chat, message)
+	return self.handleFreeInput(ctx, chat, message)
 }
 
 func (self *Bot) detectTextCommand(chat *models.Chat, message *messages.TextMessage) *TextCommand {
@@ -299,7 +299,7 @@ func (self *Bot) setVotingTimeoutCmd(ctx context.Context, chat *models.Chat, mes
 	return err
 }
 
-func (self *Bot) handleRegularText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+func (self *Bot) handleFreeInput(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	link := message.GetLastWord()
 	if link == "" {
 		return self.sendDontGetYou(ctx, chat)

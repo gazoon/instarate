@@ -19,6 +19,10 @@ func (self *Bot) onNextPairTask(ctx context.Context, chat *models.Chat,
 			Info("Next pair task relates to another match, skip")
 		return nil
 	}
+	// This task fires when the chat is ready for the next pair.
+	// No need to do the checks.
+	// Even more trySendNextGirlsPair can reject the sending,
+	// because of the clock drift in distributed systems.
 	return self.sendNextGirlsPair(ctx, chat)
 }
 
@@ -29,5 +33,8 @@ func (self *Bot) onDailyActivationTask(ctx context.Context, chat *models.Chat,
 	if _, err := self.messenger.SendText(ctx, chat.Id, text); err != nil {
 		return err
 	}
-	return self.sendNextGirlsPair(ctx, chat)
+	// Daily activation task fires after 24 hours inactivity in the chat,
+	// so actually we can call sendNextGirlsPair directly and it will be safe.
+	// But it costs nothing to do extra checks.
+	return self.trySendNextGirlsPair(ctx, chat)
 }

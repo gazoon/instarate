@@ -1,8 +1,12 @@
 . scale coefficient depending on number of matches or and current rating
 . think about webview based top page
 . add vpn, to protect internal services and db
+. write script to update followers number
 . enhance ban mechanism, let users do ban reports, mark reported girls
 . add photo verification, when someone adds a girl
+. test the most complicated parts:
+  competition.Add, competition.Vote, bot.handleFreeInput, bot.addGirlCmd, bot.girlProfileCmd,
+  bot.sendNextGirlsPair, bot.trySendNextGirlsPair
 . text girls from the top via instagram
 . temporary disable girls, that disabled theirs instagram account
 . add list of protected girls, they can't be added

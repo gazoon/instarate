@@ -30,31 +30,33 @@ func NewMatch(messageId int, leftGirlUsername, rightGirlUsername string) *Match 
 	}
 }
 
-type TopRecord struct {
-	MessageId int       `bson:"message_id"`
-	ShownAt   time.Time `bson:"shown_at"`
-}
-
-func NewTopRecord(messageId int) *TopRecord {
-	return &TopRecord{
-		MessageId: messageId,
-		ShownAt:   utils.UTCNow(),
-	}
-}
+//TopRecord model is needed to implement show top with timeouts,
+// like the voting process.
+//type TopRecord struct {
+//	MessageId int       `bson:"message_id"`
+//	ShownAt   time.Time `bson:"shown_at"`
+//}
+//
+//func NewTopRecord(messageId int) *TopRecord {
+//	return &TopRecord{
+//		MessageId: messageId,
+//		ShownAt:   utils.UTCNow(),
+//	}
+//}
 
 type Chat struct {
-	Id                    int        `bson:"chat_id"`
-	MembersNum            int        `bson:"members_number"`
-	IsGroupChat           bool       `bson:"is_group_chat"`
-	LastMatch             *Match     `bson:"last_match"`
-	LastTopRecord         *TopRecord `bson:"top_record"`
-	CurrentTopOffset      int        `bson:"current_top_offset"`
-	CreatedAt             time.Time  `bson:"created_at"`
-	CompetitionCode       string     `bson:"competition_code"`
-	SelfActivationAllowed bool       `bson:"self_activation_allowed"`
-	VotingTimeout         int        `bson:"voting_timeout"`
-	ShowTopTimeout        int        `bson:"top_timeout"`
-	Language              string     `bson:"language"`
+	Id          int    `bson:"chat_id"`
+	MembersNum  int    `bson:"members_number"`
+	IsGroupChat bool   `bson:"is_group_chat"`
+	LastMatch   *Match `bson:"last_match"`
+	//LastTopRecord         *TopRecord `bson:"top_record"`
+	CurrentTopOffset      int       `bson:"current_top_offset"`
+	CreatedAt             time.Time `bson:"created_at"`
+	CompetitionCode       string    `bson:"competition_code"`
+	SelfActivationAllowed bool      `bson:"self_activation_allowed"`
+	VotingTimeout         int       `bson:"voting_timeout"`
+	ShowTopTimeout        int       `bson:"top_timeout"`
+	Language              string    `bson:"language"`
 }
 
 func NewChat(chatId, membersNum int, isGroupChat bool) *Chat {

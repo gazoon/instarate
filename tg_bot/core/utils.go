@@ -10,9 +10,7 @@ import (
 )
 
 func initializeContext(ctx context.Context, message messages.Message) context.Context {
-
 	logger := log.WithField("chat_id", message.GetChatId())
-
 	ctx = logging.NewContext(ctx, logger)
 	return ctx
 }

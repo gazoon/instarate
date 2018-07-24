@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/telegram-bot-api.v4"
 	"instarate/libs/competition"
-	"instarate/libs/instagram"
 	"instarate/scheduler/tasks"
 	"instarate/tg_bot/cache"
 	"instarate/tg_bot/chats"
@@ -311,9 +310,6 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 
 func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink string) error {
 	profile, err := self.competition.Add(ctx, photoLink)
-	if err == competition.BadPhotoLinkErr || err == instagram.MediaForbidden {
-		return err
-	}
 	if err == competition.NotPhotoMediaErr {
 		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_not_photo"))
 		return err
@@ -335,9 +331,6 @@ func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink strin
 
 func (self *Bot) sendGirlProfile(ctx context.Context, chat *models.Chat, profileLink string) error {
 	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, profileLink)
-	if _, ok := err.(*competition.CompetitorNotFound); ok || err == competition.BadProfileLinkErr {
-		return err
-	}
 	if err != nil {
 		return err
 	}
