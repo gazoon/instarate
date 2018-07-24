@@ -141,7 +141,7 @@ func (self *Bot) showTopCmd(ctx context.Context, chat *models.Chat, message *mes
 			offset = startPosition - 1
 		}
 	}
-	chat.ResetState()
+	chat.ResetLastMatch()
 	chat.CurrentTopOffset = offset
 	return self.sendGirlFromTop(ctx, chat)
 }
@@ -186,51 +186,43 @@ func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *m
 }
 
 func (self *Bot) globalCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	text := self.gettext(chat, "global_competition_enabled")
-	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
-	}); err != nil {
-		return err
-	}
-	chat.CompetitionCode = competition.GlobalCompetition
-	chat.ResetState()
-	return nil
+	return self.changeCompetition(ctx, chat, competition.GlobalCompetition)
 }
 
 func (self *Bot) celebritiesCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	text := self.gettext(chat, "celebrities_competition_enabled")
-	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
-	}); err != nil {
-		return err
-	}
-	chat.CompetitionCode = competition.CelebritiesCompetition
-	chat.ResetState()
-	return nil
+	return self.changeCompetition(ctx, chat, competition.CelebritiesCompetition)
 }
 
 func (self *Bot) modelsCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	text := self.gettext(chat, "models_competition_enabled")
-	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
-	}); err != nil {
-		return err
-	}
-	chat.CompetitionCode = competition.ModelsCompetition
-	chat.ResetState()
-	return nil
+	return self.changeCompetition(ctx, chat, competition.ModelsCompetition)
 }
 
 func (self *Bot) regularCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	text := self.gettext(chat, "regular_competition_enabled")
+	return self.changeCompetition(ctx, chat, competition.RegularCompetition)
+}
+
+func (self *Bot) changeCompetition(ctx context.Context, chat *models.Chat, newCompetition string) error {
+	var msgid string
+	if newCompetition == competition.RegularCompetition {
+		msgid = "regular_competition_enabled"
+	} else if newCompetition == competition.ModelsCompetition {
+		msgid = "models_competition_enabled"
+	} else if newCompetition == competition.CelebritiesCompetition {
+		msgid = "celebrities_competition_enabled"
+	} else {
+		msgid = "global_competition_enabled"
+	}
+	text := self.gettext(chat, msgid)
 	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
 		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	}); err != nil {
 		return err
 	}
-	chat.CompetitionCode = competition.RegularCompetition
-	chat.ResetState()
+	chat.CompetitionCode = newCompetition
+	chat.ResetLastMatch()
+	chat.ResetTopOffset()
 	return nil
+
 }
 
 func (self *Bot) enableNotificationsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {

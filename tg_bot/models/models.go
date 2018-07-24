@@ -87,7 +87,10 @@ func (self *Chat) GetShowTopTimeout() int {
 	return 0
 }
 
-func (self *Chat) ResetState() {
-	self.LastMatch = nil
+func (self *Chat) ResetTopOffset() {
 	self.CurrentTopOffset = 0
+}
+
+func (self *Chat) ResetLastMatch() {
+	self.LastMatch = nil
 }

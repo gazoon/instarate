@@ -192,7 +192,7 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 		_, err = self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
 			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 		})
-		chat.ResetState()
+		chat.ResetLastMatch()
 		return err
 	}
 	leftGirl, rightGirl := girl1, girl2
@@ -308,7 +308,7 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "no_more_girls_in_top"), func(msg *tgbotapi.MessageConfig) {
 			msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 		})
-		chat.ResetState()
+		chat.ResetTopOffset()
 		return err
 	}
 	var keyboard interface{} = tgbotapi.ReplyKeyboardMarkup{
@@ -318,7 +318,7 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 		}}
 	if len(girls) == 1 {
 		keyboard = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
-		chat.ResetState()
+		chat.ResetTopOffset()
 	}
 	girl := girls[0]
 	caption := self.getPlaceInCompetitionText(chat, offset+1) + girl.GetProfileLink()
