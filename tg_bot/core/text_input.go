@@ -178,19 +178,11 @@ func (self *Bot) chatSettingsCmd(ctx context.Context, chat *models.Chat, message
 }
 
 func (self *Bot) leftVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	if chat.LastMatch == nil {
-		self.GetLogger(ctx).Info("Received left vote command, but chat doesn't have a match")
-		return nil
-	}
-	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.LeftGirlUsername, chat.LastMatch.RightGirlUsername)
+	return self.processVoteMessage(ctx, chat, message, leftVote)
 }
 
 func (self *Bot) rightVoteCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	if chat.LastMatch == nil {
-		self.GetLogger(ctx).Info("Received right vote command, but chat doesn't have a match")
-		return nil
-	}
-	return self.processVoteMessage(ctx, chat, message, chat.LastMatch.RightGirlUsername, chat.LastMatch.LeftGirlUsername)
+	return self.processVoteMessage(ctx, chat, message, rightVote)
 }
 
 func (self *Bot) globalCompetitionCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {

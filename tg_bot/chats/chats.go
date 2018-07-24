@@ -39,6 +39,12 @@ func (self *MongoStorage) Save(ctx context.Context, chat *models.Chat) error {
 	return errors.Wrap(err, "upsert chat document")
 }
 
+func (self *MongoStorage) ResetState(ctx context.Context, chatId int) error {
+	err := self.client.Update(bson.M{"chat_id": chatId},
+		bson.M{"$set": bson.M{"last_match": nil, "current_top_offset": 0}})
+	return errors.Wrap(err, "reset chat state")
+}
+
 func (self *MongoStorage) CreateIndexes() error {
 	var err error
 

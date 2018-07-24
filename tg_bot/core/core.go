@@ -21,6 +21,11 @@ import (
 	"time"
 )
 
+const (
+	leftVote  = "LEFT_VOTE"
+	rightVote = "RIGHT_VOTE"
+)
+
 var (
 	sessionDuration = 20 * time.Minute
 )
@@ -90,6 +95,9 @@ func (self *Bot) processMessage(ctx context.Context, message messages.Message) e
 		return err
 	}
 	if err = self.dispatchMessage(ctx, chat, message); err != nil {
+		if resetErr := self.chats.ResetState(ctx, chat.Id); resetErr != nil {
+			self.LogError(ctx, resetErr)
+		}
 		return err
 	}
 	if err = self.chats.Save(ctx, chat); err != nil {
@@ -245,7 +253,17 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 }
 
 func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
-	message messages.UserMessage, winner, loser string) error {
+	message messages.UserMessage, voteSide string) error {
+	if chat.LastMatch == nil {
+		self.GetLogger(ctx).Infof("Received %s vote command, but chat doesn't have a match", voteSide)
+		return self.sendDontGetYou(ctx, chat)
+	}
+	var winner, loser string
+	if voteSide == leftVote {
+		winner, loser = chat.LastMatch.LeftGirlUsername, chat.LastMatch.RightGirlUsername
+	} else {
+		winner, loser = chat.LastMatch.RightGirlUsername, chat.LastMatch.LeftGirlUsername
+	}
 	votersGroupId := buildVotersGroupId(message.GetChatId())
 	voterId := buildVoterId(message.GetUser())
 	_, _, err := self.competition.Vote(ctx, chat.CompetitionCode, votersGroupId, voterId, winner, loser)
