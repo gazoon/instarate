@@ -47,7 +47,7 @@ func (self *CompetitorNotFound) Error() string {
 type InstCompetitor struct {
 	Username string
 	*InstProfile
-	*competitor
+	*Competitor
 }
 
 func (self InstCompetitor) String() string {
@@ -106,7 +106,7 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	if err != nil {
 		return nil, err
 	}
-	profile := newProfile(mediaInfo.Owner, mediaCode, followers)
+	profile := NewProfile(mediaInfo.Owner, mediaCode, followers)
 	logger.WithField("profile", profile).Info("Add new instagram profile")
 	err = self.profiles.Create(ctx, profile)
 	if err == ProfileExistsErr {
@@ -123,7 +123,7 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	competitions := choseCompetition(followers)
 	logger.WithField("competitions", competitions).Info("Add new profile to suitable competitions")
 	for _, competitionCode := range competitions {
-		compttr := createCompetitor(mediaInfo.Owner, competitionCode)
+		compttr := CreateCompetitor(mediaInfo.Owner, competitionCode)
 		err = self.competitors.Create(ctx, compttr)
 		if err != nil {
 			return nil, err
@@ -245,7 +245,7 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 	return self.convertPairToInstCompetitors(ctx, winner, loser)
 }
 
-func (self *Competition) convertPairToInstCompetitors(ctx context.Context, competitor1, competitor2 *competitor) (*InstCompetitor, *InstCompetitor, error) {
+func (self *Competition) convertPairToInstCompetitors(ctx context.Context, competitor1, competitor2 *Competitor) (*InstCompetitor, *InstCompetitor, error) {
 	competitorsPair, err := self.convertToInstCompetitors(ctx, competitor1, competitor2)
 	if err != nil {
 		return nil, nil, err
@@ -256,7 +256,7 @@ func (self *Competition) convertPairToInstCompetitors(ctx context.Context, compe
 	return competitorsPair[0], competitorsPair[1], nil
 }
 
-func (self *Competition) convertToInstCompetitors(ctx context.Context, competitors ...*competitor) ([]*InstCompetitor, error) {
+func (self *Competition) convertToInstCompetitors(ctx context.Context, competitors ...*Competitor) ([]*InstCompetitor, error) {
 	usernames := make([]string, len(competitors))
 	for i := range usernames {
 		usernames[i] = competitors[i].Username
@@ -283,8 +283,8 @@ func (self *Competition) convertToInstCompetitors(ctx context.Context, competito
 	return result, nil
 }
 
-func combineProfileAndCompetitor(profile *InstProfile, competitor *competitor) *InstCompetitor {
-	return &InstCompetitor{InstProfile: profile, competitor: competitor, Username: profile.Username}
+func combineProfileAndCompetitor(profile *InstProfile, competitor *Competitor) *InstCompetitor {
+	return &InstCompetitor{InstProfile: profile, Competitor: competitor, Username: profile.Username}
 }
 
 func choseCompetition(followersNumber int) []string {

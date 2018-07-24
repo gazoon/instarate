@@ -15,7 +15,7 @@ const (
 	randomPairGetAttempts = 5
 )
 
-type competitor struct {
+type Competitor struct {
 	Username        string `bson:"username"`
 	CompetitionCode string `bson:"competition"`
 	Rating          int    `bson:"rating"`
@@ -24,8 +24,8 @@ type competitor struct {
 	Loses           int    `bson:"loses"`
 }
 
-func createCompetitor(username, competitionCode string) *competitor {
-	return &competitor{Username: username, CompetitionCode: competitionCode, Rating: initialRating}
+func CreateCompetitor(username, competitionCode string) *Competitor {
+	return &Competitor{Username: username, CompetitionCode: competitionCode, Rating: initialRating}
 }
 
 type CompetitorsStorage struct {
@@ -40,8 +40,8 @@ func NewCompetitorsStorage(mongoSettings *utils.MongoDBSettings) (*CompetitorsSt
 	return &CompetitorsStorage{collection}, nil
 }
 
-func (self *CompetitorsStorage) GetTop(ctx context.Context, competitionCode string, number, offset int) ([]*competitor, error) {
-	var result []*competitor
+func (self *CompetitorsStorage) GetTop(ctx context.Context, competitionCode string, number, offset int) ([]*Competitor, error) {
+	var result []*Competitor
 	err := self.client.Find(bson.M{"competition": competitionCode}).
 		Sort("-rating").Skip(offset).Limit(number).All(&result)
 	return result, errors.Wrap(err, "get top from mongo")
@@ -57,26 +57,26 @@ func (self *CompetitorsStorage) GetCompetitorsNumber(ctx context.Context, compet
 	return num, errors.Wrap(err, "count all competitors documents")
 }
 
-func (self *CompetitorsStorage) Get(ctx context.Context, competitionCode, username string) (*competitor, error) {
-	result := &competitor{}
+func (self *CompetitorsStorage) Get(ctx context.Context, competitionCode, username string) (*Competitor, error) {
+	result := &Competitor{}
 	err := self.client.Find(bson.M{"competition": competitionCode, "username": username}).One(result)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, &CompetitorNotFound{Username: username}
 		}
-		return nil, errors.Wrap(err, "get single competitor document")
+		return nil, errors.Wrap(err, "get single Competitor document")
 	}
 	return result, nil
 }
 
 func (self *CompetitorsStorage) GetNumberWithHigherRating(ctx context.Context, competitionCode string, rating int) (int, error) {
-	var result []*competitor
+	var result []*Competitor
 	fmt.Println(competitionCode, rating)
 	err := self.client.Find(bson.M{
 		"competition": competitionCode, "rating": bson.M{"$gt": rating},
 	}).All(&result)
 	if err != nil {
-		return 0, errors.Wrap(err, "get competitor documents with higher rating")
+		return 0, errors.Wrap(err, "get Competitor documents with higher rating")
 	}
 	ratings := map[int]bool{}
 	for _, compettr := range result {
@@ -85,7 +85,7 @@ func (self *CompetitorsStorage) GetNumberWithHigherRating(ctx context.Context, c
 	return len(ratings), nil
 }
 
-func (self *CompetitorsStorage) Update(ctx context.Context, model *competitor) error {
+func (self *CompetitorsStorage) Update(ctx context.Context, model *Competitor) error {
 	err := self.client.Update(
 		bson.M{"competition": model.CompetitionCode, "username": model.Username},
 		bson.M{"$set": bson.M{
@@ -95,17 +95,17 @@ func (self *CompetitorsStorage) Update(ctx context.Context, model *competitor) e
 			"matches": model.Matches,
 		}},
 	)
-	return errors.Wrap(err, "update competitor document")
+	return errors.Wrap(err, "update Competitor document")
 }
 
-func (self *CompetitorsStorage) Create(ctx context.Context, model *competitor) error {
+func (self *CompetitorsStorage) Create(ctx context.Context, model *Competitor) error {
 	err := self.client.Insert(model)
-	return errors.Wrap(err, "insert new competitor document")
+	return errors.Wrap(err, "insert new Competitor document")
 }
 
-func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCode string) (*competitor, *competitor, error) {
+func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCode string) (*Competitor, *Competitor, error) {
 	for i := 0; i < randomPairGetAttempts; i++ {
-		var result []*competitor
+		var result []*Competitor
 		err := self.client.Pipe([]bson.M{
 			{"$match": bson.M{"competition": competitionCode}},
 			{"$sample": bson.M{"size": 2}},
@@ -121,7 +121,7 @@ func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCo
 			return competitorOne, competitorTwo, nil
 		}
 	}
-	return nil, nil, errors.Errorf("can't get two distinct competitor in %s", competitionCode)
+	return nil, nil, errors.Errorf("can't get two distinct Competitor in %s", competitionCode)
 }
 
 func (self *CompetitorsStorage) CreateIndexes() error {

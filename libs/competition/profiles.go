@@ -25,7 +25,7 @@ type InstProfile struct {
 	AddedAt       time.Time `bson:"added_at"`
 }
 
-func newProfile(username, photoInstCode string, followers int) *InstProfile {
+func NewProfile(username, photoInstCode string, followers int) *InstProfile {
 	addedAt := utils.UTCNow()
 	photoStoragePath := username + "-" + uuid.NewV4().String()
 	return &InstProfile{
