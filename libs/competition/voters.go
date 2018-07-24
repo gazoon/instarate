@@ -15,7 +15,7 @@ type VotersStorage struct {
 	client *mgo.Collection
 }
 
-func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*VotersStorage, error) {
+func NewVotersStorage(mongoSettings *utils.MongoDBSettings) (*VotersStorage, error) {
 	collection, err := mongo.ConnectCollection(mongoSettings)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func newVotersStorage(mongoSettings *utils.MongoDBSettings) (*VotersStorage, err
 	return &VotersStorage{collection}, nil
 }
 
-func (self *VotersStorage) tryVote(ctx context.Context, competitionCode, votersGroup, voter,
+func (self *VotersStorage) TryVote(ctx context.Context, competitionCode, votersGroup, voter,
 	competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	err := self.client.Insert(bson.M{
@@ -41,7 +41,7 @@ func (self *VotersStorage) tryVote(ctx context.Context, competitionCode, votersG
 	return true, nil
 }
 
-func (self *VotersStorage) haveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
+func (self *VotersStorage) HaveSeenPair(ctx context.Context, competitionCode, votersGroup, competitorOne, competitorTwo string) (bool, error) {
 	unitedCompetitorsId := buildUnitedId(competitorOne, competitorTwo)
 	rows, err := self.client.Find(bson.M{
 		"voters_group":   votersGroup,

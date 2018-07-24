@@ -71,11 +71,11 @@ func NewCompetition(competitors *CompetitorsStorage, profiles *ProfilesStorage,
 }
 
 func (self *Competition) GetPhotoUrl(competitor *InstCompetitor) string {
-	return self.photosStorage.buildUrl(competitor.PhotoPath)
+	return self.photosStorage.BuildUrl(competitor.PhotoPath)
 }
 
 func (self *Competition) GetPosition(ctx context.Context, competitor *InstCompetitor) (int, error) {
-	num, err := self.competitors.getNumberWithHigherRating(ctx, competitor.CompetitionCode, competitor.Rating)
+	num, err := self.competitors.GetNumberWithHigherRating(ctx, competitor.CompetitionCode, competitor.Rating)
 	if err != nil {
 		return 0, err
 	}
@@ -108,7 +108,7 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	}
 	profile := newProfile(mediaInfo.Owner, mediaCode, followers)
 	logger.WithField("profile", profile).Info("Add new instagram profile")
-	err = self.profiles.create(ctx, profile)
+	err = self.profiles.Create(ctx, profile)
 	if err == ProfileExistsErr {
 		logger.WithField("username", mediaInfo.Owner).Info("Instagram profile already exists")
 		return profile, ProfileExistsErr
@@ -116,7 +116,7 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	if err != nil {
 		return nil, err
 	}
-	_, err = self.photosStorage.upload(ctx, profile.PhotoPath, mediaInfo.Url)
+	_, err = self.photosStorage.Upload(ctx, profile.PhotoPath, mediaInfo.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 	logger.WithField("competitions", competitions).Info("Add new profile to suitable competitions")
 	for _, competitionCode := range competitions {
 		compttr := createCompetitor(mediaInfo.Owner, competitionCode)
-		err = self.competitors.create(ctx, compttr)
+		err = self.competitors.Create(ctx, compttr)
 		if err != nil {
 			return nil, err
 		}
@@ -133,16 +133,16 @@ func (self *Competition) Add(ctx context.Context, photoLink string) (*InstProfil
 }
 
 func (self *Competition) GetCompetitorsNumber(ctx context.Context, competitionCode string) (int, error) {
-	return self.competitors.getCompetitorsNumber(ctx, competitionCode)
+	return self.competitors.GetCompetitorsNumber(ctx, competitionCode)
 }
 
 func (self *Competition) GetNextPair(ctx context.Context, competitionCode, votersGroupId string) (*InstCompetitor, *InstCompetitor, error) {
 	for i := 0; i < nextPairGetAttempts; i++ {
-		competitor1, competitor2, err := self.competitors.getRandomPair(ctx, competitionCode)
+		competitor1, competitor2, err := self.competitors.GetRandomPair(ctx, competitionCode)
 		if err != nil {
 			return nil, nil, err
 		}
-		haveSeenPair, err := self.voters.haveSeenPair(ctx, competitionCode, votersGroupId, competitor1.Username, competitor2.Username)
+		haveSeenPair, err := self.voters.HaveSeenPair(ctx, competitionCode, votersGroupId, competitor1.Username, competitor2.Username)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -162,11 +162,11 @@ func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, pro
 			Warn("Can't extract username from the profile link")
 		return nil, BadProfileLinkErr
 	}
-	compttr, err := self.competitors.get(ctx, competitionCode, username)
+	compttr, err := self.competitors.Get(ctx, competitionCode, username)
 	if err != nil {
 		return nil, err
 	}
-	profile, err := self.profiles.get(ctx, username)
+	profile, err := self.profiles.Get(ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -181,11 +181,11 @@ func (self *Competition) Remove(ctx context.Context, usernames ...string) error 
 			return err
 		}
 	}
-	err = self.competitors.delete(ctx, usernames)
+	err = self.competitors.Delete(ctx, usernames)
 	if err != nil {
 		return err
 	}
-	err = self.profiles.delete(ctx, usernames)
+	err = self.profiles.Delete(ctx, usernames)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (self *Competition) Remove(ctx context.Context, usernames ...string) error 
 }
 
 func (self *Competition) GetTop(ctx context.Context, competitionCode string, number, offset int) ([]*InstCompetitor, error) {
-	competitors, err := self.competitors.getTop(ctx, competitionCode, number, offset)
+	competitors, err := self.competitors.GetTop(ctx, competitionCode, number, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 		"winner":          winnerUsername,
 		"loser":           loserUsername,
 	}).Info("Save user vote")
-	ok, err := self.voters.tryVote(ctx, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername)
+	ok, err := self.voters.TryVote(ctx, competitionCode, votersGroupId, voterId, winnerUsername, loserUsername)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -218,11 +218,11 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 		return nil, nil, AlreadyVotedErr
 	}
 
-	winner, err := self.competitors.get(ctx, competitionCode, winnerUsername)
+	winner, err := self.competitors.Get(ctx, competitionCode, winnerUsername)
 	if err != nil {
 		return nil, nil, err
 	}
-	loser, err := self.competitors.get(ctx, competitionCode, loserUsername)
+	loser, err := self.competitors.Get(ctx, competitionCode, loserUsername)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -233,11 +233,11 @@ func (self *Competition) Vote(ctx context.Context, competitionCode, votersGroupI
 	loser.Loses += 1
 	loser.Matches += 1
 
-	err = self.competitors.update(ctx, winner)
+	err = self.competitors.Update(ctx, winner)
 	if err != nil {
 		return nil, nil, err
 	}
-	err = self.competitors.update(ctx, loser)
+	err = self.competitors.Update(ctx, loser)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -261,7 +261,7 @@ func (self *Competition) convertToInstCompetitors(ctx context.Context, competito
 	for i := range usernames {
 		usernames[i] = competitors[i].Username
 	}
-	profiles, err := self.profiles.getMultiple(ctx, usernames)
+	profiles, err := self.profiles.GetMultiple(ctx, usernames)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,7 @@ import (
 )
 
 func InitCompetitorsStorage() *CompetitorsStorage {
-	competitors, err := newCompetitorsStorage(Config.MongoCompetitors)
+	competitors, err := NewCompetitorsStorage(Config.MongoCompetitors)
 	if err != nil {
 		panic(err)
 	}
@@ -13,7 +13,7 @@ func InitCompetitorsStorage() *CompetitorsStorage {
 }
 
 func InitProfilesStorage() *ProfilesStorage {
-	profiles, err := newProfilesStorage(Config.MongoProfiles)
+	profiles, err := NewProfilesStorage(Config.MongoProfiles)
 	if err != nil {
 		panic(err)
 	}
@@ -21,7 +21,7 @@ func InitProfilesStorage() *ProfilesStorage {
 }
 
 func InitGoogleFilesStorage() *GoogleFilesStorage {
-	filesStorage, err := newGoogleStorage(Config.GoogleStorage.BucketName)
+	filesStorage, err := NewGoogleStorage(Config.GoogleStorage.BucketName)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func InitGoogleFilesStorage() *GoogleFilesStorage {
 }
 
 func InitVotersStorage() *VotersStorage {
-	voters, err := newVotersStorage(Config.MongoVoters)
+	voters, err := NewVotersStorage(Config.MongoVoters)
 	if err != nil {
 		panic(err)
 	}

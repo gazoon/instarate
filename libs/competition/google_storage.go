@@ -18,7 +18,7 @@ type GoogleFilesStorage struct {
 	httpClient *http.Client
 }
 
-func newGoogleStorage(bucket string) (*GoogleFilesStorage, error) {
+func NewGoogleStorage(bucket string) (*GoogleFilesStorage, error) {
 	ctx := context.Background()
 	credsPath := path.Join(utils.GetCurrentFileDir(), "config", "google_cloud_keys.json")
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credsPath))
@@ -32,7 +32,7 @@ func newGoogleStorage(bucket string) (*GoogleFilesStorage, error) {
 		httpClient: httpClient}, nil
 }
 
-func (self *GoogleFilesStorage) upload(ctx context.Context, storagePath, sourceUrl string) (string, error) {
+func (self *GoogleFilesStorage) Upload(ctx context.Context, storagePath, sourceUrl string) (string, error) {
 	fileWriter := self.bucket.Object(storagePath).NewWriter(ctx)
 	resp, err := self.httpClient.Get(sourceUrl)
 	if err != nil {
@@ -50,9 +50,9 @@ func (self *GoogleFilesStorage) upload(ctx context.Context, storagePath, sourceU
 	if err != nil {
 		return "", errors.Wrap(err, "close storage writer")
 	}
-	return self.buildUrl(storagePath), nil
+	return self.BuildUrl(storagePath), nil
 }
 
-func (self *GoogleFilesStorage) buildUrl(path string) string {
+func (self *GoogleFilesStorage) BuildUrl(path string) string {
 	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", self.bucketName, path)
 }
