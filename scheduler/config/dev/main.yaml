@@ -6,7 +6,7 @@ mongo_queue:
   database: "local"
   timeout: 5
   pool_size: 10
-  collection: insta_queue_gazon
+  collection: insta_queue
 
 mongo_tasks:
   host: "localhost"

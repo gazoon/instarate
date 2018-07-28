@@ -8,7 +8,7 @@ mongo_queue:
   database: "local"
   timeout: 5
   pool_size: 10
-  collection: insta_queue_gazon
+  collection: insta_queue
 
 sentry:
   dsn: "https://dd153cdf7a6e4e5a90b8368142cc5e42:432f707ddc87488ca451603468d7b740@sentry.edwin.ai/7"
