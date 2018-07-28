@@ -51,7 +51,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d8b6cfbf354c443b03782d7b21410df7560fe88bfc15050fb5ebb9abef1232b0"
+  digest = "1:78bd5f730c28eed64ce098cc8e551849e2386fec3bc8983833020503c36281a1"
   name = "github.com/gazoon/go-utils"
   packages = [
     ".",
@@ -63,7 +63,7 @@
     "request",
   ]
   pruneopts = "UT"
-  revision = "3ad99d9864781df1c4f4bbab150e4ff62688efde"
+  revision = "8025605f9c0641a6c1dc4d787b5a44877c9cdcc5"
 
 [[projects]]
   branch = "master"
