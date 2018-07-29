@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/gazoon/go-utils/logging"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"gopkg.in/telegram-bot-api.v4"
@@ -32,6 +33,7 @@ type messageResponse struct {
 }
 
 type Telegram struct {
+	*logging.LoggerMixin
 	botAPI *tgbotapi.BotAPI
 	token  string
 	client *http.Client
@@ -44,9 +46,10 @@ func NewTelegram(token string) (*Telegram, error) {
 		return nil, errors.Wrap(err, "Telegram API initialization")
 	}
 	return &Telegram{
-		botAPI: bot,
-		token:  token,
-		client: httpClient,
+		botAPI:      bot,
+		token:       token,
+		client:      httpClient,
+		LoggerMixin: logging.NewLoggerMixin("messenger", nil),
 	}, nil
 }
 
@@ -141,6 +144,7 @@ func (self *Telegram) SendPhoto(ctx context.Context, chatId int,
 		data.Set("reply_markup", string(replayMarkupData))
 	}
 
+	self.GetLogger(ctx).WithField("photo_uri", photoUri).Info("Upload photo")
 	resp, err := self.client.PostForm(self.buildUrl(sendPhotoMethod), data)
 	return handleSendPhotoResponse(resp, err)
 }
