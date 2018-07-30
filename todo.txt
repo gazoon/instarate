@@ -14,5 +14,3 @@
 . add timeouts to show top
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
-. configure sentry, logs
-. set up local environment
