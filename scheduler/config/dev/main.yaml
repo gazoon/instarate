@@ -15,3 +15,6 @@ mongo_tasks:
   timeout: 5
   pool_size: 10
   collection: insta_tasks
+
+sentry:
+  dsn: ""

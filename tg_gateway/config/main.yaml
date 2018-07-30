@@ -11,4 +11,4 @@ mongo_queue:
   collection: insta_queue
 
 sentry:
-  dsn: "https://dd153cdf7a6e4e5a90b8368142cc5e42:432f707ddc87488ca451603468d7b740@sentry.edwin.ai/7"
+  dsn: "https://f0ddebc2c3d644f7a21e7cc359123fb9:4a0041c586d94493831ed7a96f8c7384@sentry.io/1252689"

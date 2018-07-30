@@ -1,8 +1,8 @@
 queue_consumer:
- fetch_delay: 100
+  fetch_delay: 100
 
 service_name: "tg_bot"
 log_level: info
 
 sentry:
-  dsn: "https://dd153cdf7a6e4e5a90b8368142cc5e42:432f707ddc87488ca451603468d7b740@sentry.edwin.ai/7"
+  dsn: "https://219cedb9e82140d9b048b34249e3a48b:508288cb1d5a4848bfda298537c711dc@sentry.io/1252677"

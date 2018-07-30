@@ -2,7 +2,7 @@ service_name: "scheduler"
 log_level: info
 
 tasks_consumer:
- fetch_delay: 100
+  fetch_delay: 100
 
 sentry:
-  dsn: "https://dd153cdf7a6e4e5a90b8368142cc5e42:432f707ddc87488ca451603468d7b740@sentry.edwin.ai/7"
+  dsn: "https://3b742e791d1a497cb6a554aacef8c904:6bada080d78246e9b09014617d29c530@sentry.io/1252690"
