@@ -213,8 +213,7 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	logger.WithField("caption_text", captionText).Info("Send pair match")
 	keyboard := tgbotapi.ReplyKeyboardMarkup{
 		OneTimeKeyboard: true, ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
-			{tgbotapi.KeyboardButton{Text: "Left"}},
-			{tgbotapi.KeyboardButton{Text: "Right"}},
+			{tgbotapi.KeyboardButton{Text: "Left"}, tgbotapi.KeyboardButton{Text: "Right"}},
 		}}
 	var messageId int
 	if tgFileId != "" {
