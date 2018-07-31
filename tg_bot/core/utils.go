@@ -23,6 +23,8 @@ func instantiateMessage(messageEnvelope *MessageEnvelope) (messages.Message, err
 	switch messageType {
 	case messages.TextType:
 		message, err = messages.TextMessageFromData(messageData)
+	case messages.NewChatUsersType:
+		message, err = messages.NewChatUsersFromData(messageData)
 	case messages.CallbackType:
 		message, err = messages.CallbackFromData(messageData)
 	case messages.NextPairTaskType:

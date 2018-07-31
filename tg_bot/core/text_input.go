@@ -52,9 +52,9 @@ var (
 func (self *Bot) onText(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	logger := self.GetLogger(ctx)
 
-	if !message.IsAppealToBot(self.info.Name) &&
-		!message.IsReplyToBot(self.info.Username) && message.IsGroupChat {
-		logger.Debug("Message doesn't apply to the bot, skip")
+	if !message.IsAppealToBot(self.botInfo.Name) &&
+		!message.IsReplyToBot(self.botInfo.Username) && message.IsGroupChat {
+		logger.Info("Message doesn't apply to the bot, skip")
 		return nil
 	}
 
@@ -168,8 +168,7 @@ func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message 
 }
 
 func (self *Bot) helpCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
-	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "help_message"))
-	return err
+	return self.sendHelpText(ctx, chat)
 }
 
 func (self *Bot) chatSettingsCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
@@ -307,5 +306,9 @@ func (self *Bot) handleFreeInput(ctx context.Context, chat *models.Chat, message
 
 func (self *Bot) sendDontGetYou(ctx context.Context, chat *models.Chat) error {
 	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "dont_get_you"))
+	return err
+}
+func (self *Bot) sendHelpText(ctx context.Context, chat *models.Chat) error {
+	_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "help_message"))
 	return err
 }

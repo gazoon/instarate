@@ -35,16 +35,32 @@ func (self *Worker) ProcessUpdate(ctx context.Context, update *tgbotapi.Update) 
 }
 
 func buildQueueMessage(update *tgbotapi.Update) (int, map[string]interface{}) {
-	if update.Message != nil && update.Message.Text != "" {
+	if update.Message != nil {
 		message := update.Message
-		var replyToConverted map[string]interface{}
-		if message.ReplyToMessage != nil {
-			replyToConverted = convertMessage(message.ReplyToMessage)
-		}
 		messageConverted := convertMessage(message)
-		messageConverted["reply_to"] = replyToConverted
+		var messageType string
+		if message.Text != "" {
+			messageType = "text"
+			messageConverted["text"] = message.Text
+			if message.ReplyToMessage != nil {
+				replyToConverted := convertUser(message.ReplyToMessage.From)
+				messageConverted["reply_to_user"] = replyToConverted
+			} else {
+				messageConverted["reply_to_user"] = nil
+			}
+		} else if message.NewChatMembers != nil {
+			messageType = "new_chat_users"
+			newMembersRaw := *message.NewChatMembers
+			newMembers := make([]map[string]interface{}, len(newMembersRaw))
+			for i := range newMembersRaw {
+				newMembers[i] = convertUser(&newMembersRaw[i])
+			}
+			messageConverted["new_users"] = newMembers
+		} else {
+			return 0, nil
+		}
 		return int(message.Chat.ID), map[string]interface{}{
-			"type": "text",
+			"type": messageType,
 			"data": messageConverted,
 		}
 	} else if update.CallbackQuery != nil && update.CallbackQuery.Message != nil {
@@ -72,8 +88,8 @@ func isGroupChat(message *tgbotapi.Message) bool {
 func convertMessage(message *tgbotapi.Message) map[string]interface{} {
 	return map[string]interface{}{
 		"user":          convertUser(message.From),
-		"text":          message.Text,
 		"chat_id":       int(message.Chat.ID),
+		"message_id":    message.MessageID,
 		"is_group_chat": isGroupChat(message),
 	}
 }

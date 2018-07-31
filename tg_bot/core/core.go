@@ -42,7 +42,7 @@ type Bot struct {
 	scheduler        *tasks.Publisher
 	locales          *localization.Manager
 	commandsRegistry []*TextCommand
-	info             *utils.BotInfo
+	botInfo          *utils.BotInfo
 	competition      *competition.Competition
 	cache            *cache.Mongo
 }
@@ -57,7 +57,7 @@ func NewBot(competitionAPI *competition.Competition, chatsStorage *chats.MongoSt
 		scheduler:   scheduler,
 		locales:     locales,
 		LoggerMixin: logging.NewLoggerMixin("bot", nil),
-		info:        info,
+		botInfo:     info,
 		competition: competitionAPI,
 		cache:       cacheStorage,
 	}
@@ -129,6 +129,8 @@ func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message
 	switch actualMessage := message.(type) {
 	case *messages.TextMessage:
 		return self.onText(ctx, chat, actualMessage)
+	case *messages.NewChatUsers:
+		return self.onNewChatUsers(ctx, chat, actualMessage)
 	case *messages.Callback:
 		return self.onCallback(ctx, chat, actualMessage)
 	case *messages.NextPairTask:
@@ -138,6 +140,14 @@ func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message
 	default:
 		return errors.Errorf("can't dispatch message %T", actualMessage)
 	}
+	return nil
+}
+func (self *Bot) onNewChatUsers(ctx context.Context, chat *models.Chat, message *messages.NewChatUsers) error {
+	if message.IsBotAdded(self.botInfo.Username) {
+		return self.sendHelpText(ctx, chat)
+	}
+	self.GetLogger(ctx).WithField("new_members", message.NewUsers).
+		Info("New chat members don't contain the bot, skip")
 	return nil
 }
 
