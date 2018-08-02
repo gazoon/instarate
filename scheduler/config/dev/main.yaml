@@ -16,5 +16,5 @@ mongo_tasks:
   pool_size: 10
   collection: insta_tasks
 
-sentry:
-  dsn: ""
+#sentry:
+#  dsn: ""

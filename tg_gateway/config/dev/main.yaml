@@ -3,5 +3,5 @@ bot_token: "480997285:AAEwT3739sBnTz0RSqhEz8TNh4wvJUuqn20"
 public_url: "https://66ec43da.ngrok.io"
 log_level: debug
 
-sentry:
-  dsn: ""
+#sentry:
+#  dsn: ""

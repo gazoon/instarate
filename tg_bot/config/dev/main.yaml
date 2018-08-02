@@ -29,6 +29,6 @@ bot:
   name: "InstaRateLocal"
   username: "InstaRateLocalBot"
   admins: [231193206, 309370324]
-
-sentry:
-  dsn: ""
+#
+#sentry:
+#  dsn: ""

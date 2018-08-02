@@ -49,7 +49,7 @@ type mediaResponse struct {
 						Edges []struct {
 							Node struct {
 								IsVideo *bool `json:"is_video"`
-							} `json:"edges"`
+							} `json:"node"`
 						} `json:"edges"`
 					} `json:"edge_sidecar_to_children"`
 				} `json:"shortcode_media"`
@@ -60,25 +60,21 @@ type mediaResponse struct {
 
 func GetMediaInfo(ctx context.Context, mediaCode string) (*Media, error) {
 	mediaUrl := apiUrl + mediaPath + mediaCode
-	resp, err := httpClient.Get(mediaUrl)
+	jsonContent, httpStatus, err := requestResourceDataWithStatusCode(mediaUrl)
 	if err != nil {
-		return nil, errors.Wrap(err, "http get media data")
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, MediaForbidden
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("media info response unexpected status: %d", resp.StatusCode)
+		if httpStatus == http.StatusForbidden {
+			return nil, MediaForbidden
+		}
+		return nil, err
 	}
 	responseData := &mediaResponse{}
-	err = extractData(resp, responseData)
+	err = json.Unmarshal([]byte(jsonContent), responseData)
 	if err != nil {
-		return nil, errors.Wrap(err, "can't parse media response")
+		return nil, errors.Wrap(err, "parse instagram media response into json")
 	}
 	err = validateMediaResponse(responseData)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid media response")
+		return nil, errors.Wrapf(err, "media_url=%s; json_content=%s; invalid media response", mediaUrl, jsonContent)
 	}
 	mediaData := responseData.EntryData.PostPage[0].GraphQL.Media
 	username := mediaData.Owner.Username
@@ -137,24 +133,47 @@ type userResponse struct {
 
 func GetFollowersNumber(ctx context.Context, username string) (int, error) {
 	profileUrl := apiUrl + username
-	resp, err := httpClient.Get(profileUrl)
+	jsonContent, err := RequestResourceData(profileUrl)
 	if err != nil {
-		return 0, errors.Wrap(err, "http get profile data")
+		return 0, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return 0, errors.Errorf("user response unexpected status: %d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
 	responseData := &userResponse{}
-	err = extractData(resp, responseData)
+	err = json.Unmarshal([]byte(jsonContent), responseData)
 	if err != nil {
-		return 0, errors.Wrap(err, "can't parse user response")
+		return 0, errors.Wrap(err, "parse instagram profile response into json")
 	}
 	err = validateUserResponse(responseData)
 	if err != nil {
-		return 0, errors.Wrap(err, "invalid user response")
+		return 0, errors.Wrapf(err, "profile_url=%s; json_content=%s; invalid user response", profileUrl, jsonContent)
 	}
 	return *responseData.EntryData.ProfilePage[0].GraphQL.User.FollowedBy.Count, nil
+}
+
+func RequestResourceData(url string) (string, error) {
+	data, _, err := requestResourceDataWithStatusCode(url)
+	return data, err
+}
+
+func requestResourceDataWithStatusCode(url string) (string, int, error) {
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		return "", 0, errors.Wrapf(err, "url=%s; http get instagram data", url)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", resp.StatusCode, errors.Errorf("url=%s; instagram API unexpected status: %d", url, resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", resp.StatusCode, errors.Wrapf(err, "url=%s; read instagram http response content", url)
+	}
+	text := string(b)
+	firstMarker := "window._sharedData = "
+	secondMarker := ";</script>"
+	dataStart := strings.Index(text, firstMarker) + len(firstMarker)
+	dataEnd := strings.Index(text, secondMarker)
+	data := text[dataStart:dataEnd]
+	return data, resp.StatusCode, nil
 }
 
 func validateUserResponse(data *userResponse) error {
@@ -165,21 +184,6 @@ func validateUserResponse(data *userResponse) error {
 		return errors.New("no followers info")
 	}
 	return nil
-}
-
-func extractData(resp *http.Response, destination interface{}) error {
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "read http response content")
-	}
-	text := string(b)
-	firstMarker := "window._sharedData = "
-	secondMarker := ";</script>"
-	dataStart := strings.Index(text, firstMarker) + len(firstMarker)
-	dataEnd := strings.Index(text, secondMarker)
-	data := text[dataStart:dataEnd]
-	err = json.Unmarshal([]byte(data), destination)
-	return errors.Wrap(err, "parse http response content into json")
 }
 
 func BuildProfileUrl(username string) string {
