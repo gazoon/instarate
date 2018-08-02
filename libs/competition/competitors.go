@@ -90,12 +90,7 @@ func (self *CompetitorsStorage) GetNumberWithHigherRating(ctx context.Context, c
 func (self *CompetitorsStorage) Update(ctx context.Context, model *Competitor) error {
 	err := self.client.Update(
 		bson.M{"competition": model.CompetitionCode, "username": model.Username},
-		bson.M{"$set": bson.M{
-			"rating":  model.Rating,
-			"wins":    model.Wins,
-			"loses":   model.Loses,
-			"matches": model.Matches,
-		}},
+		model,
 	)
 	return errors.Wrap(err, "update competitor document")
 }
