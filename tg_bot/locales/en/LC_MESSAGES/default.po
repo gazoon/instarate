@@ -1,6 +1,9 @@
 msgid "propose_to_vote"
 msgstr "Hi! Don't you mind to vote?"
 
+msgid "start_again"
+msgstr "If want to start, click: /start@InstaRateBot"
+
 msgid "add_girl_no_link"
 msgstr "Please send me a link, example:\naddGirl@InstaRateBot 'https://instagram.com/p/<photo_code>/'"
 

@@ -31,6 +31,8 @@ func instantiateMessage(messageEnvelope *MessageEnvelope) (messages.Message, err
 		message, err = messages.NextPairTaskFromData(messageData)
 	case messages.DailyActivationTaskType:
 		message, err = messages.DailyActivationTaskFromData(messageData)
+	case messages.CancelKeyboardTaskType:
+		message, err = messages.CancelKeyboardTaskFromData(messageData)
 	default:
 		return nil, errors.Errorf("unknown message type: %s", messageType)
 	}

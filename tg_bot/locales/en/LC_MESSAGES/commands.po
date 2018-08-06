@@ -5,7 +5,7 @@ msgid "right_vote"
 msgstr "right"
 
 msgid "next_top_girl"
-msgstr "next"
+msgstr "next girl"
 
 msgid "show_top"
 msgstr "showTop|top|best|popular|beautiful|beautiful|gorgeous"
@@ -14,7 +14,7 @@ msgid "girl_profile"
 msgstr "profile|info about|information about|statistic|statistics|stat|stats|data about"
 
 msgid "start"
-msgstr "start|work|go"
+msgstr "start|work|go|next pair"
 
 msgid "add_girl"
 msgstr "addGirl|add|save|enroll"

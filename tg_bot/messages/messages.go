@@ -15,6 +15,7 @@ var (
 	CallbackType            = "callback"
 	NextPairTaskType        = "next_pair_task"
 	DailyActivationTaskType = "daily_activation_task"
+	CancelKeyboardTaskType  = "cancel_keyboard_task"
 )
 
 type Message interface {
@@ -223,5 +224,22 @@ func DailyActivationTaskFromData(data interface{}) (*DailyActivationTask, error)
 }
 
 func (self DailyActivationTask) String() string {
+	return utils.ObjToString(&self)
+}
+
+type CancelKeyboardTask struct {
+	task `mapstructure:",squash"`
+}
+
+func CancelKeyboardTaskFromData(data interface{}) (*CancelKeyboardTask, error) {
+	t := &CancelKeyboardTask{}
+	err := mapstructure.Decode(data, t)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create cancel keyboard task from data")
+	}
+	return t, nil
+}
+
+func (self CancelKeyboardTask) String() string {
 	return utils.ObjToString(&self)
 }

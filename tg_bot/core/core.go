@@ -137,6 +137,8 @@ func (self *Bot) dispatchMessage(ctx context.Context, chat *models.Chat, message
 		return self.onNextPairTask(ctx, chat, actualMessage)
 	case *messages.DailyActivationTask:
 		return self.onDailyActivationTask(ctx, chat, actualMessage)
+	case *messages.CancelKeyboardTask:
+		return self.onCancelKeyboardTask(ctx, chat, actualMessage)
 	default:
 		return errors.Errorf("can't dispatch message %T", actualMessage)
 	}
@@ -224,6 +226,7 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	keyboard := tgbotapi.ReplyKeyboardMarkup{
 		OneTimeKeyboard: chat.IsGroupChat, ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
 			{tgbotapi.KeyboardButton{Text: "Left"}, tgbotapi.KeyboardButton{Text: "Right"}},
+			{tgbotapi.KeyboardButton{Text: "Next pair"}},
 		}}
 	var messageId int
 	if tgFileId != "" {
@@ -257,6 +260,9 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	if err := self.scheduleDailyNotification(ctx, chat); err != nil {
 		return err
 	}
+	if err := self.scheduleCancelKeyboard(ctx, chat); err != nil {
+		return err
+	}
 	chat.LastMatch = models.NewMatch(messageId, leftGirl.Username, rightGirl.Username)
 	return nil
 }
@@ -285,8 +291,10 @@ func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
 	if err != nil {
 		return err
 	}
-	err = self.trySendNextGirlsPair(ctx, chat)
-	return err
+	if err := self.scheduleCancelKeyboard(ctx, chat); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Chat) error {
@@ -300,6 +308,15 @@ func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Cha
 	logger.WithField("activation_time", activationTime).Info("Schedule next day activation")
 	return self.scheduler.CreateOrReplaceTask(ctx, task)
 }
+
+func (self *Bot) scheduleCancelKeyboard(ctx context.Context, chat *models.Chat) error {
+	logger := self.GetLogger(ctx)
+	activationTime := utils.UTCNow().Add(models.CancelKeyboardAfter)
+	task := tasks.NewTaskWithoutArgs(messages.CancelKeyboardTaskType, chat.Id, activationTime)
+	logger.WithField("activation_time", activationTime).Info("Schedule cancel keyboard")
+	return self.scheduler.CreateOrReplaceTask(ctx, task)
+}
+
 func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 	offset := chat.CurrentTopOffset
 	amount := 2
@@ -335,6 +352,10 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 		settings.ReplyMarkup = keyboard
 		settings.Caption = caption
 	})
+	if err != nil {
+		return err
+	}
+	err = self.scheduleCancelKeyboard(ctx, chat)
 	return err
 }
 

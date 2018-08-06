@@ -9,9 +9,11 @@ import (
 var (
 	DefaultTimeoutSeconds = 5
 	DefaultTimeout        = time.Duration(DefaultTimeoutSeconds) * time.Second
-	RuLanguage            = "ru"
-	EnLanguage            = "en"
-	DefaultLang           = RuLanguage
+	CancelKeyboardAfter   = time.Duration(20) * time.Second
+
+	RuLanguage  = "ru"
+	EnLanguage  = "en"
+	DefaultLang = RuLanguage
 )
 
 type Match struct {
