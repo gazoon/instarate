@@ -224,7 +224,7 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	logger := self.GetLogger(ctx)
 	logger.WithField("caption_text", captionText).Info("Send pair match")
 	keyboard := tgbotapi.ReplyKeyboardMarkup{
-		OneTimeKeyboard: chat.IsGroupChat, ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
+		ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
 			{tgbotapi.KeyboardButton{Text: "Left"}, tgbotapi.KeyboardButton{Text: "Right"}},
 			{tgbotapi.KeyboardButton{Text: "Next pair"}},
 		}}
