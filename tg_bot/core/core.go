@@ -18,6 +18,7 @@ import (
 	"instarate/tg_bot/messenger"
 	"instarate/tg_bot/models"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -360,6 +361,10 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 }
 
 func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink string) error {
+	if !strings.HasPrefix(photoLink, "https://instagram.com/p/") &&
+		!strings.HasPrefix(photoLink, "https://www.instagram.com/p/") {
+		return competition.BadPhotoLinkErr
+	}
 	profile, err := self.competition.Add(ctx, photoLink)
 	if err == competition.NotPhotoMediaErr {
 		_, err = self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "add_girl_not_photo"))

@@ -9,7 +9,6 @@ import (
 
 	"io/ioutil"
 
-	"github.com/gazoon/go-utils"
 	"github.com/pkg/errors"
 )
 
@@ -188,13 +187,4 @@ func validateUserResponse(data *userResponse) error {
 
 func BuildProfileUrl(username string) string {
 	return apiUrl + username + "/"
-}
-
-func ExtractMediaCode(mediaUrl string) (string, error) {
-	if !strings.HasPrefix(mediaUrl, "https://instagram.com/p/") &&
-		!strings.HasPrefix(mediaUrl, "https://www.instagram.com/p/") {
-		return "", errors.New("url doesn't have the right prefix")
-	}
-	mediaCode, err := utils.ExtractLastPathPart(mediaUrl)
-	return mediaCode, err
 }

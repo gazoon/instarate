@@ -22,13 +22,26 @@ func main() {
 	links := strings.Split(string(fileContent), "\n")
 	api := competition.InitCompetition()
 	ctx := context.Background()
+	outFile, err := os.Create("error_links.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer outFile.Close()
 	for _, link := range links {
 		_, err := api.Add(ctx, link)
 		if err == nil {
 			continue
 		}
+		if err == competition.ProfileExistsErr {
+			log.WithField("link", link).Warn("Competitor already exists.")
+			continue
+		}
 		log.WithFields(log.Fields{"link": link, "reason": err}).
-			Warn("Competitor wasn't added. Skip.")
+			Error("Competitor wasn't added. Skip.")
+		if _, err := outFile.WriteString(link + "\n"); err != nil {
+			panic(err)
+		}
+
 	}
 	log.Info("Done!")
 }
