@@ -385,11 +385,7 @@ func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink strin
 	return err
 }
 
-func (self *Bot) sendGirlProfile(ctx context.Context, chat *models.Chat, profileLink string) error {
-	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, profileLink)
-	if err != nil {
-		return err
-	}
+func (self *Bot) sendGirlProfile(ctx context.Context, chat *models.Chat, girl *competition.InstCompetitor) error {
 	titleText := fmt.Sprintf("[%s](%s)", girl.Username, girl.GetProfileLink())
 	if _, err := self.messenger.SendMarkdown(ctx, chat.Id, titleText); err != nil {
 		return err

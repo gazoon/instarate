@@ -13,6 +13,9 @@ msgstr "showTop|top|best|popular|beautiful|beautiful|gorgeous"
 msgid "girl_profile"
 msgstr "profile|info about|information about|statistic|statistics|stat|stats|data about"
 
+msgid "random_girl"
+msgstr "random"
+
 msgid "start"
 msgstr "start|work|go|next pair"
 
@@ -20,7 +23,7 @@ msgid "add_girl"
 msgstr "addGirl|add|save|enroll"
 
 msgid "help"
-msgstr "help|support|what you can|tell yourself|commands|information|info|what write|functions|functional|features"
+msgstr "help|support|what you can|tell yourself|commands|information|info|what write|functions|functional|features|hi|hello"
 
 msgid "chat_settings"
 msgstr "chatSettings|settings|options"

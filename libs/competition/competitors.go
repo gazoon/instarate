@@ -2,7 +2,7 @@ package competition
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/gazoon/go-utils"
 	"github.com/gazoon/go-utils/mongo"
 	"github.com/globalsign/mgo"
@@ -73,7 +73,6 @@ func (self *CompetitorsStorage) Get(ctx context.Context, competitionCode, userna
 
 func (self *CompetitorsStorage) GetNumberWithHigherRating(ctx context.Context, competitionCode string, rating int) (int, error) {
 	var result []*Competitor
-	fmt.Println(competitionCode, rating)
 	err := self.client.Find(bson.M{
 		"competition": competitionCode, "rating": bson.M{"$gt": rating},
 	}).All(&result)
@@ -101,6 +100,18 @@ func (self *CompetitorsStorage) Create(ctx context.Context, model *Competitor) e
 		return CompetitorAlreadyExists(err)
 	}
 	return errors.Wrap(err, "insert new competitor document")
+}
+
+func (self *CompetitorsStorage) GetRandomOne(ctx context.Context, competitionCode string) (*Competitor, error) {
+	result := &Competitor{}
+	err := self.client.Pipe([]bson.M{
+		{"$match": bson.M{"competition": competitionCode}},
+		{"$sample": bson.M{"size": 1}},
+	}).One(result)
+	if err != nil {
+		return nil, errors.Wrap(err, "get one random competitors documents")
+	}
+	return result, nil
 }
 
 func (self *CompetitorsStorage) GetRandomPair(ctx context.Context, competitionCode string) (*Competitor, *Competitor, error) {

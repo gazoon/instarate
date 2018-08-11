@@ -176,6 +176,18 @@ func (self *Competition) GetCompetitor(ctx context.Context, competitionCode, pro
 	return combineProfileAndCompetitor(profile, compttr), nil
 }
 
+func (self *Competition) GetRandomCompetitor(ctx context.Context, competitionCode string) (*InstCompetitor, error) {
+	compttr, err := self.competitors.GetRandomOne(ctx, competitionCode)
+	if err != nil {
+		return nil, err
+	}
+	profile, err := self.profiles.Get(ctx, compttr.Username)
+	if err != nil {
+		return nil, err
+	}
+	return combineProfileAndCompetitor(profile, compttr), nil
+}
+
 func (self *Competition) Remove(ctx context.Context, usernames ...string) error {
 	var err error
 	for i := range usernames {

@@ -34,6 +34,7 @@ var (
 	nextTopGirlCmd            = "next_top_girl"
 	showTopCmd                = "show_top"
 	girlProfileCmd            = "girl_profile"
+	randomGirlCmd             = "random_girl"
 	startCmd                  = "start"
 	addGirlCmd                = "add_girl"
 	helpCmd                   = "help"
@@ -89,6 +90,7 @@ func (self *Bot) buildCommandsList() []*TextCommand {
 		{nextTopGirlCmd, self.nextGirlCmd},
 		{showTopCmd, self.showTopCmd},
 		{girlProfileCmd, self.girlProfileCmd},
+		{randomGirlCmd, self.randomGirlCmd},
 		{startCmd, self.startCmd},
 		{addGirlCmd, self.addGirlCmd},
 		{helpCmd, self.helpCmd},
@@ -154,7 +156,7 @@ func (self *Bot) nextGirlCmd(ctx context.Context, chat *models.Chat, message *me
 
 func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
 	girlLink := message.GetCommandArg()
-	err := self.sendGirlProfile(ctx, chat, girlLink)
+	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, girlLink)
 	if err == competition.BadProfileLinkErr {
 		_, err := self.messenger.SendText(ctx, chat.Id, self.gettext(chat, "get_girl_no_username"))
 		return err
@@ -164,6 +166,19 @@ func (self *Bot) girlProfileCmd(ctx context.Context, chat *models.Chat, message 
 		_, err := self.messenger.SendMarkdown(ctx, chat.Id, text)
 		return err
 	}
+	if err != nil {
+		return err
+	}
+	err = self.sendGirlProfile(ctx, chat, girl)
+	return err
+}
+
+func (self *Bot) randomGirlCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	girl, err := self.competition.GetRandomCompetitor(ctx, chat.CompetitionCode)
+	if err != nil {
+		return err
+	}
+	err = self.sendGirlProfile(ctx, chat, girl)
 	return err
 }
 
@@ -290,8 +305,12 @@ func (self *Bot) handleFreeInput(ctx context.Context, chat *models.Chat, message
 
 	var err error
 
-	err = self.sendGirlProfile(ctx, chat, link)
+	girl, err := self.competition.GetCompetitor(ctx, chat.CompetitionCode, link)
 	if _, ok := err.(*competition.CompetitorNotFound); !ok && err != competition.BadProfileLinkErr {
+		return err
+	}
+	if err == nil {
+		err = self.sendGirlProfile(ctx, chat, girl)
 		return err
 	}
 

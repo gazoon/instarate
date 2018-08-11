@@ -14,8 +14,6 @@
 . add timeouts to show top
 . return callback top implementation
 . choose callback or buttons depending on size of the chat
-. throw a random girl
 . enhance next day push
 . don't close keyboard in private chat
 . enhance keyboard closing logic
-. handle "hi" intent
