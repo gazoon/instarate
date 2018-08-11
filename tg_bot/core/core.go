@@ -260,9 +260,6 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 			return err
 		}
 	}
-	if err := self.scheduleDailyNotification(ctx, chat); err != nil {
-		return err
-	}
 	chat.LastMatch = models.NewMatch(messageId, leftGirl.Username, rightGirl.Username)
 	return nil
 }
@@ -292,9 +289,14 @@ func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
 		return err
 	}
 	if !chat.IsGroupChat {
-		err = self.trySendNextGirlsPair(ctx, chat)
+		if err := self.trySendNextGirlsPair(ctx, chat); err != nil {
+			return err
+		}
 	}
-	return err
+	if err := self.scheduleDailyNotification(ctx, chat); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Chat) error {
