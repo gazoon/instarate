@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"gopkg.in/telegram-bot-api.v4"
 	"instarate/tg_bot/messages"
 	"instarate/tg_bot/models"
 )
@@ -29,15 +28,7 @@ func (self *Bot) onNextPairTask(ctx context.Context, chat *models.Chat,
 
 func (self *Bot) onCancelKeyboardTask(ctx context.Context, chat *models.Chat,
 	message *messages.CancelKeyboardTask) error {
-	chat.ResetLastMatch()
-	chat.ResetTopOffset()
-	text := self.gettext(chat, "start_again")
-	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
-		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
-	}); err != nil {
-		return err
-	}
-	return nil
+	return self.stopActivity(ctx, chat)
 }
 
 func (self *Bot) onDailyActivationTask(ctx context.Context, chat *models.Chat,

@@ -227,8 +227,10 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	keyboard := tgbotapi.ReplyKeyboardMarkup{
 		ResizeKeyboard: true, Keyboard: [][]tgbotapi.KeyboardButton{
 			{tgbotapi.KeyboardButton{Text: "Left"}, tgbotapi.KeyboardButton{Text: "Right"}},
-			{tgbotapi.KeyboardButton{Text: "Next pair"}},
 		}}
+	if chat.IsGroupChat {
+		keyboard.Keyboard = append(keyboard.Keyboard, []tgbotapi.KeyboardButton{{Text: "Next pair"}})
+	}
 	var messageId int
 	if tgFileId != "" {
 		logger.WithField("tg_file_id", tgFileId).Info("Use cached match photo")
@@ -261,9 +263,6 @@ func (self *Bot) sendNextGirlsPair(ctx context.Context, chat *models.Chat) error
 	if err := self.scheduleDailyNotification(ctx, chat); err != nil {
 		return err
 	}
-	if err := self.scheduleCancelKeyboard(ctx, chat); err != nil {
-		return err
-	}
 	chat.LastMatch = models.NewMatch(messageId, leftGirl.Username, rightGirl.Username)
 	return nil
 }
@@ -292,10 +291,10 @@ func (self *Bot) processVoteMessage(ctx context.Context, chat *models.Chat,
 	if err != nil {
 		return err
 	}
-	if err := self.scheduleCancelKeyboard(ctx, chat); err != nil {
-		return err
+	if !chat.IsGroupChat {
+		err = self.trySendNextGirlsPair(ctx, chat)
 	}
-	return nil
+	return err
 }
 
 func (self *Bot) scheduleDailyNotification(ctx context.Context, chat *models.Chat) error {
@@ -356,8 +355,7 @@ func (self *Bot) sendGirlFromTop(ctx context.Context, chat *models.Chat) error {
 	if err != nil {
 		return err
 	}
-	err = self.scheduleCancelKeyboard(ctx, chat)
-	return err
+	return nil
 }
 
 func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink string) error {
@@ -383,6 +381,18 @@ func (self *Bot) addGirl(ctx context.Context, chat *models.Chat, photoLink strin
 	text := self.gettext(chat, msgid, profile.Username, profile.GetProfileLink())
 	_, err = self.messenger.SendMarkdown(ctx, chat.Id, text)
 	return err
+}
+
+func (self *Bot) stopActivity(ctx context.Context, chat *models.Chat) error {
+	chat.ResetLastMatch()
+	chat.ResetTopOffset()
+	text := self.gettext(chat, "start_again")
+	if _, err := self.messenger.SendText(ctx, chat.Id, text, func(msg *tgbotapi.MessageConfig) {
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (self *Bot) sendGirlProfile(ctx context.Context, chat *models.Chat, girl *competition.InstCompetitor) error {

@@ -36,6 +36,7 @@ var (
 	girlProfileCmd            = "girl_profile"
 	randomGirlCmd             = "random_girl"
 	startCmd                  = "start"
+	stopCmd                   = "stop"
 	addGirlCmd                = "add_girl"
 	helpCmd                   = "help"
 	chatSettingsCmd           = "chat_settings"
@@ -92,6 +93,7 @@ func (self *Bot) buildCommandsList() []*TextCommand {
 		{girlProfileCmd, self.girlProfileCmd},
 		{randomGirlCmd, self.randomGirlCmd},
 		{startCmd, self.startCmd},
+		{stopCmd, self.stopCmd},
 		{addGirlCmd, self.addGirlCmd},
 		{helpCmd, self.helpCmd},
 		{chatSettingsCmd, self.chatSettingsCmd},
@@ -180,6 +182,10 @@ func (self *Bot) randomGirlCmd(ctx context.Context, chat *models.Chat, message *
 	}
 	err = self.sendGirlProfile(ctx, chat, girl)
 	return err
+}
+
+func (self *Bot) stopCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
+	return self.stopActivity(ctx, chat)
 }
 
 func (self *Bot) helpCmd(ctx context.Context, chat *models.Chat, message *messages.TextMessage) error {
