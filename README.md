@@ -1,8 +1,11 @@
 # InstaRate
-Script to parse saved photos: <br>
-https://gist.github.com/attemka/43de9779a80a2f2fb99a50e78adc6eb1
+Facemash is a site that was created by Mark Zuckerberg to reveal the most beautiful girls in the campus:
+https://www.facebook.com/facemash.service/
 
-Google PAAS notes: <br>
+This project uses the same algorithm, but it works with girls Instagram accounts and it's available as a Telegram bot.
+So you can simple add @InstaRateBot to a group or play with it in the private chat. 
+
+Used Google PAAS components: <br>
 1. Mongodb node
 2. App engine
 3. Logging
